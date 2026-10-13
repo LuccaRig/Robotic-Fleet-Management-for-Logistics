@@ -28,18 +28,16 @@ private:
     int setpoint_posicao_y;
     std::string tarefa_atual;
     RobotState estado_atual;
-
     bool em_processo_de_carga; 
 
-    // Controle da Thread
-    std::thread robot_thread;
+    // Controle das DUAS threads do processo do robô
+    std::thread navigation_thread;
+    std::thread status_thread;
     std::atomic<bool> running;
 
-    // Loop principal da thread (executa as tarefas periódicas)
-    void executionLoop();
-
-    // Tarefa periódica interna de status (gerencia bateria, consumo e saúde)
-    void executarTarefaStatusPeriodica();
+    // Funções executadas por cada thread de forma independente
+    void navigationLoop();
+    void statusLoop();
 
     bool verificarSegurancaPassagemEstreita(int proximo_x, int proximo_y);
 
@@ -50,15 +48,12 @@ public:
     void start();
     void stop();
 
+    // Tarefas e comandos
     void atribuirTarefa(const std::string& descricao_tarefa, int destino_x, int destino_y);
+    void ComandoDeNavegacao(); 
+    void StatusDoRobo();       
+    void setRobotStatus(int nova_bateria, bool novo_estado_falha);
 
-    // Tarefas periódicas principais
-    void ComandoDeNavegacao();
-    
-    // Recepção externa de status/telemetria (simulação ou MQTT)
-    void setStatusDoRobo(int nova_bateria, bool novo_estado_falha);
-
-    // Getters
     int getId() const;
     int getX() const;
     int getY() const;

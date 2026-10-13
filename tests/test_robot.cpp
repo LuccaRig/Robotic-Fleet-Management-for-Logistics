@@ -23,13 +23,13 @@ TEST(RobotAgentTest, InitializationAndTaskAssignment) {
 TEST(RobotAgentTest, StatusTelemetryUpdate) {
     RobotAgent robot(2, 0, 0);
 
-    // Atualiza bateria e define sem falha
-    robot.setStatusDoRobo(45, false);
+    // Atualiza bateria e define sem falha (Nome corrigido para setRobotStatus)
+    robot.setRobotStatus(45, false);
     EXPECT_EQ(robot.getBateria(), 45);
     EXPECT_FALSE(robot.isFalha());
 
     // Atualiza com estado de falha
-    robot.setStatusDoRobo(40, true);
+    robot.setRobotStatus(40, true);
     EXPECT_TRUE(robot.isFalha());
     EXPECT_EQ(robot.getEstado(), RobotState::ERROR);
 }
@@ -39,7 +39,7 @@ TEST(RobotAgentTest, CriticalBatteryTriggersChargingState) {
     RobotAgent robot(3, 2, 2);
     
     // Simula bateria abaixo de 15% via telemetria externa
-    robot.setStatusDoRobo(10, false);
+    robot.setRobotStatus(10, false);
     
     // Inicia a thread para que a tarefa periódica de status processe o alerta
     robot.start();
