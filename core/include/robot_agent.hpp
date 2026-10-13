@@ -21,7 +21,7 @@ public:
 
     void updateSetpoint(int target_x, int target_y);
     void ComandoDeNavegacao(bool pronto_para_acoplar = false);
-    void StatusDoRobo(int nova_bateria, bool novo_estado_falha);
+    void SetStatusDoRobo(int nova_bateria, bool novo_estado_falha);
 
     //void acoplarAndErguer(int tamanho_grupo_n);
 

@@ -59,7 +59,7 @@ TEST(RobotAgentTest, StatusTelemetryUpdate) {
     RobotAgent robot(2, 0, 0);
 
     // Simula a chegada de novos dados de bateria e falha via tarefa periódica de status
-    robot.StatusDoRobo(45, true);
+    robot.setStatusDoRobo(45, true);
 
     EXPECT_EQ(robot.getBateria(), 45);
     EXPECT_TRUE(robot.isFalha());
