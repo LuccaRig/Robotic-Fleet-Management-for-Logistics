@@ -30,12 +30,10 @@ private:
     RobotState estado_atual;
     bool em_processo_de_carga; 
 
-    // Controle das DUAS threads do processo do robô
     std::thread navigation_thread;
     std::thread status_thread;
     std::atomic<bool> running;
 
-    // Funções executadas por cada thread de forma independente
     void navigationLoop();
     void statusLoop();
 
@@ -48,7 +46,6 @@ public:
     void start();
     void stop();
 
-    // Tarefas e comandos
     void atribuirTarefa(const std::string& descricao_tarefa, int destino_x, int destino_y);
     void ComandoDeNavegacao(); 
     void StatusDoRobo();       
