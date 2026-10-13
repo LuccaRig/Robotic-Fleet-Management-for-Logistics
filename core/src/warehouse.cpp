@@ -4,6 +4,8 @@ WarehouseGrid::WarehouseGrid(int width, int height)
     : width(width), height(height), grid(width * height, CellState::EMPTY) {}
 
 WarehouseGrid::WarehouseGrid(const std::vector<std::vector<int>>& initial_layout) {
+    //TODO: CHECAR SE A INICIALIZAÇÃO POSSUI ALGUM ROBÔ, POIS NÃO PODEM EXISTIR ROBÔS NO GRID INICIAL, POIS O ORQUESTRADOR É QUE VAI GERENCIAR OS ROBÔS
+
     if (initial_layout.empty() || initial_layout[0].empty()) {
         width = 0;
         height = 0;

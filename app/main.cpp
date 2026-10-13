@@ -15,7 +15,7 @@ int main() {
     std::vector<std::vector<int>> mapa_inicial = {
         {5, 5, 5, 5, 5},
         {5, 2, 0, 3, 5}, // 2 = Charging Station, 0 = Empty, 3 = Narrow Tunnel
-        {5, 0, 1, 0, 5}, // 1 = Robot
+        {5, 0, 0, 0, 5}, // 1 = Robot
         {5, 4, 0, 4, 5}, // 4 = Pickup Point
         {5, 5, 5, 5, 5}
     };
