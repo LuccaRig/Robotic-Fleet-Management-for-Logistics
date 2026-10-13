@@ -24,6 +24,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(unit_tests 
     tests/test_warehouse.cpp
+    tests/test_robot.cpp
 )
 
 target_link_libraries(unit_tests 
