@@ -56,7 +56,7 @@ public:
     void ComandoDeNavegacao();
     
     // Recepção externa de status/telemetria (simulação ou MQTT)
-    void StatusDoRobo(int nova_bateria, bool novo_estado_falha);
+    void setStatusDoRobo(int nova_bateria, bool novo_estado_falha);
 
     // Getters
     int getId() const;

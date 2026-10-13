@@ -94,7 +94,7 @@ void RobotAgent::ComandoDeNavegacao() {
     }
 }
 
-void RobotAgent::StatusDoRobo(int nova_bateria, bool novo_estado_falha) {
+void RobotAgent::setStatusDoRobo(int nova_bateria, bool novo_estado_falha) {
     if (nova_bateria >= 0 && nova_bateria <= 100) {
         bateria = nova_bateria;
     }
