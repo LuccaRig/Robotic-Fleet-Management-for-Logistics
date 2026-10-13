@@ -24,7 +24,8 @@ TEST(RobotAgentTest, InitializationAndAsyncSetpoint) {
     EXPECT_EQ(robot.getX(), 3);
 }
 
-// 2. Testes de Integração: RobotAgent + WarehouseGrid
+// 2. Testes de Integração: RobotAgent + WarehouseGrid 
+// OBS: ESSES TESTES NÃO ESTÃO BONS, TESTAR A INTEGRAÇÃO DO ROBO COM A WAREHOUSE NO ORQUESTRADOR MELHOR DEPOIS
 TEST(RobotWarehouseIntegrationTest, RobotMovementWithinWarehouseBounds) {
     // Cria um armazém de 10x10
     WarehouseGrid warehouse(10, 10);
