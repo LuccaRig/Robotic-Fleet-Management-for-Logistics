@@ -8,9 +8,21 @@
 int main() {
     std::cout << "[INFO] Iniciando Simulacao Logistica Multirobos..." << std::endl;
 
-    // 1. Inicializa o cliente MQTT (Mosquitto)
+    // 1. Inicializa o cliente MQTT 
 
     // 2. Inicializa o Galpão e o Orquestrador
+
+    std::vector<std::vector<int>> mapa_inicial = {
+        {5, 5, 5, 5, 5},
+        {5, 2, 0, 3, 5}, // 2 = Charging Station, 0 = Empty, 3 = Narrow Tunnel
+        {5, 0, 1, 0, 5}, // 1 = Robot
+        {5, 4, 0, 4, 5}, // 4 = Pickup Point
+        {5, 5, 5, 5, 5}
+    };
+
+    WarehouseGrid warehouse(mapa_inicial);
+
+    warehouse.printGrid();
 
     std::cout << "[INFO] Sistema pronto. Iniciando loop principal." << std::endl;
 
