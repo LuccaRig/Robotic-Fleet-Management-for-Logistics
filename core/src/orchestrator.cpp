@@ -1,6 +1,9 @@
 #include "orchestrator.hpp"
 #include <iostream>
 
+
+// TODO: Tem que adicionar a comunicação entre simulador e Orquestrador via MQTT 
+
 Orchestrator::Orchestrator() {
     std::cout << "[Orchestrator] Inicializado para gerenciamento de processos.\n";
 }
