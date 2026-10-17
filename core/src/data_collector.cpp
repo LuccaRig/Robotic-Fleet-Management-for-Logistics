@@ -7,6 +7,8 @@
 #include <ctime>
 #include <sstream>
 
+
+// default path: "../logs/events.txt"
 DataCollector::DataCollector(const std::string& file_path)
     : log_file_path(file_path) {
 }
