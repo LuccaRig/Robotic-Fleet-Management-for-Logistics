@@ -4,71 +4,182 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-#include <ctime>
 #include <sstream>
+#include <ctime>
+#include <iomanip>
+#include <stdexcept>
 
-
-// default path: "../logs/events.txt"
+// Construtor
 DataCollector::DataCollector(const std::string& file_path)
     : log_file_path(file_path) {
 }
 
+// Destrutor
 DataCollector::~DataCollector() {
     stop();
 }
 
+
+// Inicializacao
 void DataCollector::start() {
-    // TODO:
-    // Verificar se o coletor ja esta em execucao.
-    // Atualizar running.
-    // Iniciar collector_thread.
+    std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex);
+
+    {
+        std::lock_guard<std::mutex> queue_lock(queue_mutex);
+
+        if (state != CollectorState::STOPPED) {
+            return;
+        }
+
+        state = CollectorState::RUNNING;
+    }
+
+    try {
+        collector_thread = std::thread(
+            &DataCollector::collectorLoop, this
+        );
+    }
+    catch (...) {
+        std::lock_guard<std::mutex> queue_lock(queue_mutex);
+        state = CollectorState::STOPPED;
+        throw;
+    }
 }
 
+
+// Encerramento
 void DataCollector::stop() {
-    // TODO:
-    // Solicitar encerramento da thread.
-    // Notificar queue_cv.
-    // Aguardar o processamento dos eventos pendentes.
-    // Executar join() na thread.
+    std::lock_guard<std::mutex> lifecycle_lock(lifecycle_mutex);
+
+    {
+        std::lock_guard<std::mutex> queue_lock(queue_mutex);
+
+        if (state == CollectorState::STOPPED) {
+            return;
+        }
+
+        state = CollectorState::STOPPING;
+    }
+
+    queue_cv.notify_all();
+
+    if (collector_thread.joinable()) {
+        collector_thread.join();
+    }
+
+    {
+        std::lock_guard<std::mutex> queue_lock(queue_mutex);
+        state = CollectorState::STOPPED;
+    }
 }
 
+
+// Insercao de eventos
 void DataCollector::enqueueEvent(const RobotEvent& event) {
-    // TODO:
-    // Bloquear queue_mutex.
-    // Inserir event na event_queue.
-    // Liberar o mutex.
-    // Notificar queue_cv.
+    {
+        std::lock_guard<std::mutex> lock(queue_mutex);
+
+        if (state != CollectorState::RUNNING) {
+            throw std::runtime_error(
+                "DataCollector nao esta recebendo eventos"
+            );
+        }
+
+        event_queue.push(event);
+    }
+
+    queue_cv.notify_one();
 }
 
+
+// Thread consumidora
 void DataCollector::collectorLoop() {
-    // TODO:
-    // Enquanto running ou houver eventos pendentes:
-    //
-    // 1. Aguardar novos eventos com queue_cv.
-    // 2. Retirar um evento da fila.
-    // 3. Liberar o mutex.
-    // 4. Gravar o evento em disco.
+    while (true) {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+
+        queue_cv.wait(lock, [this] {
+            return !event_queue.empty() ||
+                   state != CollectorState::RUNNING;
+        });
+
+        if (event_queue.empty() &&
+            state == CollectorState::STOPPING) {
+            break;
+        }
+
+        RobotEvent event = event_queue.front();
+        event_queue.pop();
+
+        lock.unlock();
+
+        writeEventToDisk(event);
+    }
 }
 
-void DataCollector::writeEventToDisk(
-    const RobotEvent& event
-) {
-    // TODO:
-    // Abrir log_file_path com std::ofstream.
-    // Converter EventType para texto.
-    // Registrar timestamp, robot_id e descricao.
-    // Incluir dados de carga, quando existentes.
-    // Verificar erros de escrita.
+
+// Gravacao em disco
+void DataCollector::writeEventToDisk(const RobotEvent& event) {
+    std::ofstream log_file(log_file_path, std::ios::app);
+
+    if (!log_file.is_open()) {
+        std::cerr << "Erro ao abrir o arquivo de log: "
+                  << log_file_path << std::endl;
+        return;
+    }
+
+    log_file << event.timestamp
+             << " - Robot ID: " << event.robot_id
+             << " - Type: " << static_cast<int>(event.type)
+             << " - Description: " << event.description;
+
+    if (event.bay_id != -1) {
+        log_file << " - Bay ID: " << event.bay_id;
+    }
+
+    if (!event.destination.empty()) {
+        log_file << " - Destination: " << event.destination;
+    }
+
+    if (!event.team_robot_ids.empty()) {
+        log_file << " - Team Robots: ";
+
+        for (const auto& id : event.team_robot_ids) {
+            log_file << id << " ";
+        }
+    }
+
+    log_file << '\n';
+    log_file.flush();
+
+    if (!log_file) {
+        std::cerr << "Erro ao gravar evento no arquivo: "
+                  << log_file_path << std::endl;
+    }
 }
 
+
+// Data e hora
 std::string DataCollector::getTimestamp() const {
-    // TODO:
-    // Obter horario atual.
-    // Converter para uma string com data e hora.
+    auto now = std::chrono::system_clock::now();
 
-    return "";
+    std::time_t now_time =
+        std::chrono::system_clock::to_time_t(now);
+
+    std::tm time_info{};
+
+    localtime_r(&now_time, &time_info);
+
+    std::ostringstream timestamp;
+
+    timestamp << std::put_time(
+        &time_info, "%Y-%m-%d %H:%M:%S"
+    );
+
+    return timestamp.str();
 }
 
+
+// Registro de evento de robo
 void DataCollector::recordRobotEvent(
     int robot_id,
     EventType type,
@@ -84,6 +195,8 @@ void DataCollector::recordRobotEvent(
     enqueueEvent(event);
 }
 
+
+// Registro de entrega de carga
 void DataCollector::recordCargoDelivery(
     int bay_id,
     const std::string& destination,
