@@ -1,0 +1,2 @@
+2026-10-17 19:13:38 - Robot ID: 10 - Type: 0 - Description: Primeira instancia
+2026-10-17 19:13:38 - Robot ID: 11 - Type: 0 - Description: Segunda instancia

@@ -25,6 +25,7 @@ FetchContent_MakeAvailable(googletest)
 add_executable(unit_tests 
     tests/test_warehouse.cpp
     tests/test_robot.cpp
+    tests/test_data_collector.cpp
 )
 
 target_link_libraries(unit_tests 
@@ -34,3 +35,7 @@ target_link_libraries(unit_tests
 
 include(GoogleTest)
 gtest_discover_tests(unit_tests)
+# Caminho absoluto, independente do diretorio usado pelo CTest.
+target_compile_definitions(unit_tests PRIVATE
+    DATA_COLLECTOR_TEST_LOG="${CMAKE_CURRENT_SOURCE_DIR}/tests/test_log.txt"
+)
