@@ -1,54 +1,63 @@
 #ifndef ROBOT_AGENT_HPP
 #define ROBOT_AGENT_HPP
 
-#include "domain.hpp"
-#include <thread>
+#include "protocol.hpp"
 #include <atomic>
-#include <chrono>
-#include <string>
+#include <condition_variable>
+#include <deque>
+#include <exception>
+#include <functional>
+#include <mutex>
+#include <thread>
 
 class RobotAgent {
-private:
-    int id;
-    int posicao_atual_x;
-    int posicao_atual_y;
-    bool carga_atracada;
-    int bateria;            // 0 a 100
-    bool falha;
-    
-    int setpoint_posicao_x;
-    int setpoint_posicao_y;
-    std::string tarefa_atual;
-    RobotState estado_atual;
-    bool em_processo_de_carga; 
-
-    std::thread navigation_thread;
-    std::thread status_thread;
-    std::atomic<bool> running;
-
-    void navigationLoop();
-    void statusLoop();
-
-    bool verificarSegurancaPassagemEstreita(int proximo_x, int proximo_y);
-
 public:
-    RobotAgent(int id, int start_x, int start_y);
+    using Sender = std::function<void(Message)>;
+    RobotAgent(int id, int x, int y, std::uint64_t generation = 1, Sender sender = {});
     ~RobotAgent();
-
+    RobotAgent(const RobotAgent&) = delete;
+    RobotAgent& operator=(const RobotAgent&) = delete;
     void start();
     void stop();
-
-    void atribuirTarefa(const std::string& descricao_tarefa, int destino_x, int destino_y);
-    void ComandoDeNavegacao(); 
-    void StatusDoRobo();       
-    void setRobotStatus(int nova_bateria, bool novo_estado_falha);
-
-    int getId() const;
-    int getX() const;
-    int getY() const;
-    int getBateria() const;
-    RobotState getEstado() const;
-    bool isFalha() const;
+    void handle(const Message& message);
+    void navigationTick();
+    void statusTick();
+    RobotSnapshot snapshot() const;
+    void checkError() const;
+    void atribuirTarefa(const std::string& description, int x, int y);
+    void ComandoDeNavegacao() { navigationTick(); }
+    void StatusDoRobo() { statusTick(); }
+    void setRobotStatus(int battery, bool failure);
+    int getId() const { return snapshot().id; }
+    int getX() const { return snapshot().position.x; }
+    int getY() const { return snapshot().position.y; }
+    int getBateria() const { return snapshot().battery; }
+    RobotState getEstado() const { return snapshot().state; }
+    bool isFalha() const { return snapshot().failure; }
+private:
+    mutable std::mutex mutex_;
+    std::mutex lifecycle_;
+    std::condition_variable cv_;
+    RobotSnapshot state_;
+    Sender sender_;
+    std::vector<Pos> route_;
+    std::vector<int> members_;
+    std::deque<Message> sensor_reads_;
+    Pos distance_position_;
+    std::size_t route_index_ = 0;
+    bool waiting_position_ = false;
+    bool dirty_ = true;
+    bool running_ = false;
+    bool stopping_ = false;
+    std::uint64_t last_command_ = 0;
+    bool last_accepted_ = true;
+    std::uint64_t local_sensor_ = 0;
+    std::thread navigation_thread_;
+    std::thread status_thread_;
+    std::exception_ptr error_;
+    void emit(Message message);
+    void publish();
+    void loop(bool navigation) noexcept;
 };
 
-#endif // ROBOT_AGENT_HPP
+#endif
