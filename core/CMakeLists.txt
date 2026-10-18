@@ -9,6 +9,7 @@ add_library(core_lib
     src/robot_agent.cpp
     src/robot_worker.cpp
     src/warehouse.cpp
+    src/route_planner.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)
