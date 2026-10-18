@@ -36,6 +36,7 @@ struct Orchestrator::Impl {
     mutable std::mutex mutex;
     std::condition_variable cv;
     std::map<int, std::shared_ptr<Entry>> entries;
+    FleetStateStore fleet;
     Handler handler;
     std::function<bool(Pos)> validator;
     std::thread gateway;
@@ -44,8 +45,10 @@ struct Orchestrator::Impl {
     bool stopping = false;
     std::exception_ptr error;
 
-    explicit Impl(std::string path) : executable(std::move(path)), gateway(&Impl::loop, this) {}
+    explicit Impl(std::string path) : executable(std::move(path)) { gateway = std::thread(&Impl::loop, this); }
     void notify(const Message& message) {
+        if (message.type == MessageType::RobotReady || message.type == MessageType::RobotSnapshot) fleet.update(snapshotFromMessage(message));
+        if (message.type == MessageType::RobotDisconnected) fleet.disconnect(message.robot_id, message.generation);
         Handler callback;
         { std::lock_guard<std::mutex> lock(mutex); callback = handler; }
         if (callback) callback(message);
@@ -155,6 +158,7 @@ bool Orchestrator::spawnRobot(int id, int x, int y) {
     auto entry = std::make_shared<Impl::Entry>();
     entry->process = {id, static_cast<int>(pid), generation, false, false};
     entry->channel = std::make_shared<IpcChannel>(fds[0]);
+    impl_->fleet.registerRobot(id, generation, {x, y});
     impl_->entries.emplace(id, std::move(entry)); impl_->cv.notify_all(); return true;
 }
 
@@ -194,6 +198,7 @@ std::vector<RobotProcess> Orchestrator::processes() const {
 std::size_t Orchestrator::getActiveRobotCount() const { return processes().size(); }
 bool Orchestrator::robotExists(int id) const { for (const auto& p : processes()) if (p.id == id) return true; return false; }
 void Orchestrator::printAllRobotsStatus() const { for (const auto& p : processes()) std::cout << "Robô " << p.id << " | PID " << p.pid << " | " << (p.ready ? "Pronto" : "Inicializando") << '\n'; }
+const FleetStateStore& Orchestrator::fleet() const { return impl_->fleet; }
 void Orchestrator::checkError() const { std::lock_guard<std::mutex> lock(impl_->mutex); if (impl_->error) std::rethrow_exception(impl_->error); }
 void Orchestrator::stop() {
     std::lock_guard<std::mutex> lifecycle(impl_->lifecycle);

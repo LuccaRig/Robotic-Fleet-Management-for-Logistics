@@ -2,6 +2,7 @@
 #define ORCHESTRATOR_HPP
 
 #include "protocol.hpp"
+#include "fleet_state.hpp"
 #include <functional>
 #include <memory>
 #include <string>
@@ -32,6 +33,7 @@ public:
     bool robotExists(int id) const;
     void printAllRobotsStatus() const;
     void checkError() const;
+    const FleetStateStore& fleet() const;
     void stop();
 private:
     struct Impl;
