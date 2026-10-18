@@ -10,6 +10,7 @@ add_library(core_lib
     src/robot_worker.cpp
     src/warehouse.cpp
     src/route_planner.cpp
+    src/logistics.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)
