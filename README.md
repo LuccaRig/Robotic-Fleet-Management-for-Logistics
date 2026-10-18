@@ -4,9 +4,9 @@ Núcleo da Etapa 1 do trabalho de Automação em Tempo Real da UFMG. Implementa�
 
 ## Estado da entrega
 
-O código, os oito cenários e os testes foram preparados. **Build, testes e cenários não foram executados nesta implementação.** A validação funcional e as evidências do relatório permanecem pendentes de execução autorizada.
+**Build aprovado e 46 testes passaram no macOS:** 37 unitários e 9 de integração, incluindo os oito cenários e o encerramento durante operação. Os resultados foram registrados em [Validação da Etapa 1](docs/validacao-etapa1.md).
 
-A inspeção realizada foi por leitura do código e revisão do diff. Isso não comprova compilação, funcionamento ou ausência de condições de corrida em execução.
+A execução no Linux e a consolidação do relatório em PDF permanecem pendentes. Os testes funcionais não substituem a análise de escalonabilidade da Etapa 2.
 
 ## Preparação
 
@@ -14,7 +14,7 @@ Requisitos: compilador C++17, CMake 3.15 ou superior, SQLite 3.24 ou superior co
 
 No Ubuntu, as dependências são `cmake`, `build-essential` e `libsqlite3-dev`. No macOS, é necessário o Command Line Tools e CMake; o SQLite pode ser fornecido pelo sistema ou pelo Homebrew.
 
-Os comandos abaixo são instruções para execução futura. Não foram executados como parte desta entrega.
+Os comandos abaixo permitem preparar a aplicação sem os testes. A validação registrada utilizou `BUILD_TESTING=ON`.
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=OFF
@@ -54,9 +54,9 @@ O modo automático aplica o roteiro do cenário e encerra quando suas condiçõe
 
 O banco padrão é `logs/etapa1.db`, criado quando necessário e ignorado pelo Git. O banco de inspeção versionado não é usado pelos cenários padrão. Não aponte `--banco` para esse arquivo se desejar preservá-lo.
 
-## Verificação preparada
+## Verificação
 
-Os testes ficam desativados por padrão, sem download de GoogleTest na configuração normal. Para prepará-los futuramente:
+Os testes ficam desativados por padrão, sem download de GoogleTest na configuração normal. Para preparar e executar a verificação:
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=ON
@@ -69,6 +69,7 @@ O CMake procura GoogleTest instalado e, se necessário, prepara a versão 1.14.0
 ## Documentação
 
 - [Arquitetura, sincronização e contratos](docs/arquitetura-etapa1.md).
-- [Roteiro de demonstração e evidências pendentes](docs/demonstracao-etapa1.md).
+- [Roteiro de demonstração e evidências](docs/demonstracao-etapa1.md).
+- [Resultados da validação no macOS](docs/validacao-etapa1.md).
 
 A interface gráfica e os clientes MQTT serão conectados na Etapa 2. O adaptador atual representa hardware por leituras e confirmações controladas e não pretende reproduzir a física de um galpão real.

@@ -2,9 +2,9 @@
 
 ## Situação da verificação
 
-**Pendente de execução autorizada.** Os comandos, cenários e testes descritos abaixo foram preparados, mas não foram executados nesta implementação. Não há tempos medidos, resultados aprovados, capturas ou traces de execução para apresentar como evidência.
+**Build e testes aprovados no macOS em 18/10/2026.** Passaram 37 testes unitários e 9 de integração, incluindo os oito cenários. O [registro de validação](validacao-etapa1.md) contém ambiente, revisão, resultados e localização dos logs.
 
-A revisão estática e a organização dos commits não substituem a execução. O relatório deve conter resultados observados depois da validação.
+Os cenários foram executados pelos testes de integração com processos reais. A sessão interativa e as consultas manuais específicas deste roteiro ainda podem ser usadas para selecionar evidências de apresentação. A execução no Linux está pendente.
 
 ## Matriz de cenários
 
@@ -90,7 +90,7 @@ Os testes unitários de domínio usam chamadas por passos. Integrações usam es
 
 ## Material para o relatório
 
-Após execução, preencher uma tabela para cada cenário:
+Para o relatório, complementar o registro de validação e selecionar evidências para cada cenário:
 
 | Campo | Registro a produzir |
 |---|---|
@@ -104,13 +104,13 @@ Após execução, preencher uma tabela para cada cenário:
 
 O relatório da Etapa 1 pode reutilizar o diagrama e as tabelas de sincronização da documentação de arquitetura. A apresentação deve explicar a diferença entre processo e thread, o IPC, as barreiras de equipe, a reserva indivisível de passagens e a separação entre estado corrente e histórico.
 
-## Critérios pendentes para considerar a entrega validada
+## Pendências para a entrega
 
-- Compilar em macOS e Linux.
-- Executar testes unitários e integrações.
-- Confirmar que nenhum filho permanece após parada normal e interrupção.
-- Confirmar que o histórico foi drenado e a execução marcada como encerrada.
-- Verificar participantes e timestamps de cada carga entregue.
-- Coletar evidências e registrar eventuais falhas.
+- Reproduzir o build e os testes no Linux.
+- Consolidar o relatório em PDF e exportar o diagrama de arquitetura.
+- Selecionar trechos dos logs e consultas para a apresentação.
+- Conferir o detalhamento e o formato de submissão no Moodle.
+
+Os testes já verificaram no macOS o recolhimento de processos, encerramento da execução no SQLite, participantes das cargas e migração com timestamps. A inspeção final não encontrou processos de robô remanescentes.
 
 Não há análise experimental de escalonabilidade nesta etapa. A representação de transporte é lógica, não física: integrantes podem compartilhar posição de carga, áreas abertas não possuem controle geral de colisão e a recuperação de integrante acoplado não faz transferência física automática de carga.

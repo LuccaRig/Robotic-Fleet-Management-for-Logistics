@@ -4,7 +4,7 @@
 
 O núcleo implementa as tarefas de Gestor de Robôs, Navegação, Status, Organizador da Logística e Coletor de Dados. A integração utiliza processos POSIX e sockets locais. A simulação visual, a operação remota por MQTT e a análise experimental de escalonabilidade pertencem à próxima etapa.
 
-Esta documentação descreve o código preparado. Compilação, execução e resultados experimentais estão pendentes. O relatório da disciplina deve distinguir a implementação descrita dos resultados que ainda precisam ser coletados.
+Esta documentação descreve o código implementado. O build e 46 testes funcionais passaram no macOS, conforme [registro de validação](validacao-etapa1.md). A execução no Linux e as medições de tempo de resposta e escalonabilidade permanecem pendentes.
 
 ## Processos e tarefas
 
