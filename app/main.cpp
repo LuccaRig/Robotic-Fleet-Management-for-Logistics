@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include "scenarios.hpp"
 #include <csignal>
 #include <cstdlib>
 #include <filesystem>
@@ -24,11 +25,7 @@ std::string executablePath(const char* argv0) {
     if (std::filesystem::exists(argv0)) return std::filesystem::canonical(argv0).string();
     throw std::runtime_error("Não foi possível localizar o executável");
 }
-Scenario baseScenario() {
-    WarehouseGrid map(12, 8); map.addBay({1, {2, 2}, {}}); map.addDestination({1, {9, 5}}); map.setCell(1, 1, CellState::CHARGING_STATION);
-    Cargo cargo; cargo.id = 1; cargo.bay_id = 1; cargo.destination_id = 1;
-    return {"base", std::move(map), {cargo}, {{1, {1, 2}}}};
-}
+
 }
 int main(int argc, char** argv) {
     try {
@@ -38,17 +35,17 @@ int main(int argc, char** argv) {
             const std::string arg = argv[i];
             if (arg == "--interativo") interactive = true;
             else if ((arg == "--cenario" || arg == "--banco") && i + 1 < argc) { const auto value = argv[++i]; if (arg == "--cenario") scenario = value; else database = value; }
-            else if (arg == "--ajuda") { std::cout << "Uso: simulador_exec [--cenario base] [--banco logs/etapa1.db] [--interativo]\n"; return 0; }
+            else if (arg == "--ajuda") { std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--interativo]\nCenários: " << scenarioNames() << "\n"; return 0; }
             else throw std::invalid_argument("Argumento inválido: " + arg);
         }
-        if (scenario != "base") throw std::invalid_argument("Cenário desconhecido");
         std::signal(SIGINT, signalHandler); std::signal(SIGTERM, signalHandler);
-        ControlRuntime runtime(executablePath(argv[0]), database, baseScenario()); runtime.start();
+        ControlRuntime runtime(executablePath(argv[0]), database, makeScenario(scenario)); ScenarioScript script(scenario); runtime.start();
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(120);
         std::string pending;
         while (!interrupted && !runtime.exitRequested()) {
             runtime.tick();
-            if (!interactive && runtime.complete()) break;
+            if (!interactive) script.tick(runtime);
+            if (!interactive && script.complete(runtime)) { runtime.print("Cenário concluído: " + scenario); break; }
             if (!interactive && std::chrono::steady_clock::now() >= deadline) throw std::runtime_error("Prazo do cenário excedido; consulte cargas e eventos");
             if (interactive) {
                 pollfd input{STDIN_FILENO, POLLIN, 0};

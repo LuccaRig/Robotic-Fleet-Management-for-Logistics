@@ -7,7 +7,7 @@
 
 ControlRuntime::ControlRuntime(std::string executable, std::string database, Scenario scenario)
     : warehouse_(std::move(scenario.warehouse)), initial_(std::move(scenario.robots)), collector_(database), buffer_(collector_, 100),
-      recorder_(buffer_, [this](const RobotEvent& event) { print("Evento: " + event.getDescription() + " | robô " + std::to_string(event.getRobotId()) + " | missão " + std::to_string(event.missionId())); }),
+      recorder_(buffer_, [this](const RobotEvent& event) { { std::lock_guard<std::mutex> lock(metrics_mutex_); ++metrics_[event.getType()]; } print("Evento: " + event.getDescription() + " | robô " + std::to_string(event.getRobotId()) + " | missão " + std::to_string(event.missionId())); }),
       manager_(std::move(executable)),
       passages_(warehouse_, [this](Message m) { manager_.send(m.robot_id, std::move(m)); }, [this](const PassageNotice& n) { recorder_.onPassage(n); }),
       hardware_(warehouse_, [this](Message m) { onSensor(std::move(m)); }),
@@ -101,6 +101,7 @@ bool ControlRuntime::complete() const {
     for (const auto& robot : manager_.fleet().snapshot()) if (robot.connected && (robot.mission_id || robot.coupled || robot.state != RobotState::IDLE)) return false;
     return true;
 }
+std::size_t ControlRuntime::eventCount(EventType type) const { std::lock_guard<std::mutex> lock(metrics_mutex_); const auto it = metrics_.find(type); return it == metrics_.end() ? 0 : it->second; }
 void ControlRuntime::print(const std::string& message) const { std::lock_guard<std::mutex> lock(console_); std::cout << message << std::endl; }
 void ControlRuntime::command(const std::string& line) {
     std::istringstream input(line); std::string action; input >> action;

@@ -15,6 +15,7 @@ add_library(core_lib
     src/passages.cpp
     src/event_recorder.cpp
     src/runtime.cpp
+    src/scenarios.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)

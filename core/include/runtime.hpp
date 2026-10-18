@@ -30,6 +30,7 @@ public:
     bool setFailure(int id, bool failure);
     void resume(EntityId mission_id);
     bool complete() const;
+    std::size_t eventCount(EventType type) const;
     void command(const std::string& line);
     void print(const std::string& text) const;
     const FleetStateStore& fleet() const { return manager_.fleet(); }
@@ -44,6 +45,8 @@ private:
     DataCollector collector_;
     Buffer buffer_;
     mutable std::mutex console_;
+    mutable std::mutex metrics_mutex_;
+    std::map<EventType, std::size_t> metrics_;
     EventRecorder recorder_;
     Orchestrator manager_;
     PassageCoordinator passages_;
