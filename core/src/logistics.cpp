@@ -61,6 +61,7 @@ void LogisticsOrganizer::schedule() {
     std::set<int> reserved;
     for (const auto& pair : missions_) if (pair.second.phase != MissionPhase::NONE) reserved.insert(pair.second.members.begin(), pair.second.members.end());
     const auto robots = fleet_.snapshot();
+    std::set<int> needs_charge;
     for (auto& bay_pair : bays_) {
         auto& bay = bay_pair.second;
         if (bay.cargo_queue.empty()) continue;
@@ -72,11 +73,11 @@ void LogisticsOrganizer::schedule() {
         if (!delivery || !charging) { cargo.reason = "Sem rota compatível com a carga ou sem carregador alcançável"; continue; }
         std::vector<RobotSnapshot> chosen;
         for (const auto& robot : robots) {
-            if (!robot.connected || !robot.available || robot.failure || robot.coupled || reserved.count(robot.id)) continue;
+            if (!robot.connected || !robot.available || robot.failure || robot.coupled || reserved.count(robot.id) || charging_.count(robot.id)) continue;
             const auto pickup = planner_.route(robot.position, bay.position);
             if (!pickup) continue;
             const auto cost = pickup->size() + delivery->size() + charging->second.size() + 15;
-            if (static_cast<std::size_t>(robot.battery) <= cost) continue;
+            if (static_cast<std::size_t>(robot.battery) <= cost) { needs_charge.insert(robot.id); continue; }
             chosen.push_back(robot); if (chosen.size() == static_cast<std::size_t>(cargo.size)) break;
         }
         if (chosen.size() != static_cast<std::size_t>(cargo.size)) { cargo.reason = "Aguardando equipe completa com rota e bateria suficientes"; continue; }
@@ -92,6 +93,16 @@ void LogisticsOrganizer::schedule() {
         }
         notice(LogisticsNotice::Kind::Assigned, stored);
     }
+    for (const auto& robot : robots) {
+        if (charging_.count(robot.id) && (!robot.connected || (robot.state == RobotState::IDLE && robot.battery == 100))) charging_.erase(robot.id);
+        if (!robot.connected || robot.failure || robot.coupled || robot.mission_id || reserved.count(robot.id) || charging_.count(robot.id) || robot.state != RobotState::IDLE || robot.battery == 100) continue;
+        if (robot.battery > 15 && !needs_charge.count(robot.id)) continue;
+        const auto charger = planner_.nearestCharger(robot.position);
+        if (!charger || charger->second.size() > static_cast<std::size_t>(robot.battery)) continue;
+        Message m; m.type = MessageType::AssignMission; m.phase = MissionPhase::TO_CHARGE;
+        m.target = charger->first; m.route = charger->second; m.members = {robot.id};
+        charging_.insert(robot.id); actions_.emplace_back(robot.id, std::move(m));
+    }
 }
 void LogisticsOrganizer::report(const Message& m) {
     if (m.type == MessageType::ResumeMission && m.robot_id == -1) {
@@ -103,8 +114,9 @@ void LogisticsOrganizer::report(const Message& m) {
             if (mission.generations.count(m.robot_id) && mission.generations.at(m.robot_id) == m.generation)
                 interrupt(mission, "Integrante desconectado: " + std::to_string(m.robot_id));
         }
-        return;
+        charging_.erase(m.robot_id); return;
     }
+    if (m.type == MessageType::CommandAck && !m.accepted && m.mission_id == 0) charging_.erase(m.robot_id);
     auto it = missions_.find(m.mission_id);
     if (it == missions_.end() || !it->second.generations.count(m.robot_id) || it->second.generations.at(m.robot_id) != m.generation) return;
     auto& mission = it->second;

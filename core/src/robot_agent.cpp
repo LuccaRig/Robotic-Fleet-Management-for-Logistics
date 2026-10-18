@@ -59,6 +59,7 @@ void RobotAgent::handle(const Message& m) {
         } else if (m.type == MessageType::SensorUpdate) {
             if (m.battery < 0 || m.battery > 100 || m.sensor_sequence <= state_.sensor_sequence) return;
             if (m.mission_id != state_.mission_id || m.revision != state_.revision) return;
+            if (sensor_reads_.size() >= 4096) throw std::runtime_error("Fila de leituras do robô esgotada");
             sensor_reads_.push_back(m); state_.sensor_sequence = m.sensor_sequence;
             state_.battery = m.battery; state_.failure = m.failure; state_.coupled = m.coupled;
             state_.position = m.position;
@@ -121,6 +122,7 @@ void RobotAgent::navigationTick() {
         std::lock_guard<std::mutex> lock(mutex_);
         const bool navigating = state_.state == RobotState::NAVIGATING_TO_PICKUP || state_.state == RobotState::NAVIGATING_TO_DELIVERY || state_.state == RobotState::NAVIGATING_TO_CHARGE;
         if (stopping_ || command_pending_ || state_.failure || !navigating || waiting_position_ || waiting_passage_) return;
+        if (state_.battery == 0 || (state_.battery <= 15 && state_.state != RobotState::NAVIGATING_TO_CHARGE)) return;
         if (route_index_ >= route_.size()) {
             if (state_.phase == MissionPhase::TO_PICKUP) { state_.state = RobotState::WAITING_TO_LOAD; state_.phase = MissionPhase::PICKUP_READY; }
             else if (state_.phase == MissionPhase::TO_DELIVERY) { state_.state = RobotState::WAITING_TO_UNLOAD; state_.phase = MissionPhase::DELIVERY_READY; }
@@ -146,6 +148,10 @@ void RobotAgent::statusTick() {
             distance_position_ = sensor.position; sensor_reads_.pop_front();
         }
         if (state_.failure) state_.state = RobotState::ERROR;
+        if (state_.state == RobotState::CHARGING && state_.battery >= 100 && !state_.failure) {
+            state_.state = RobotState::IDLE; state_.phase = MissionPhase::NONE; state_.mission_id = 0;
+            route_.clear(); waiting_position_ = false; waiting_passage_ = false; passage_granted_ = false;
+        }
         state_.available = state_.state == RobotState::IDLE && !state_.failure && !state_.coupled && state_.battery > 15;
         dirty_ = false;
     }
