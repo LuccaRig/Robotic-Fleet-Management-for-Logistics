@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-find_package(SQLite3 REQUIRED)
+find_package(SQLite3 3.24 REQUIRED)
 find_package(Threads REQUIRED)
 
 add_library(core_lib
