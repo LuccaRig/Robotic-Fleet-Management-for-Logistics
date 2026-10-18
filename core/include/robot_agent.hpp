@@ -1,19 +1,11 @@
 #ifndef ROBOT_AGENT_HPP
 #define ROBOT_AGENT_HPP
 
+#include "domain.hpp"
 #include <thread>
 #include <atomic>
 #include <chrono>
 #include <string>
-
-enum class RobotState {
-    IDLE,               
-    NAVIGATING_TO_PICKUP, 
-    WAITING_TO_LOAD,    
-    NAVIGATING_TO_DELIVERY, 
-    CHARGING,           
-    ERROR               
-};
 
 class RobotAgent {
 private:

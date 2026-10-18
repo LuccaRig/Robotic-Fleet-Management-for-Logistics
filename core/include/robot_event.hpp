@@ -2,6 +2,7 @@
 #ifndef ROBOT_EVENT_HPP
 #define ROBOT_EVENT_HPP
 
+#include "domain.hpp"
 #include <string>
 #include <vector>
 #include <chrono>
@@ -20,10 +21,6 @@ enum class EventType {
     CARGO_DELIVERED
 };
 
-struct Pos {
-    int x = 0;
-    int y = 0;
-};
 
 class RobotEvent {
 private:
