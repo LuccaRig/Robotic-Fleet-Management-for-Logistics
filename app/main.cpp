@@ -5,7 +5,10 @@
 #include "warehouse.hpp"
 #include "orchestrator.hpp"
 
-int main() {
+int main(int argc, char** argv) {
+    if (argc == 7 && std::string(argv[1]) == "--robot-worker") {
+        return runRobotWorker(std::stoi(argv[2]), std::stoi(argv[3]), std::stoull(argv[4]), {std::stoi(argv[5]), std::stoi(argv[6])});
+    }
     std::cout << "[INFO] Iniciando Simulacao Logistica Multirobos..." << std::endl;
 
     // 1. Inicializa o cliente MQTT 
