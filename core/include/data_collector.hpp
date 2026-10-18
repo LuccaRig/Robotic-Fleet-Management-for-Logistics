@@ -1,78 +1,50 @@
-
 #ifndef DATA_COLLECTOR_HPP
 #define DATA_COLLECTOR_HPP
 
-#include <string>
-#include <vector>
-#include <queue>
-#include <thread>
-#include <mutex>
+#include "robot_event.hpp"
+
 #include <condition_variable>
-
-enum class EventType {
-    ROBOT_CREATED,
-    ROBOT_MOVING,
-    ROBOT_ARRIVED,
-    LOW_BATTERY,
-    ROBOT_CHARGING,
-    ROBOT_FAILURE,
-    CARGO_PICKUP,
-    CARGO_DELIVERED
-};
-
-struct RobotEvent {
-    int robot_id = -1;
-    EventType type = EventType::ROBOT_CREATED;
-    std::string description;
-    std::string timestamp;
-    int bay_id = -1;
-    std::string destination;
-    std::vector<int> team_robot_ids;
-};
+#include <exception>
+#include <mutex>
+#include <queue>
+#include <string>
+#include <thread>
+#include <sqlite3.h>
 
 class DataCollector {
 private:
-    enum class CollectorState {
-        STOPPED,
-        RUNNING,
-        STOPPING
-    };
+    enum class CollectorState { STOPPED, RUNNING, STOPPING, FAILED };
 
-    CollectorState state = CollectorState::STOPPED;
-
-    std::queue<RobotEvent> event_queue;
-
+    // Protege a fila, o estado e os erros da thread consumidora.
     std::mutex queue_mutex;
-    std::mutex lifecycle_mutex;
     std::condition_variable queue_cv;
+    std::queue<RobotEvent> event_queue;
+    CollectorState state = CollectorState::STOPPED;
+    std::exception_ptr worker_error;
 
+    // Serializa start() e stop(), incluindo a operacao join().
+    std::mutex lifecycle_mutex;
     std::thread collector_thread;
-    std::string log_file_path;
 
-    void collectorLoop();
-    void writeEventToDisk(const RobotEvent& event);
-    std::string getTimestamp() const;
+    std::string db_path;
+    sqlite3* db = nullptr;
+
+    void openDatabase();
+    void createTable();
+    void closeDatabase() noexcept;
+    void collectorLoop() noexcept;
+    void writeEventToDatabase(const RobotEvent& event);
 
 public:
-    explicit DataCollector(const std::string& file_path);
+    explicit DataCollector(const std::string& database_path);
     ~DataCollector();
+
+    DataCollector(const DataCollector&) = delete;
+    DataCollector& operator=(const DataCollector&) = delete;
 
     void start();
     void stop();
-
     void enqueueEvent(const RobotEvent& event);
-
-    void recordRobotEvent(
-        int robot_id,
-        EventType type,
-        const std::string& description
-    );
-
-    void recordCargoDelivery(
-        int bay_id,
-        const std::string& destination,
-        const std::vector<int>& robot_ids
-    );
 };
 
 #endif
