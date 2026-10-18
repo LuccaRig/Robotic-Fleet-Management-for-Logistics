@@ -13,6 +13,7 @@ add_library(core_lib
     src/logistics.cpp
     src/hardware.cpp
     src/passages.cpp
+    src/event_recorder.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)
