@@ -99,10 +99,49 @@ void LogisticsOrganizer::report(const Message& m) {
     if (it == missions_.end() || !it->second.generations.count(m.robot_id) || it->second.generations.at(m.robot_id) != m.generation) return;
     it->second.reports[m.robot_id] = snapshotFromMessage(m);
 }
-void LogisticsOrganizer::advance(TeamMission&) {}
+void LogisticsOrganizer::advance(TeamMission& mission) {
+    if (mission.phase == MissionPhase::NONE || mission.phase == MissionPhase::SUSPENDED) return;
+    auto all = [&](auto predicate) {
+        for (const auto id : mission.members) {
+            const auto it = mission.reports.find(id);
+            if (it == mission.reports.end() || !predicate(it->second)) return false;
+        }
+        return true;
+    };
+    auto& cargo = cargo_.at(mission.cargo_id);
+    if (mission.phase == MissionPhase::TO_PICKUP && all([](const RobotSnapshot& s) { return s.state == RobotState::WAITING_TO_LOAD && s.phase == MissionPhase::PICKUP_READY && !s.failure; })) {
+        notice(LogisticsNotice::Kind::Gathered, mission); cargo.state = CargoState::COUPLING;
+        command(mission, MessageType::Couple, MissionPhase::COUPLING);
+    } else if (mission.phase == MissionPhase::COUPLING && all([](const RobotSnapshot& s) { return s.coupled && s.state == RobotState::WAITING_TO_LOAD && !s.failure; })) {
+        mission.ever_coupled = true; cargo.state = CargoState::TRANSPORTING;
+        notice(LogisticsNotice::Kind::Coupled, mission);
+        command(mission, MessageType::AssignMission, MissionPhase::TO_DELIVERY);
+        notice(LogisticsNotice::Kind::TransportStarted, mission);
+    } else if (mission.phase == MissionPhase::TO_DELIVERY && all([](const RobotSnapshot& s) { return s.coupled && s.state == RobotState::WAITING_TO_UNLOAD && s.phase == MissionPhase::DELIVERY_READY && !s.failure; })) {
+        cargo.state = CargoState::UNCOUPLING; command(mission, MessageType::Uncouple, MissionPhase::UNCOUPLING);
+    } else if (mission.phase == MissionPhase::UNCOUPLING && all([](const RobotSnapshot& s) { return !s.coupled && s.state == RobotState::WAITING_TO_UNLOAD && s.phase == MissionPhase::UNCOUPLING && !s.failure; })) {
+        cargo.state = CargoState::DELIVERED; cargo.reason.clear();
+        auto& queue = bays_.at(cargo.bay_id).cargo_queue;
+        if (queue.empty() || queue.front() != cargo.id) throw std::logic_error("Fila da baía inconsistente");
+        queue.pop_front(); notice(LogisticsNotice::Kind::Delivered, mission);
+        command(mission, MessageType::CancelMission, MissionPhase::NONE);
+    }
+}
 void LogisticsOrganizer::interrupt(TeamMission&, const std::string&) {}
 void LogisticsOrganizer::resume(TeamMission&) {}
-void LogisticsOrganizer::command(TeamMission&, MessageType, MissionPhase) {}
+void LogisticsOrganizer::command(TeamMission& mission, MessageType type, MissionPhase phase) {
+    const auto& cargo = cargo_.at(mission.cargo_id);
+    mission.phase = phase;
+    for (const auto id : mission.members) {
+        Message m; m.type = type; m.phase = phase; m.mission_id = mission.id; m.cargo_id = cargo.id;
+        m.team_id = mission.id; m.bay_id = cargo.bay_id; m.members = mission.members; m.team_size = cargo.size;
+        if (type == MessageType::AssignMission || type == MessageType::ResumeMission) {
+            m.target = warehouse_.destinations().at(cargo.destination_id).position; m.route = mission.delivery_route;
+        }
+        actions_.emplace_back(id, std::move(m));
+    }
+    mission.reports.clear();
+}
 void LogisticsOrganizer::notice(LogisticsNotice::Kind kind, const TeamMission& mission) { notices_.push_back({kind, cargo_.at(mission.cargo_id), mission, epochMilliseconds()}); }
 std::vector<Cargo> LogisticsOrganizer::cargos() const { std::lock_guard<std::mutex> lock(state_mutex_); std::vector<Cargo> result; for (const auto& c : cargo_) result.push_back(c.second); return result; }
 std::vector<TeamMission> LogisticsOrganizer::missions() const { std::lock_guard<std::mutex> lock(state_mutex_); std::vector<TeamMission> result; for (const auto& m : missions_) result.push_back(m.second); return result; }
