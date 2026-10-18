@@ -90,9 +90,15 @@ void RobotAgent::handle(const Message& m) {
                     state_.phase = MissionPhase::UNCOUPLING; state_.state = RobotState::UNCOUPLING;
                 } else if (m.type == MessageType::PauseMission && same_mission) {
                     state_.phase = MissionPhase::SUSPENDED; state_.state = state_.failure ? RobotState::ERROR : RobotState::SUSPENDED; waiting_position_ = false;
-                } else if (m.type == MessageType::ResumeMission && same_mission && !state_.failure && state_.battery > 15 && state_.coupled && state_.state == RobotState::SUSPENDED) {
-                    state_.phase = MissionPhase::TO_DELIVERY; state_.state = RobotState::NAVIGATING_TO_DELIVERY;
-                    route_ = m.route; members_ = m.members; state_.target = m.target; route_index_ = 0; state_.step = 0; waiting_position_ = false;
+                } else if (m.type == MessageType::ResumeMission && same_mission && !state_.failure && state_.battery > 15 && state_.state == RobotState::SUSPENDED) {
+                    if (m.phase == MissionPhase::COUPLING) {
+                        state_.phase = m.phase; state_.state = state_.coupled ? RobotState::WAITING_TO_LOAD : RobotState::COUPLING;
+                    } else if (m.phase == MissionPhase::UNCOUPLING) {
+                        state_.phase = m.phase; state_.state = state_.coupled ? RobotState::UNCOUPLING : RobotState::WAITING_TO_UNLOAD;
+                    } else if (m.phase == MissionPhase::TO_DELIVERY && state_.coupled) {
+                        state_.phase = MissionPhase::TO_DELIVERY; state_.state = RobotState::NAVIGATING_TO_DELIVERY;
+                        route_ = m.route; members_ = m.members; state_.target = m.target; route_index_ = 0; state_.step = 0; waiting_position_ = false;
+                    } else ack.accepted = false;
                 } else if (m.type != MessageType::Shutdown) ack.accepted = false;
                 last_accepted_ = ack.accepted; dirty_ = true;
             }

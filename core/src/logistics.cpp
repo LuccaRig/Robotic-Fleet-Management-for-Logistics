@@ -94,10 +94,28 @@ void LogisticsOrganizer::schedule() {
     }
 }
 void LogisticsOrganizer::report(const Message& m) {
-    if (m.type != MessageType::RobotSnapshot && m.type != MessageType::RobotReady) return;
+    if (m.type == MessageType::ResumeMission && m.robot_id == -1) {
+        const auto it = missions_.find(m.mission_id); if (it != missions_.end()) resume(it->second); return;
+    }
+    if (m.type == MessageType::RobotDisconnected) {
+        for (auto& pair : missions_) {
+            auto& mission = pair.second;
+            if (mission.generations.count(m.robot_id) && mission.generations.at(m.robot_id) == m.generation)
+                interrupt(mission, "Integrante desconectado: " + std::to_string(m.robot_id));
+        }
+        return;
+    }
     auto it = missions_.find(m.mission_id);
     if (it == missions_.end() || !it->second.generations.count(m.robot_id) || it->second.generations.at(m.robot_id) != m.generation) return;
-    it->second.reports[m.robot_id] = snapshotFromMessage(m);
+    auto& mission = it->second;
+    if (m.type == MessageType::CommandAck) {
+        if (!m.accepted) interrupt(mission, "Comando rejeitado pelo robô " + std::to_string(m.robot_id));
+        return;
+    }
+    if (m.type != MessageType::RobotSnapshot && m.type != MessageType::RobotReady && m.type != MessageType::SensorUpdate) return;
+    if (m.coupled) { mission.ever_coupled = true; mission.coupled_members.insert(m.robot_id); }
+    if (m.failure || m.battery <= 15) { interrupt(mission, m.failure ? "Falha em integrante da equipe" : "Bateria insuficiente em integrante da equipe"); return; }
+    if (m.type != MessageType::SensorUpdate) mission.reports[m.robot_id] = snapshotFromMessage(m);
 }
 void LogisticsOrganizer::advance(TeamMission& mission) {
     if (mission.phase == MissionPhase::NONE || mission.phase == MissionPhase::SUSPENDED) return;
@@ -127,8 +145,43 @@ void LogisticsOrganizer::advance(TeamMission& mission) {
         command(mission, MessageType::CancelMission, MissionPhase::NONE);
     }
 }
-void LogisticsOrganizer::interrupt(TeamMission&, const std::string&) {}
-void LogisticsOrganizer::resume(TeamMission&) {}
+void LogisticsOrganizer::interrupt(TeamMission& mission, const std::string& reason) {
+    if (mission.phase == MissionPhase::NONE || mission.phase == MissionPhase::SUSPENDED) return;
+    auto& cargo = cargo_.at(mission.cargo_id); cargo.reason = reason;
+    if (!mission.ever_coupled && mission.phase == MissionPhase::TO_PICKUP) {
+        cargo.state = CargoState::PENDING; cargo.mission_id = 0;
+        command(mission, MessageType::CancelMission, MissionPhase::NONE); notice(LogisticsNotice::Kind::Cancelled, mission);
+    } else {
+        mission.suspended_phase = mission.phase; cargo.state = CargoState::SUSPENDED;
+        command(mission, MessageType::PauseMission, MissionPhase::SUSPENDED); notice(LogisticsNotice::Kind::Suspended, mission);
+    }
+}
+void LogisticsOrganizer::resume(TeamMission& mission) {
+    if (mission.phase != MissionPhase::SUSPENDED) return;
+    auto& cargo = cargo_.at(mission.cargo_id);
+    std::optional<Pos> position;
+    bool all_coupled = true;
+    for (const auto id : mission.members) {
+        const auto robot = fleet_.get(id);
+        if (!robot || !robot->connected || robot->generation != mission.generations.at(id) || robot->failure || robot->battery <= 15 || robot->state != RobotState::SUSPENDED) {
+            cargo.reason = "Recupere todos os integrantes e aguarde confirmação de suspensão"; return;
+        }
+        if (position && robot->position != *position) { cargo.reason = "Equipe fora da mesma posição lógica"; return; }
+        position = robot->position; all_coupled = all_coupled && robot->coupled;
+    }
+    if (mission.suspended_phase == MissionPhase::COUPLING) {
+        cargo.state = CargoState::COUPLING; command(mission, MessageType::ResumeMission, MissionPhase::COUPLING);
+    } else if (mission.suspended_phase == MissionPhase::UNCOUPLING) {
+        cargo.state = CargoState::UNCOUPLING; command(mission, MessageType::ResumeMission, MissionPhase::UNCOUPLING);
+    } else {
+        if (!all_coupled) { cargo.reason = "Transporte exige que todos os integrantes estejam acoplados"; return; }
+        auto route = planner_.route(*position, warehouse_.destinations().at(cargo.destination_id).position, cargo.size);
+        if (!route) { cargo.reason = "Sem rota para retomar o transporte"; return; }
+        mission.delivery_route = *route; cargo.state = CargoState::TRANSPORTING;
+        command(mission, MessageType::ResumeMission, MissionPhase::TO_DELIVERY);
+    }
+    cargo.reason.clear(); notice(LogisticsNotice::Kind::Resumed, mission);
+}
 void LogisticsOrganizer::command(TeamMission& mission, MessageType type, MissionPhase phase) {
     const auto& cargo = cargo_.at(mission.cargo_id);
     mission.phase = phase;
