@@ -27,7 +27,8 @@ TEST(StorageMigrationTest, SurfacesWorkerWriteFailureAndMarksSessionFailed) {
         DataCollector collector(path); collector.start(); sqlite3* db = nullptr;
         ASSERT_EQ(sqlite3_open(path.c_str(),&db),SQLITE_OK);
         ASSERT_EQ(sqlite3_exec(db,"CREATE TRIGGER bloquear BEFORE INSERT ON robot_events BEGIN SELECT RAISE(ABORT,'bloqueado'); END",nullptr,nullptr,nullptr),SQLITE_OK);
-        sqlite3_close(db); collector.enqueueEvent(RobotEvent()); EXPECT_THROW(collector.stop(),std::runtime_error); EXPECT_THROW(collector.checkError(),std::runtime_error);
+        sqlite3_close(db); collector.enqueueEvent(RobotEvent()); EXPECT_THROW(collector.stop(),std::runtime_error);
+        EXPECT_THROW(collector.checkError(),std::runtime_error);
     }
     std::filesystem::remove(path);
 }

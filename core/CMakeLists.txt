@@ -19,4 +19,9 @@ add_library(core_lib
 )
 
 target_include_directories(core_lib PUBLIC include)
-target_link_libraries(core_lib PUBLIC SQLite::SQLite3 Threads::Threads communication_lib)
+if(TARGET SQLite3::SQLite3)
+    set(ETAPA1_SQLITE_TARGET SQLite3::SQLite3)
+else()
+    set(ETAPA1_SQLITE_TARGET SQLite::SQLite3)
+endif()
+target_link_libraries(core_lib PUBLIC ${ETAPA1_SQLITE_TARGET} Threads::Threads communication_lib)
