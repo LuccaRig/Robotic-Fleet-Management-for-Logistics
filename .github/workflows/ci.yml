@@ -8,19 +8,12 @@ on:
 
 jobs:
   build-and-test:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - name: Obter o código
         uses: actions/checkout@v4
       - name: Instalar dependências no Linux
-        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y cmake build-essential libsqlite3-dev
-      - name: Instalar dependências no macOS
-        if: runner.os == 'macOS'
-        run: brew list cmake >/dev/null 2>&1 || brew install cmake
       - name: Configurar os testes
         run: cmake -B build -S . -DBUILD_TESTING=ON
       - name: Compilar

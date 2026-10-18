@@ -64,7 +64,7 @@ cmake --build build --parallel 2
 ctest --test-dir build --output-on-failure
 ```
 
-O CMake procura GoogleTest instalado e, se necessário, prepara a versão 1.14.0 por FetchContent. Os testes unitários usam lógica por passos; as integrações iniciam processos reais e possuem prazos de execução. A configuração de CI foi preparada para Linux e macOS, sem ter sido acionada nesta implementação.
+O CMake procura GoogleTest instalado e, se necessário, prepara a versão 1.14.0 por FetchContent. Os testes unitários usam lógica por passos; as integrações iniciam processos reais e possuem prazos de execução. O CI executa build e testes somente no Ubuntu. Esse workflow ainda não foi acionado nesta implementação.
 
 ## Documentação
 

@@ -73,7 +73,7 @@ Os bancos dos testes são temporários e normalmente removidos ao concluir cada 
 
 ## Pendências e limites
 
-- Build e testes no Linux ainda não foram executados localmente; o CI está preparado para esse sistema e para macOS.
+- Build e testes no Linux ainda não foram executados localmente; o CI está configurado exclusivamente para Ubuntu. Os resultados de macOS acima correspondem à validação local.
 - A apresentação interativa e as consultas manuais específicas do roteiro não fazem parte da rodada automatizada registrada.
 - Falta consolidar o relatório em PDF, exportar o diagrama e conferir o detalhamento do Moodle.
 - Uma rodada funcional aprovada não comprova ausência de todas as condições de corrida, tolerância a todas as falhas ou limite máximo de robôs.
