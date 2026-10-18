@@ -11,6 +11,7 @@ add_library(core_lib
     src/warehouse.cpp
     src/route_planner.cpp
     src/logistics.cpp
+    src/hardware.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)

@@ -47,6 +47,7 @@ private:
     std::size_t route_index_ = 0;
     bool waiting_position_ = false;
     bool dirty_ = true;
+    bool command_pending_ = false;
     bool running_ = false;
     bool stopping_ = false;
     std::uint64_t last_command_ = 0;

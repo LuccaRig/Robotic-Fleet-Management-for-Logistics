@@ -67,7 +67,7 @@ void RobotAgent::handle(const Message& m) {
             if (state_.state == RobotState::UNCOUPLING && !m.coupled) state_.state = RobotState::WAITING_TO_UNLOAD;
             dirty_ = true;
         } else if (m.command_id != 0) {
-            acknowledge = true; ack.type = MessageType::CommandAck; ack.command_id = m.command_id;
+            command_pending_ = true; acknowledge = true; ack.type = MessageType::CommandAck; ack.command_id = m.command_id;
             ack.mission_id = m.mission_id; ack.phase = m.phase;
             if (m.command_id <= last_command_) ack.accepted = m.command_id == last_command_ && last_accepted_;
             else {
@@ -104,7 +104,8 @@ void RobotAgent::handle(const Message& m) {
             }
         }
     }
-    cv_.notify_all(); if (acknowledge) emit(ack);
+    if (acknowledge) { emit(ack); std::lock_guard<std::mutex> lock(mutex_); command_pending_ = false; }
+    cv_.notify_all();
 }
 
 void RobotAgent::navigationTick() {
@@ -112,7 +113,7 @@ void RobotAgent::navigationTick() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         const bool navigating = state_.state == RobotState::NAVIGATING_TO_PICKUP || state_.state == RobotState::NAVIGATING_TO_DELIVERY || state_.state == RobotState::NAVIGATING_TO_CHARGE;
-        if (stopping_ || state_.failure || !navigating || waiting_position_) return;
+        if (stopping_ || command_pending_ || state_.failure || !navigating || waiting_position_) return;
         if (route_index_ >= route_.size()) {
             if (state_.phase == MissionPhase::TO_PICKUP) { state_.state = RobotState::WAITING_TO_LOAD; state_.phase = MissionPhase::PICKUP_READY; }
             else if (state_.phase == MissionPhase::TO_DELIVERY) { state_.state = RobotState::WAITING_TO_UNLOAD; state_.phase = MissionPhase::DELIVERY_READY; }
