@@ -62,6 +62,9 @@ void RobotAgent::handle(const Message& m) {
                 ++route_index_; state_.step = route_index_; waiting_position_ = false;
             }
             if (m.failure) state_.state = RobotState::ERROR;
+            else if (state_.state == RobotState::ERROR) state_.state = state_.mission_id ? RobotState::SUSPENDED : RobotState::IDLE;
+            if (state_.state == RobotState::COUPLING && m.coupled) state_.state = RobotState::WAITING_TO_LOAD;
+            if (state_.state == RobotState::UNCOUPLING && !m.coupled) state_.state = RobotState::WAITING_TO_UNLOAD;
             dirty_ = true;
         } else if (m.command_id != 0) {
             acknowledge = true; ack.type = MessageType::CommandAck; ack.command_id = m.command_id;
@@ -69,13 +72,27 @@ void RobotAgent::handle(const Message& m) {
             if (m.command_id <= last_command_) ack.accepted = m.command_id == last_command_ && last_accepted_;
             else {
                 last_command_ = m.command_id; ack.accepted = true;
-                if (m.type == MessageType::AssignMission && !state_.failure && !state_.coupled) {
+                const bool same_mission = m.mission_id == state_.mission_id;
+                const bool pickup = m.phase == MissionPhase::TO_PICKUP && !state_.coupled && state_.state == RobotState::IDLE;
+                const bool delivery = m.phase == MissionPhase::TO_DELIVERY && state_.coupled && same_mission && state_.state == RobotState::WAITING_TO_LOAD;
+                const bool charging = m.phase == MissionPhase::TO_CHARGE && !state_.coupled && state_.mission_id == 0;
+                if (m.type == MessageType::AssignMission && !state_.failure && (pickup || delivery || charging)) {
                     state_.mission_id = m.mission_id; state_.cargo_id = m.cargo_id; state_.team_id = m.team_id; state_.bay_id = m.bay_id;
-                    state_.phase = m.phase; state_.target = m.target; state_.state = RobotState::NAVIGATING_TO_PICKUP;
+                    state_.phase = m.phase; state_.target = m.target;
+                    state_.state = charging ? RobotState::NAVIGATING_TO_CHARGE : (delivery ? RobotState::NAVIGATING_TO_DELIVERY : RobotState::NAVIGATING_TO_PICKUP);
                     route_ = m.route; members_ = m.members; route_index_ = 0; state_.step = 0; waiting_position_ = false; state_.available = false;
-                } else if (m.type == MessageType::CancelMission && !state_.coupled) {
-                    state_.mission_id = 0; state_.cargo_id = 0; state_.team_id = 0; state_.phase = MissionPhase::NONE;
+                } else if (m.type == MessageType::CancelMission && same_mission && !state_.coupled) {
+                    state_.mission_id = 0; state_.cargo_id = 0; state_.team_id = 0; state_.bay_id = -1; state_.phase = MissionPhase::NONE;
                     state_.state = state_.failure ? RobotState::ERROR : RobotState::IDLE; route_.clear(); waiting_position_ = false;
+                } else if (m.type == MessageType::Couple && same_mission && !state_.failure && !state_.coupled && state_.state == RobotState::WAITING_TO_LOAD) {
+                    state_.phase = MissionPhase::COUPLING; state_.state = RobotState::COUPLING;
+                } else if (m.type == MessageType::Uncouple && same_mission && !state_.failure && state_.coupled && state_.state == RobotState::WAITING_TO_UNLOAD) {
+                    state_.phase = MissionPhase::UNCOUPLING; state_.state = RobotState::UNCOUPLING;
+                } else if (m.type == MessageType::PauseMission && same_mission) {
+                    state_.phase = MissionPhase::SUSPENDED; state_.state = state_.failure ? RobotState::ERROR : RobotState::SUSPENDED; waiting_position_ = false;
+                } else if (m.type == MessageType::ResumeMission && same_mission && !state_.failure && state_.battery > 15 && state_.coupled && state_.state == RobotState::SUSPENDED) {
+                    state_.phase = MissionPhase::TO_DELIVERY; state_.state = RobotState::NAVIGATING_TO_DELIVERY;
+                    route_ = m.route; members_ = m.members; state_.target = m.target; route_index_ = 0; state_.step = 0; waiting_position_ = false;
                 } else if (m.type != MessageType::Shutdown) ack.accepted = false;
                 last_accepted_ = ack.accepted; dirty_ = true;
             }
@@ -88,9 +105,13 @@ void RobotAgent::navigationTick() {
     Message movement; bool send = false; bool changed = false;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (stopping_ || state_.failure || state_.coupled || state_.state != RobotState::NAVIGATING_TO_PICKUP || waiting_position_) return;
+        const bool navigating = state_.state == RobotState::NAVIGATING_TO_PICKUP || state_.state == RobotState::NAVIGATING_TO_DELIVERY || state_.state == RobotState::NAVIGATING_TO_CHARGE;
+        if (stopping_ || state_.failure || !navigating || waiting_position_) return;
         if (route_index_ >= route_.size()) {
-            state_.state = RobotState::WAITING_TO_LOAD; state_.phase = MissionPhase::PICKUP_READY; changed = true;
+            if (state_.phase == MissionPhase::TO_PICKUP) { state_.state = RobotState::WAITING_TO_LOAD; state_.phase = MissionPhase::PICKUP_READY; }
+            else if (state_.phase == MissionPhase::TO_DELIVERY) { state_.state = RobotState::WAITING_TO_UNLOAD; state_.phase = MissionPhase::DELIVERY_READY; }
+            else if (state_.phase == MissionPhase::TO_CHARGE) { state_.state = RobotState::CHARGING; state_.phase = MissionPhase::CHARGING; }
+            changed = true;
         } else {
             movement = messageFromSnapshot(state_); movement.type = MessageType::NavigationSetpoint;
             movement.target = route_[route_index_]; movement.step = route_index_ + 1; movement.members = members_;
