@@ -38,7 +38,7 @@ std::vector<std::uint8_t> encodeMessage(const Message& m) {
     Writer w;
     w.number(PROTOCOL_VERSION); w.number(static_cast<std::uint32_t>(m.type));
     w.number(static_cast<std::uint32_t>(m.robot_id)); w.number(m.generation); w.number(m.sequence);
-    w.number(m.command_id); w.number(m.mission_id); w.number(m.cargo_id); w.number(m.team_id);
+    w.number(m.command_id); w.number(m.revision); w.number(m.mission_id); w.number(m.cargo_id); w.number(m.team_id);
     w.number(static_cast<std::uint32_t>(m.bay_id)); w.number(static_cast<unsigned>(m.phase));
     w.number(static_cast<unsigned>(m.state)); w.point(m.position); w.point(m.target);
     w.number(static_cast<std::uint32_t>(m.battery)); w.number(m.failure); w.number(m.coupled); w.number(m.accepted);
@@ -58,7 +58,7 @@ Message decodeMessage(const std::vector<std::uint8_t>& bytes) {
     const auto type = r.number();
     if (type < 1 || type > static_cast<unsigned>(MessageType::RobotDisconnected)) throw std::runtime_error("Tipo IPC inválido");
     Message m; m.type = static_cast<MessageType>(type); m.robot_id = r.integer();
-    m.generation = r.number(); m.sequence = r.number(); m.command_id = r.number();
+    m.generation = r.number(); m.sequence = r.number(); m.command_id = r.number(); m.revision = r.number();
     m.mission_id = static_cast<EntityId>(r.number()); m.cargo_id = static_cast<EntityId>(r.number()); m.team_id = static_cast<EntityId>(r.number());
     m.bay_id = r.integer();
     const auto phase = r.number(), state = r.number();
@@ -83,7 +83,7 @@ RobotSnapshot snapshotFromMessage(const Message& m) {
     s.battery = m.battery; s.failure = m.failure; s.coupled = m.coupled;
     s.connected = true; s.available = m.state == RobotState::IDLE && !m.failure && !m.coupled && m.battery > 15;
     s.mission_id = m.mission_id; s.cargo_id = m.cargo_id; s.team_id = m.team_id; s.bay_id = m.bay_id;
-    s.step = m.step; s.sensor_sequence = m.sensor_sequence; s.distance = m.distance; s.updated_at_ms = m.occurred_at_ms;
+    s.revision = m.revision; s.step = m.step; s.sensor_sequence = m.sensor_sequence; s.distance = m.distance; s.updated_at_ms = m.occurred_at_ms;
     return s;
 }
 
@@ -92,6 +92,6 @@ Message messageFromSnapshot(const RobotSnapshot& s) {
     m.sequence = s.sequence; m.position = s.position; m.target = s.target; m.state = s.state; m.phase = s.phase;
     m.battery = s.battery; m.failure = s.failure; m.coupled = s.coupled; m.distance = s.distance;
     m.mission_id = s.mission_id; m.cargo_id = s.cargo_id; m.team_id = s.team_id; m.bay_id = s.bay_id;
-    m.step = s.step; m.sensor_sequence = s.sensor_sequence; m.occurred_at_ms = s.updated_at_ms;
+    m.revision = s.revision; m.step = s.step; m.sensor_sequence = s.sensor_sequence; m.occurred_at_ms = s.updated_at_ms;
     return m;
 }

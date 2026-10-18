@@ -71,6 +71,7 @@ struct RobotSnapshot {
     int bay_id = -1;
     std::uint64_t step = 0;
     std::uint64_t sensor_sequence = 0;
+    std::uint64_t revision = 0;
     std::uint64_t distance = 0;
     std::int64_t updated_at_ms = 0;
 };

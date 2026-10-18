@@ -46,6 +46,8 @@ private:
     Pos distance_position_;
     std::size_t route_index_ = 0;
     bool waiting_position_ = false;
+    bool waiting_passage_ = false;
+    bool passage_granted_ = false;
     bool dirty_ = true;
     bool command_pending_ = false;
     bool running_ = false;

@@ -52,9 +52,13 @@ void RobotAgent::handle(const Message& m) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (m.robot_id != state_.id || m.generation != state_.generation) return;
-        if (m.type == MessageType::SensorUpdate) {
+        if (m.type == MessageType::PassageGranted) {
+            if (m.mission_id == state_.mission_id && m.revision == state_.revision && m.phase == state_.phase && waiting_passage_ && m.step == route_index_ + 1 && route_index_ < route_.size() && m.target == route_[route_index_]) {
+                passage_granted_ = m.accepted; waiting_passage_ = false;
+            }
+        } else if (m.type == MessageType::SensorUpdate) {
             if (m.battery < 0 || m.battery > 100 || m.sensor_sequence <= state_.sensor_sequence) return;
-            if (m.mission_id != state_.mission_id) return;
+            if (m.mission_id != state_.mission_id || m.revision != state_.revision) return;
             sensor_reads_.push_back(m); state_.sensor_sequence = m.sensor_sequence;
             state_.battery = m.battery; state_.failure = m.failure; state_.coupled = m.coupled;
             state_.position = m.position;
@@ -100,6 +104,9 @@ void RobotAgent::handle(const Message& m) {
                         route_ = m.route; members_ = m.members; state_.target = m.target; route_index_ = 0; state_.step = 0; waiting_position_ = false;
                     } else ack.accepted = false;
                 } else if (m.type != MessageType::Shutdown) ack.accepted = false;
+                if (ack.accepted && m.type != MessageType::Shutdown) {
+                    state_.revision = m.command_id; waiting_passage_ = false; passage_granted_ = false;
+                }
                 last_accepted_ = ack.accepted; dirty_ = true;
             }
         }
@@ -113,16 +120,19 @@ void RobotAgent::navigationTick() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         const bool navigating = state_.state == RobotState::NAVIGATING_TO_PICKUP || state_.state == RobotState::NAVIGATING_TO_DELIVERY || state_.state == RobotState::NAVIGATING_TO_CHARGE;
-        if (stopping_ || command_pending_ || state_.failure || !navigating || waiting_position_) return;
+        if (stopping_ || command_pending_ || state_.failure || !navigating || waiting_position_ || waiting_passage_) return;
         if (route_index_ >= route_.size()) {
             if (state_.phase == MissionPhase::TO_PICKUP) { state_.state = RobotState::WAITING_TO_LOAD; state_.phase = MissionPhase::PICKUP_READY; }
             else if (state_.phase == MissionPhase::TO_DELIVERY) { state_.state = RobotState::WAITING_TO_UNLOAD; state_.phase = MissionPhase::DELIVERY_READY; }
             else if (state_.phase == MissionPhase::TO_CHARGE) { state_.state = RobotState::CHARGING; state_.phase = MissionPhase::CHARGING; }
             changed = true;
         } else {
-            movement = messageFromSnapshot(state_); movement.type = MessageType::NavigationSetpoint;
+            movement = messageFromSnapshot(state_); movement.type = passage_granted_ ? MessageType::NavigationSetpoint : MessageType::PassageRequest;
             movement.target = route_[route_index_]; movement.step = route_index_ + 1; movement.members = members_;
-            movement.team_size = std::max(1, static_cast<int>(members_.size())); waiting_position_ = true; send = true;
+            movement.team_size = state_.coupled ? std::max(1, static_cast<int>(members_.size())) : 1;
+            if (passage_granted_) { waiting_position_ = true; passage_granted_ = false; }
+            else waiting_passage_ = true;
+            send = true;
         }
     }
     if (send) emit(movement); if (changed) publish();

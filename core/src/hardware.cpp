@@ -20,6 +20,7 @@ void LocalHardwareAdapter::commandAccepted(const Message& m) {
         auto it = units_.find(m.robot_id); if (it == units_.end()) return;
         auto& unit = it->second;
         if (m.generation != unit.sensor.generation) return;
+        unit.sensor.revision = m.command_id;
         if (m.type == MessageType::CancelMission) {
             proposals_.erase(unit.sensor.mission_id); unit.sensor.mission_id = 0; unit.sensor.cargo_id = 0; unit.sensor.team_id = 0;
             unit.sensor.phase = MissionPhase::NONE; unit.sensor.step = 0; unit.members = {m.robot_id}; unit.paused = false;
@@ -43,7 +44,7 @@ void LocalHardwareAdapter::setpoint(const Message& m) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = units_.find(m.robot_id); if (it == units_.end()) throw std::runtime_error("Setpoint de robô inexistente");
         auto& unit = it->second;
-        if (m.generation != unit.sensor.generation || m.mission_id != unit.sensor.mission_id || m.phase != unit.sensor.phase || unit.paused) return;
+        if (m.generation != unit.sensor.generation || m.mission_id != unit.sensor.mission_id || m.phase != unit.sensor.phase || m.revision != unit.sensor.revision || unit.paused) return;
         if (unit.sensor.failure || unit.sensor.battery == 0) return;
         if (m.step != unit.sensor.step + 1 || m.position != unit.sensor.position || gridDistance(unit.sensor.position, m.target) != 1 || !warehouse_.traversable(m.target)) throw std::runtime_error("Setpoint físico inválido");
         if (validator_ && !validator_(m)) throw std::runtime_error("Movimento sem permissão de passagem");

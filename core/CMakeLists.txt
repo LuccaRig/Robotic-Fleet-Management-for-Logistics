@@ -12,6 +12,7 @@ add_library(core_lib
     src/route_planner.cpp
     src/logistics.cpp
     src/hardware.cpp
+    src/passages.cpp
 )
 
 target_include_directories(core_lib PUBLIC include)

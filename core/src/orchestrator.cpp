@@ -174,7 +174,7 @@ bool Orchestrator::send(int id, Message message) {
     switch (message.type) {
     case MessageType::AssignMission: case MessageType::CancelMission: case MessageType::Couple:
     case MessageType::Uncouple: case MessageType::PauseMission: case MessageType::ResumeMission: case MessageType::Shutdown:
-        message.command_id = message.sequence;
+        if (!message.command_id) message.command_id = message.sequence;
         entry.pending[message.command_id] = std::chrono::steady_clock::now() + std::chrono::seconds(3); break;
     default: break;
     }

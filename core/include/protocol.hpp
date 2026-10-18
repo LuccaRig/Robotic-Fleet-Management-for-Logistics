@@ -23,6 +23,7 @@ struct Message {
     std::uint64_t generation = 0;
     std::uint64_t sequence = 0;
     std::uint64_t command_id = 0;
+    std::uint64_t revision = 0;
     EntityId mission_id = 0;
     EntityId cargo_id = 0;
     EntityId team_id = 0;
