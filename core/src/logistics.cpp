@@ -108,6 +108,15 @@ void LogisticsOrganizer::report(const Message& m) {
     if (m.type == MessageType::ResumeMission && m.robot_id == -1) {
         const auto it = missions_.find(m.mission_id); if (it != missions_.end()) resume(it->second); return;
     }
+    const bool reading = m.type == MessageType::SensorUpdate || m.type == MessageType::RobotSnapshot || m.type == MessageType::RobotReady;
+    if (reading) {
+        const auto previous = health_.find(m.robot_id);
+        if (previous != health_.end()) {
+            const auto& old = previous->second;
+            if (m.generation < old.generation || (m.generation == old.generation && (m.sensor_sequence < old.sensor_sequence || m.revision < old.revision))) return;
+        }
+        health_[m.robot_id] = snapshotFromMessage(m);
+    }
     if (m.type == MessageType::RobotDisconnected) {
         for (auto& pair : missions_) {
             auto& mission = pair.second;
@@ -175,7 +184,11 @@ void LogisticsOrganizer::resume(TeamMission& mission) {
     bool all_coupled = true;
     for (const auto id : mission.members) {
         const auto robot = fleet_.get(id);
-        if (!robot || !robot->connected || robot->generation != mission.generations.at(id) || robot->failure || robot->battery <= 15 || robot->state != RobotState::SUSPENDED) {
+        const auto health = health_.find(id);
+        const bool confirmed = robot && health != health_.end() && health->second.generation == robot->generation &&
+            robot->sensor_sequence >= health->second.sensor_sequence && robot->revision >= health->second.revision &&
+            !health->second.failure && health->second.battery > 15;
+        if (!robot || !confirmed || !robot->connected || robot->generation != mission.generations.at(id) || robot->failure || robot->battery <= 15 || robot->state != RobotState::SUSPENDED) {
             cargo.reason = "Recupere todos os integrantes e aguarde confirmação de suspensão"; return;
         }
         if (position && robot->position != *position) { cargo.reason = "Equipe fora da mesma posição lógica"; return; }

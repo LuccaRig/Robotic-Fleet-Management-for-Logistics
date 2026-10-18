@@ -69,6 +69,18 @@ struct Orchestrator::Impl {
         }
         notify(message);
     }
+    void consume(const std::shared_ptr<Entry>& entry, const Message& message) {
+        if (message.robot_id != entry->process.id || message.generation != entry->process.generation || message.sequence <= entry->received)
+            throw std::runtime_error("Identidade ou sequência IPC inválida");
+        entry->received = message.sequence;
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            entry->seen = std::chrono::steady_clock::now();
+            if (message.type == MessageType::RobotReady) entry->process.ready = true;
+            if (message.type == MessageType::CommandAck) entry->pending.erase(message.command_id);
+        }
+        notify(message);
+    }
     void loop() noexcept {
         try {
             while (true) {
@@ -81,24 +93,17 @@ struct Orchestrator::Impl {
                 for (const auto& entry : current) {
                     std::deque<Message> outgoing;
                     { std::lock_guard<std::mutex> lock(mutex); outgoing.swap(entry->outgoing); }
+                    std::string send_error;
+                    try { for (const auto& message : outgoing) entry->channel->send(message); }
+                    catch (const std::exception& e) { send_error = e.what(); }
                     try {
-                        for (const auto& message : outgoing) entry->channel->send(message);
                         while (entry->connected) {
                             const auto received = entry->channel->receive(std::chrono::milliseconds(0));
                             if (!received) break;
-                            const auto& message = *received;
-                            if (message.robot_id != entry->process.id || message.generation != entry->process.generation || message.sequence <= entry->received)
-                                throw std::runtime_error("Identidade ou sequência IPC inválida");
-                            entry->received = message.sequence;
-                            {
-                                std::lock_guard<std::mutex> lock(mutex);
-                                entry->seen = std::chrono::steady_clock::now();
-                                if (message.type == MessageType::RobotReady) entry->process.ready = true;
-                                if (message.type == MessageType::CommandAck) entry->pending.erase(message.command_id);
-                            }
-                            notify(message);
+                            consume(entry, *received);
                         }
                     } catch (const std::exception& e) { disconnect(entry, e.what()); }
+                    if (!send_error.empty()) disconnect(entry, send_error);
                     bool expired = false;
                     {
                         std::lock_guard<std::mutex> lock(mutex);
@@ -117,6 +122,11 @@ struct Orchestrator::Impl {
                     int status = 0;
                     const auto pid = waitpid(entry->process.pid, &status, WNOHANG);
                     if (pid > 0 || (pid < 0 && errno == ECHILD)) {
+                        if (entry->connected) {
+                            try {
+                                while (const auto message = entry->channel->receive(std::chrono::milliseconds(0))) consume(entry, *message);
+                            } catch (const std::exception& e) { disconnect(entry, e.what()); }
+                        }
                         disconnect(entry, "Processo do robô encerrado");
                         std::lock_guard<std::mutex> lock(mutex);
                         entries.erase(entry->process.id); cv.notify_all();
@@ -171,6 +181,7 @@ bool Orchestrator::send(int id, Message message) {
     const auto it = impl_->entries.find(id);
     if (it == impl_->entries.end() || !it->second->connected) return false;
     auto& entry = *it->second;
+    if (entry.process.stopping && message.type != MessageType::Shutdown) return false;
     if (!entry.process.ready && message.type != MessageType::Shutdown) return false;
     if (entry.outgoing.size() >= 1024) throw std::runtime_error("Fila de envio IPC esgotada");
     message.robot_id = id; message.generation = entry.process.generation; message.sequence = ++entry.sent;

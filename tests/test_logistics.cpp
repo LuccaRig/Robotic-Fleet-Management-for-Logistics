@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "logistics.hpp"
+#include <algorithm>
 
 namespace {
 WarehouseGrid layout() { WarehouseGrid map(6,5); map.addBay({1,{1,1},{}}); map.addDestination({1,{4,1}}); map.setCell(0,0,CellState::CHARGING_STATION); return map; }
@@ -40,4 +41,26 @@ TEST(LogisticsTest, SuspendsPartiallyCoupledTeamInsteadOfReassigning) {
     auto failure = report(2,RobotState::ERROR,MissionPhase::COUPLING); failure.failure = true; organizer.onMessage(failure); organizer.processOnce();
     EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED); EXPECT_EQ(organizer.missions().size(),1u);
     organizer.requestResume(1); organizer.processOnce(); EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
+}
+TEST(LogisticsTest, ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults) {
+    auto map = layout(); FleetStateStore fleet; registerRobot(fleet,1);
+    std::vector<LogisticsNotice::Kind> notices;
+    LogisticsOrganizer organizer(map,fleet,{load(1)},[](int,Message) { return true; },[&](const LogisticsNotice& n) { notices.push_back(n.kind); });
+    organizer.processOnce();
+    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::PICKUP_READY)); organizer.processOnce();
+    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::COUPLING,true)); organizer.processOnce();
+    auto failure = report(1,RobotState::ERROR,MissionPhase::TO_DELIVERY,true);
+    failure.type = MessageType::SensorUpdate; failure.sensor_sequence = 1; failure.revision = 3; failure.failure = true;
+    organizer.onMessage(failure); organizer.processOnce(); ASSERT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
+    auto recovered = failure; recovered.failure = false; recovered.sensor_sequence = 2; recovered.revision = 4;
+    organizer.onMessage(recovered); organizer.processOnce();
+    auto old = snapshotFromMessage(failure); old.failure = false; old.state = RobotState::SUSPENDED; old.sequence = 3;
+    ASSERT_TRUE(fleet.update(old)); organizer.requestResume(1); organizer.processOnce();
+    EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
+    auto current = snapshotFromMessage(recovered); current.state = RobotState::SUSPENDED; current.sequence = 4;
+    ASSERT_TRUE(fleet.update(current)); organizer.requestResume(1); organizer.processOnce();
+    ASSERT_EQ(organizer.cargos()[0].state,CargoState::TRANSPORTING);
+    organizer.onMessage(failure); organizer.processOnce();
+    EXPECT_EQ(organizer.cargos()[0].state,CargoState::TRANSPORTING);
+    EXPECT_EQ(std::count(notices.begin(),notices.end(),LogisticsNotice::Kind::Suspended),1);
 }

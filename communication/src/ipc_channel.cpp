@@ -55,7 +55,7 @@ void IpcChannel::send(const Message& message, std::chrono::milliseconds timeout)
 
 std::optional<Message> IpcChannel::receive(std::chrono::milliseconds timeout) {
     const auto deadline = std::chrono::steady_clock::now() + timeout;
-    do {
+    while (true) {
         if (incoming_.size() >= 4) {
             const std::uint32_t size = (std::uint32_t(incoming_[0]) << 24) | (std::uint32_t(incoming_[1]) << 16) | (std::uint32_t(incoming_[2]) << 8) | incoming_[3];
             if (size == 0 || size > MAX_MESSAGE_BYTES) throw std::runtime_error("Enquadramento IPC inválido");
@@ -76,6 +76,5 @@ std::optional<Message> IpcChannel::receive(std::chrono::milliseconds timeout) {
         if (n < 0) fail("Falha ao receber IPC");
         if (n == 0) throw std::runtime_error("Canal IPC encerrado");
         incoming_.insert(incoming_.end(), bytes, bytes + n);
-    } while (std::chrono::steady_clock::now() < deadline);
-    return std::nullopt;
+    }
 }

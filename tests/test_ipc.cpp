@@ -43,3 +43,13 @@ TEST(FleetStateTest, RejectsStateRegressionEvenWithHigherTransportSequence) {
     s.revision = 5; s.sensor_sequence = 3; EXPECT_FALSE(fleet.update(s));
     fleet.disconnect(1,1); s.sensor_sequence = 5; EXPECT_FALSE(fleet.update(s));
 }
+TEST(IpcTest, ZeroTimeoutConsumesQueuedFrameBeforePeerExit) {
+    int sockets[2]; ASSERT_EQ(socketpair(AF_UNIX,SOCK_STREAM,0,sockets),0);
+    IpcChannel receiver(sockets[0]);
+    {
+        IpcChannel sender(sockets[1]); Message message; message.type = MessageType::RobotStopped; sender.send(message);
+    }
+    const auto message = receiver.receive(std::chrono::milliseconds(0));
+    ASSERT_TRUE(message); EXPECT_EQ(message->type,MessageType::RobotStopped);
+    EXPECT_THROW(receiver.receive(std::chrono::milliseconds(0)),std::runtime_error);
+}

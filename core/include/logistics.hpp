@@ -46,6 +46,7 @@ private:
     std::map<EntityId, TeamMission> missions_;
     EntityId next_mission_ = 0;
     std::set<int> charging_;
+    std::map<int, RobotSnapshot> health_;
     std::vector<std::pair<int, Message>> actions_;
     std::vector<LogisticsNotice> notices_;
     mutable std::mutex queue_mutex_;

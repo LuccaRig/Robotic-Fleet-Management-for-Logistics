@@ -92,9 +92,10 @@ void ScenarioScript::tick(ControlRuntime& runtime) {
             runtime.setFailure(2,true); stage_ = 3;
         } else if (stage_ == 3 && active != missions.rend() && active->phase == MissionPhase::SUSPENDED && allSuspended(runtime,*active,false)) {
             runtime.setFailure(2,false); for (const auto id : active->members) runtime.setBattery(id,100); stage_ = 4;
-        } else if (stage_ == 4 && active != missions.rend() && active->phase == MissionPhase::SUSPENDED && allSuspended(runtime,*active,true)) {
-            runtime.resume(active->id); stage_ = 5;
-        } else if (stage_ == 5 && runtime.eventCount(EventType::MISSION_RESUMED)) stage_ = 6;
+        } else if (stage_ == 4) {
+            if (runtime.eventCount(EventType::MISSION_RESUMED)) stage_ = 6;
+            else if (active != missions.rend() && active->phase == MissionPhase::SUSPENDED && allSuspended(runtime,*active,true)) runtime.resume(active->id);
+        }
     }
 }
 bool ScenarioScript::complete(const ControlRuntime& runtime) const {
