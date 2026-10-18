@@ -32,7 +32,8 @@ void IpcChannel::send(const Message& message, std::chrono::milliseconds timeout)
     std::vector<std::uint8_t> frame{static_cast<std::uint8_t>(size >> 24), static_cast<std::uint8_t>(size >> 16), static_cast<std::uint8_t>(size >> 8), static_cast<std::uint8_t>(size)};
     frame.insert(frame.end(), payload.begin(), payload.end());
     const auto deadline = std::chrono::steady_clock::now() + timeout;
-    std::lock_guard<std::mutex> lock(send_mutex_);
+    std::unique_lock<std::timed_mutex> lock(send_mutex_, std::defer_lock);
+    if (!lock.try_lock_until(deadline)) throw std::runtime_error("Prazo de serialização do envio IPC excedido");
     std::size_t offset = 0;
     while (offset < frame.size()) {
         if (std::chrono::steady_clock::now() >= deadline) throw std::runtime_error("Prazo de envio IPC excedido");

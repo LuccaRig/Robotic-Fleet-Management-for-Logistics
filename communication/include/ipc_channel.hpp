@@ -19,7 +19,7 @@ public:
     int descriptor() const noexcept { return fd_; }
 private:
     int fd_;
-    std::mutex send_mutex_;
+    std::timed_mutex send_mutex_;
     std::vector<std::uint8_t> incoming_;
 };
 

@@ -1,5 +1,6 @@
 #include "passages.hpp"
 #include <algorithm>
+#include <iterator>
 #include <stdexcept>
 
 PassageCoordinator::PassageCoordinator(const WarehouseGrid& warehouse, Sender sender, Observer observer)

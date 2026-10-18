@@ -47,7 +47,7 @@ struct Orchestrator::Impl {
 
     explicit Impl(std::string path) : executable(std::move(path)) { gateway = std::thread(&Impl::loop, this); }
     void notify(const Message& message) {
-        if (message.type == MessageType::RobotReady || message.type == MessageType::RobotSnapshot) fleet.update(snapshotFromMessage(message));
+        if (message.type == MessageType::RobotReady || message.type == MessageType::RobotSnapshot) { if (!fleet.update(snapshotFromMessage(message))) return; }
         if (message.type == MessageType::RobotDisconnected) fleet.disconnect(message.robot_id, message.generation);
         Handler callback;
         { std::lock_guard<std::mutex> lock(mutex); callback = handler; }
@@ -147,19 +147,23 @@ bool Orchestrator::spawnRobot(int id, int x, int y) {
     std::vector<std::string> args{impl_->executable, "--robot-worker", "3", std::to_string(id), std::to_string(generation), std::to_string(x), std::to_string(y)};
     std::vector<char*> argv; for (auto& arg : args) argv.push_back(arg.data()); argv.push_back(nullptr);
     posix_spawn_file_actions_t actions;
-    posix_spawn_file_actions_init(&actions);
-    posix_spawn_file_actions_addclose(&actions, fds[0]);
-    posix_spawn_file_actions_adddup2(&actions, fds[1], 3);
-    if (fds[1] != 3) posix_spawn_file_actions_addclose(&actions, fds[1]);
+    int action_error = posix_spawn_file_actions_init(&actions);
+    if (action_error != 0) { close(fds[0]); close(fds[1]); return false; }
+    action_error = posix_spawn_file_actions_addclose(&actions, fds[0]);
+    if (!action_error) action_error = posix_spawn_file_actions_adddup2(&actions, fds[1], 3);
+    if (!action_error && fds[1] != 3) action_error = posix_spawn_file_actions_addclose(&actions, fds[1]);
+    if (action_error) { posix_spawn_file_actions_destroy(&actions); close(fds[0]); close(fds[1]); return false; }
     pid_t pid = -1;
     const int result = posix_spawn(&pid, impl_->executable.c_str(), &actions, nullptr, argv.data(), environ);
     posix_spawn_file_actions_destroy(&actions); close(fds[1]);
     if (result != 0) { close(fds[0]); return false; }
-    auto entry = std::make_shared<Impl::Entry>();
-    entry->process = {id, static_cast<int>(pid), generation, false, false};
-    entry->channel = std::make_shared<IpcChannel>(fds[0]);
-    impl_->fleet.registerRobot(id, generation, {x, y});
-    impl_->entries.emplace(id, std::move(entry)); impl_->cv.notify_all(); return true;
+    try {
+        auto channel = std::make_shared<IpcChannel>(fds[0]);
+        auto entry = std::make_shared<Impl::Entry>();
+        entry->process = {id, static_cast<int>(pid), generation, false, false}; entry->channel = std::move(channel);
+        impl_->fleet.registerRobot(id, generation, {x, y}); impl_->entries.emplace(id, std::move(entry));
+    } catch (...) { kill(pid, SIGKILL); while (waitpid(pid, nullptr, 0) < 0 && errno == EINTR) {} throw; }
+    impl_->cv.notify_all(); return true;
 }
 
 bool Orchestrator::send(int id, Message message) {

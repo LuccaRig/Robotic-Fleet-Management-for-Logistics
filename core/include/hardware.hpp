@@ -23,6 +23,7 @@ public:
     explicit LocalHardwareAdapter(const WarehouseGrid& warehouse, SensorSink sink);
     void registerRobot(const RobotSnapshot& snapshot);
     bool contains(int id) const;
+    void disconnect(int id);
     bool removeRobot(int id);
     void commandAccepted(const Message& command) override;
     void setpoint(const Message& message) override;

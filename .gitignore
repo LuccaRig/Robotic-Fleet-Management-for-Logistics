@@ -1,1 +1,6 @@
-\build
+/build/
+/build-*/
+/logs/etapa1*.db
+/logs/etapa1*.db-journal
+/logs/etapa1*.db-wal
+/logs/etapa1*.db-shm

@@ -82,7 +82,7 @@ void DataCollector::start() {
 }
 void DataCollector::stop() {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
-    { std::lock_guard<std::mutex> lock(queue_mutex); if (state == CollectorState::STOPPED) return; if (state == CollectorState::RUNNING) state = CollectorState::STOPPING; }
+    { std::lock_guard<std::mutex> lock(queue_mutex); if (state == CollectorState::STOPPED) return; if (!db && worker_error) std::rethrow_exception(worker_error); if (state == CollectorState::RUNNING) state = CollectorState::STOPPING; }
     queue_cv.notify_all(); if (collector_thread.joinable()) collector_thread.join();
     std::exception_ptr error;
     { std::lock_guard<std::mutex> lock(queue_mutex); error = worker_error; }
@@ -113,10 +113,10 @@ EntityId DataCollector::runId() const { std::lock_guard<std::mutex> lock(queue_m
 void DataCollector::writeEventToDatabase(const RobotEvent& e) {
     execute(db, "BEGIN IMMEDIATE");
     try {
-        auto stmt = prepare(db, R"SQL(INSERT OR IGNORE INTO robot_events
+        auto stmt = prepare(db, R"SQL(INSERT INTO robot_events
             (timestamp,robot_id,team_id,bay_id,position_x,position_y,event_type,description,destination,
              run_id,cargo_id,mission_id,generation,source,source_sequence,occurred_at_ms)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?))SQL");
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(run_id,source,generation,source_sequence,event_type) WHERE run_id IS NOT NULL DO NOTHING)SQL");
         text(stmt.get(), 1, e.getTimestamp()); sqlite3_bind_int(stmt.get(), 2, e.getRobotId());
         if (e.getTeamId() >= 0) sqlite3_bind_int(stmt.get(), 3, e.getTeamId());
         if (e.getBayId() >= 0) sqlite3_bind_int(stmt.get(), 4, e.getBayId());

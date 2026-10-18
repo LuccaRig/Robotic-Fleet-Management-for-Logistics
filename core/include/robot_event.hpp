@@ -42,7 +42,9 @@ public:
     const std::vector<int>& participants() const { return participants_; }
     RobotEvent& trace(EntityId cargo, EntityId mission, std::uint64_t generation, std::string source, std::uint64_t sequence, std::int64_t occurred, std::vector<int> participants = {}) {
         cargo_id_ = cargo; mission_id_ = mission; generation_ = generation; source_ = std::move(source);
-        source_sequence_ = sequence; occurred_at_ms_ = occurred; participants_ = std::move(participants); return *this;
+        source_sequence_ = sequence; occurred_at_ms_ = occurred; participants_ = std::move(participants);
+        const auto seconds = static_cast<std::time_t>(occurred / 1000); std::tm local{};
+        localtime_r(&seconds, &local); std::ostringstream stream; stream << std::put_time(&local, "%d-%m-%Y %H:%M:%S"); timestamp_ = stream.str(); return *this;
     }
 private:
     int robot_id_, team_id_, bay_id_;

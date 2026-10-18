@@ -10,6 +10,7 @@ void LocalHardwareAdapter::registerRobot(const RobotSnapshot& snapshot) {
     if (units_.count(snapshot.id)) throw std::runtime_error("O robô ainda ocupa o ambiente; remova-o explicitamente antes de recriar");
     Unit unit; unit.sensor = messageFromSnapshot(snapshot); unit.members = {snapshot.id}; units_.emplace(snapshot.id, std::move(unit));
 }
+void LocalHardwareAdapter::disconnect(int id) { std::lock_guard<std::mutex> lock(mutex_); const auto it = units_.find(id); if (it != units_.end()) { it->second.paused = true; proposals_.erase(it->second.sensor.mission_id); } }
 bool LocalHardwareAdapter::contains(int id) const { std::lock_guard<std::mutex> lock(mutex_); return units_.count(id) != 0; }
 bool LocalHardwareAdapter::removeRobot(int id) { std::lock_guard<std::mutex> lock(mutex_); auto it = units_.find(id); if (it == units_.end() || it->second.sensor.coupled) return false; proposals_.erase(it->second.sensor.mission_id); units_.erase(it); return true; }
 void LocalHardwareAdapter::setMovementValidator(std::function<bool(const Message&)> validator) { std::lock_guard<std::mutex> lock(mutex_); validator_ = std::move(validator); }

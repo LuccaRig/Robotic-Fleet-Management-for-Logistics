@@ -20,7 +20,7 @@ public:
     bool update(RobotSnapshot snapshot) {
         std::lock_guard<std::mutex> lock(mutex_);
         auto it = robots_.find(snapshot.id);
-        if (it == robots_.end() || snapshot.generation != it->second.generation || snapshot.sequence <= it->second.sequence) return false;
+        if (it == robots_.end() || snapshot.generation != it->second.generation || snapshot.sequence <= it->second.sequence || snapshot.revision < it->second.revision || snapshot.sensor_sequence < it->second.sensor_sequence || (!it->second.connected && it->second.sequence > 0)) return false;
         it->second = std::move(snapshot); return true;
     }
     bool disconnect(int id, std::uint64_t generation) {

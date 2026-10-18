@@ -48,7 +48,7 @@ void RobotAgent::loop(bool navigation) noexcept {
 }
 
 void RobotAgent::handle(const Message& m) {
-    Message ack; bool acknowledge = false;
+    Message ack; bool acknowledge = false; bool sensor_changed = false;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (m.robot_id != state_.id || m.generation != state_.generation) return;
@@ -61,16 +61,21 @@ void RobotAgent::handle(const Message& m) {
             if (m.mission_id != state_.mission_id || m.revision != state_.revision) return;
             if (sensor_reads_.size() >= 4096) throw std::runtime_error("Fila de leituras do robô esgotada");
             sensor_reads_.push_back(m); state_.sensor_sequence = m.sensor_sequence;
+            if (m.failure && !state_.failure) before_failure_ = state_.state;
             state_.battery = m.battery; state_.failure = m.failure; state_.coupled = m.coupled;
             state_.position = m.position;
             if (waiting_position_ && m.step == route_index_ + 1 && route_index_ < route_.size() && route_[route_index_] == m.position) {
                 ++route_index_; state_.step = route_index_; waiting_position_ = false;
             }
             if (m.failure) state_.state = RobotState::ERROR;
-            else if (state_.state == RobotState::ERROR) state_.state = state_.mission_id ? RobotState::SUSPENDED : RobotState::IDLE;
+            else if (state_.state == RobotState::ERROR) {
+                if (state_.mission_id) state_.state = RobotState::SUSPENDED;
+                else if (state_.phase == MissionPhase::TO_CHARGE || state_.phase == MissionPhase::CHARGING) state_.state = before_failure_;
+                else state_.state = RobotState::IDLE;
+            }
             if (state_.state == RobotState::COUPLING && m.coupled) state_.state = RobotState::WAITING_TO_LOAD;
             if (state_.state == RobotState::UNCOUPLING && !m.coupled) state_.state = RobotState::WAITING_TO_UNLOAD;
-            dirty_ = true;
+            dirty_ = true; sensor_changed = true;
         } else if (m.command_id != 0) {
             command_pending_ = true; acknowledge = true; ack.type = MessageType::CommandAck; ack.command_id = m.command_id;
             ack.mission_id = m.mission_id; ack.phase = m.phase;
@@ -113,6 +118,7 @@ void RobotAgent::handle(const Message& m) {
         }
     }
     if (acknowledge) { emit(ack); std::lock_guard<std::mutex> lock(mutex_); command_pending_ = false; }
+    if (sensor_changed) publish();
     cv_.notify_all();
 }
 

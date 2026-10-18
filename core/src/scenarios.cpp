@@ -13,7 +13,7 @@ WarehouseGrid layout() {
     }
     int id = 0;
     for (const auto item : std::vector<std::pair<int,int>>{{6,3},{12,4},{17,5}}) {
-        map.setCell(item.first, item.second, CellState::EMPTY); map.addPassage({++id, id, {{item.first, item.second}}});
+        ++id; map.setCell(item.first, item.second, CellState::EMPTY); map.addPassage({id, id, {{item.first, item.second}}});
         map.setCell(item.first, 10, CellState::EMPTY); map.addPassage({10 + id, 4, {{item.first, 10}}});
     }
     map.addBay({1, {2,3}, {}}); map.addBay({2, {2,10}, {}});

@@ -39,6 +39,7 @@ private:
     std::mutex lifecycle_;
     std::condition_variable cv_;
     RobotSnapshot state_;
+    RobotState before_failure_ = RobotState::IDLE;
     Sender sender_;
     std::vector<Pos> route_;
     std::vector<int> members_;

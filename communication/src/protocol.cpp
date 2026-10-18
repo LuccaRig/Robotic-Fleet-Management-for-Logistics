@@ -19,7 +19,12 @@ struct Reader {
         for (int i = 0; i < 8; ++i) value = (value << 8) | bytes[offset++];
         return value;
     }
-    int integer() { return static_cast<std::int32_t>(number()); }
+    int integer() {
+        const auto value = number();
+        if (value > std::numeric_limits<std::uint32_t>::max()) throw std::runtime_error("Inteiro IPC fora dos limites");
+        if (value <= static_cast<std::uint64_t>(std::numeric_limits<std::int32_t>::max())) return static_cast<int>(value);
+        return -1 - static_cast<int>(std::numeric_limits<std::uint32_t>::max() - value);
+    }
     bool boolean() {
         const auto v = number();
         if (v > 1) throw std::runtime_error("Valor booleano IPC inválido");
@@ -81,7 +86,7 @@ RobotSnapshot snapshotFromMessage(const Message& m) {
     s.id = m.robot_id; s.generation = m.generation; s.sequence = m.sequence;
     s.position = m.position; s.target = m.target; s.state = m.state; s.phase = m.phase;
     s.battery = m.battery; s.failure = m.failure; s.coupled = m.coupled;
-    s.connected = true; s.available = m.state == RobotState::IDLE && !m.failure && !m.coupled && m.battery > 15;
+    s.connected = true; s.available = m.state == RobotState::IDLE && !m.failure && !m.coupled && m.battery > 15 && m.mission_id == 0;
     s.mission_id = m.mission_id; s.cargo_id = m.cargo_id; s.team_id = m.team_id; s.bay_id = m.bay_id;
     s.revision = m.revision; s.step = m.step; s.sensor_sequence = m.sensor_sequence; s.distance = m.distance; s.updated_at_ms = m.occurred_at_ms;
     return s;

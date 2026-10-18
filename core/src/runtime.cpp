@@ -72,6 +72,7 @@ void ControlRuntime::onMessage(const Message& m) {
     } else if (m.type == MessageType::NavigationSetpoint) hardware_.setpoint(m);
     else if (m.type == MessageType::RobotSnapshot) hardware_.observe(snapshotFromMessage(m));
     else if (m.type == MessageType::RobotDisconnected) {
+        hardware_.disconnect(m.robot_id);
         const auto reading = hardware_.reading(m.robot_id); passages_.cancel(m.robot_id, reading ? reading->mission_id : 0);
         std::lock_guard<std::mutex> lock(pending_mutex_);
         for (auto it = pending_.begin(); it != pending_.end();) { if (it->second.robot_id == m.robot_id) it = pending_.erase(it); else ++it; }
@@ -112,7 +113,7 @@ void ControlRuntime::command(const std::string& line) {
     else if (action == "status") {
         exhausted();
         for (const auto& s : fleet().snapshot()) print("Robô " + std::to_string(s.id) + " | " + robotStateName(s.state) + " | posição " + std::to_string(s.position.x) + "," + std::to_string(s.position.y) + " | bateria " + std::to_string(s.battery) + "% | distância " + std::to_string(s.distance) + " | " + (s.connected ? "Conectado" : "Desconectado"));
-        manager_.printAllRobotsStatus();
+        for (const auto& p : processes()) print("Processo do robô " + std::to_string(p.id) + " | PID " + std::to_string(p.pid) + " | geração " + std::to_string(p.generation));
     } else if (action == "cargas") {
         exhausted(); for (const auto& c : cargos()) print("Carga " + std::to_string(c.id) + " | " + cargoStateName(c.state) + " | missão " + std::to_string(c.mission_id) + " | " + c.reason);
     } else if (action == "passagens") {
