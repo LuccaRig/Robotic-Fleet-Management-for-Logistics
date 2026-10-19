@@ -70,10 +70,16 @@ ORDER BY t.mission_id, m.robot_id;
 
 Em 18/10/2026, o build e os **48 testes: 39 unitários e 9 de integração** passaram após a centralização do ciclo. Ambiente: macOS 14.4.1 arm64, Apple Clang 15.0.0, CMake 4.4.4, SQLite 3.43.2 e GoogleTest 1.14.0. Comandos no [README](../README.md).
 
-Os unitários cobrem protocolo, estado, rotas, barreiras, passagens, hardware, falhas, energia e persistência. As integrações executam os oito cenários com processos reais e um caso de encerramento durante operação. Verificam recolhimento de filhos, término da execução no banco e participantes dos transportes. A inspeção final não encontrou robôs remanescentes; o banco versionado foi preservado.
+### 1. Testes de Unidade e Lógica Interna
+* **`test_warehouse.cpp`**: Valida a integridade do mapa estático do armazém (`MapaGalpao`) e o algoritmo de planejamento de rotas (`PlanejadorRotas`), garantindo o desvio de obstáculos/paredes e o cálculo correto de distâncias.
+* **`test_robot.cpp`**: Testa o comportamento autônomo individual de cada agente robô (`AgenteRobo`), incluindo máquina de estados, validação de permissões de trecho, rejeição de revisões obsoletas e ciclos de recarga de bateria.
+* **`test_passages_hardware.cpp`**: Verifica a coordenação de passagens restritas/túneis de capacidade limitada (`ControlePassagens`) e o adaptador de hardware local, assegurando o movimento sincronizado de equipes em corredores estreitos.
+* **`test_logistics.cpp`**: Valida o organizador de logística (`OrganizadorLogistica`), gerando a alocação de cargas, formação de equipes cooperativas, tratamento de suspensão por falhas parciais e retomada de missões.
 
-Os bancos dos testes são temporários; para evidência permanente, execute um cenário com `--banco logs/etapa1-demo.db`. A suíte levou 100,66 segundos, sem representar uma medição de latência de controle.
+### 2. Testes de Comunicação, Estado e Persistência
+* **`test_ipc.cpp`**: Garante a serialização e desserialização binária de mensagens do protocolo IPC, a remontagem segura de *frames* fragmentados via *sockets* Unix e a consistência estrita da máquina de estados global da frota (`EstadoFrota`).
+* **`test_data_collector.cpp` & `test_buffer_data_collector.cpp`**: Validam o coletor assíncrono de eventos e o buffer circular de telemetria direcionados ao SQLite, assegurando que múltiplos robôs concorrentes não corrompam os dados.
+* **`test_storage_migration.cpp`**: Testa a retrocompatibilidade e a migração de esquemas legados de bases de dados SQLite, além de resiliência contra falhas de gravação.
 
-Para concluir o relatório: reproduzir a validação no Linux, selecionar logs/PIDs/consultas SQLite, exportar o diagrama, redigir o PDF e conferir as orientações do Moodle. O CI está configurado somente para Ubuntu e ainda não teve execução registrada.
-
-O transporte atual é lógico: integrantes compartilham a posição da carga, não há controle geral de colisões em áreas abertas nem transferência física automática de carga após falha. A Etapa 2 deverá integrar MQTT e interfaces gráficas pelo adaptador e realizar a análise de tempo de resposta e escalonabilidade.
+### 3. Testes de Integração
+* **`test_integration.cpp`**: Executa cenários completos de simulação de ponta a ponta (`base`, `cooperativo`, `falhas`, etc.) com sub-processos reais de robôs (`fork`/`exec`), garantindo o encerramento limpo sem processos zumbis e a integridade final dos relatórios no banco de dados.
