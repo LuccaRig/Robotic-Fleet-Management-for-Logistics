@@ -7,15 +7,15 @@
 #include <optional>
 #include <vector>
 
-class IpcChannel {
+class CanalIpc {
 public:
-    explicit IpcChannel(int fd);
-    ~IpcChannel();
-    IpcChannel(const IpcChannel&) = delete;
-    IpcChannel& operator=(const IpcChannel&) = delete;
-    void send(const Message& message, std::chrono::milliseconds timeout = std::chrono::milliseconds(1000));
-    std::optional<Message> receive(std::chrono::milliseconds timeout);
-    void interrupt() noexcept;
+    explicit CanalIpc(int fd);
+    ~CanalIpc();
+    CanalIpc(const CanalIpc&) = delete;
+    CanalIpc& operator=(const CanalIpc&) = delete;
+    void enviar(const Mensagem& mensagem, std::chrono::milliseconds timeout = std::chrono::milliseconds(1000));
+    std::optional<Mensagem> receber(std::chrono::milliseconds timeout);
+    void interromper() noexcept;
     int descriptor() const noexcept { return fd_; }
 private:
     int fd_;

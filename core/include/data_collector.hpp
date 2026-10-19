@@ -10,34 +10,34 @@
 #include <thread>
 #include <sqlite3.h>
 
-class DataCollector {
+class ColetorDados {
 public:
-    explicit DataCollector(const std::string& database_path);
-    ~DataCollector();
-    DataCollector(const DataCollector&) = delete;
-    DataCollector& operator=(const DataCollector&) = delete;
-    void start();
-    void stop();
-    void enqueueEvent(const RobotEvent& event);
-    void checkError() const;
-    EntityId runId() const;
+    explicit ColetorDados(const std::string& caminho_banco);
+    ~ColetorDados();
+    ColetorDados(const ColetorDados&) = delete;
+    ColetorDados& operator=(const ColetorDados&) = delete;
+    void iniciar();
+    void parar();
+    void enfileirarEvento(const EventoRobo& event);
+    void verificarFalha() const;
+    IdEntidade idExecucao() const;
 private:
-    enum class CollectorState { STOPPED, RUNNING, STOPPING, FAILED };
-    mutable std::mutex queue_mutex;
-    std::condition_variable queue_cv;
-    std::queue<RobotEvent> event_queue;
-    CollectorState state = CollectorState::STOPPED;
-    std::exception_ptr worker_error;
-    std::mutex lifecycle_mutex;
-    std::thread collector_thread;
-    std::string db_path;
+    enum class EstadoColetor { ENCERRADO, EM_EXECUCAO, ENCERRANDO, FALHOU };
+    mutable std::mutex mutex_fila;
+    std::condition_variable condicao_fila;
+    std::queue<EventoRobo> fila_eventos;
+    EstadoColetor estado = EstadoColetor::ENCERRADO;
+    std::exception_ptr erro_thread;
+    std::mutex mutex_ciclo_vida;
+    std::thread thread_coletora;
+    std::string caminho_banco;
     sqlite3* db = nullptr;
-    EntityId run_id = 0;
+    IdEntidade run_id = 0;
     void openDatabase();
     void createTable();
     void closeDatabase() noexcept;
     void collectorLoop() noexcept;
-    void writeEventToDatabase(const RobotEvent& event);
+    void writeEventToDatabase(const EventoRobo& event);
 };
 
 #endif

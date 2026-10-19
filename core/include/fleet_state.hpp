@@ -7,43 +7,45 @@
 #include <optional>
 #include <vector>
 
-class FleetStateStore {
+// Guarda o último estado confirmado de cada geração de robô.
+class EstadoFrota {
 public:
-    bool registerRobot(int id, std::uint64_t generation, Pos start) {
+    bool registrarRobo(int id, std::uint64_t geracao, Posicao inicio) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = robots_.find(id);
-        if (it != robots_.end() && generation <= it->second.generation) return false;
-        RobotSnapshot snapshot; snapshot.id = id; snapshot.generation = generation; snapshot.position = start;
-        snapshot.target = start; snapshot.updated_at_ms = epochMilliseconds();
-        robots_[id] = snapshot; return true;
+        auto it = robos_.find(id);
+        if (it != robos_.end() && geracao <= it->second.geracao) return false;
+        EstadoAtualRobo estado; estado.id = id; estado.geracao = geracao; estado.posicao = inicio;
+        estado.destino = inicio; estado.atualizado_em_ms = instanteUnixMs();
+        robos_[id] = estado; return true;
     }
-    bool update(RobotSnapshot snapshot) {
+    bool atualizar(EstadoAtualRobo estado) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = robots_.find(snapshot.id);
-        if (it == robots_.end() || snapshot.generation != it->second.generation || snapshot.sequence <= it->second.sequence || snapshot.revision < it->second.revision || snapshot.sensor_sequence < it->second.sensor_sequence || (!it->second.connected && it->second.sequence > 0)) return false;
-        it->second = std::move(snapshot); return true;
+        auto it = robos_.find(estado.id);
+        // Geração e sequências impedem que mensagens atrasadas restaurem estado antigo.
+        if (it == robos_.end() || estado.geracao != it->second.geracao || estado.sequencia <= it->second.sequencia || estado.revisao < it->second.revisao || estado.sequencia_sensor < it->second.sequencia_sensor || (!it->second.conectado && it->second.sequencia > 0)) return false;
+        it->second = std::move(estado); return true;
     }
-    bool disconnect(int id, std::uint64_t generation) {
+    bool desconectar(int id, std::uint64_t geracao) {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto it = robots_.find(id);
-        if (it == robots_.end() || generation != it->second.generation) return false;
-        it->second.connected = false; it->second.available = false; it->second.updated_at_ms = epochMilliseconds(); return true;
+        auto it = robos_.find(id);
+        if (it == robos_.end() || geracao != it->second.geracao) return false;
+        it->second.conectado = false; it->second.disponivel = false; it->second.atualizado_em_ms = instanteUnixMs(); return true;
     }
-    std::optional<RobotSnapshot> get(int id) const {
+    std::optional<EstadoAtualRobo> obter(int id) const {
         std::lock_guard<std::mutex> lock(mutex_);
-        const auto it = robots_.find(id);
-        if (it == robots_.end()) return std::nullopt;
+        const auto it = robos_.find(id);
+        if (it == robos_.end()) return std::nullopt;
         return it->second;
     }
-    std::vector<RobotSnapshot> snapshot() const {
+    std::vector<EstadoAtualRobo> capturarEstado() const {
         std::lock_guard<std::mutex> lock(mutex_);
-        std::vector<RobotSnapshot> result;
-        for (const auto& pair : robots_) result.push_back(pair.second);
+        std::vector<EstadoAtualRobo> result;
+        for (const auto& pair : robos_) result.push_back(pair.second);
         return result;
     }
 private:
     mutable std::mutex mutex_;
-    std::map<int, RobotSnapshot> robots_;
+    std::map<int, EstadoAtualRobo> robos_;
 };
 
 #endif

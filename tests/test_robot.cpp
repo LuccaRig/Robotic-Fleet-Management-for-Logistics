@@ -3,51 +3,51 @@
 #include <algorithm>
 
 namespace {
-Message assign(int command = 1) {
-    Message m; m.type = MessageType::AssignMission; m.robot_id = 1; m.generation = 1;
-    m.command_id = command; m.mission_id = 7; m.phase = MissionPhase::TO_PICKUP; m.target = {1,0}; m.route = {{1,0}}; m.members = {1}; return m;
+Mensagem assign(int executarComando = 1) {
+    Mensagem m; m.tipo = TipoMensagem::AtribuirMissao; m.id_robo = 1; m.geracao = 1;
+    m.id_comando = executarComando; m.id_missao = 7; m.fase = FaseMissao::INDO_PARA_COLETA; m.destino = {1,0}; m.rota = {{1,0}}; m.integrantes = {1}; return m;
 }
-Message sensorFor(const RobotAgent& robot, std::uint64_t sequence) {
-    auto m = messageFromSnapshot(robot.snapshot()); m.type = MessageType::SensorUpdate; m.sensor_sequence = sequence; return m;
+Mensagem sensorFor(const AgenteRobo& robo, std::uint64_t sequencia) {
+    auto m = mensagemDoEstadoRobo(robo.capturarEstado()); m.tipo = TipoMensagem::AtualizarSensores; m.sequencia_sensor = sequencia; return m;
 }
 }
 TEST(RobotAgentTest, MovementRequiresPermissionAndConfirmedSensor) {
-    std::vector<Message> sent; RobotAgent robot(1,0,0,1,[&](Message m) { sent.push_back(m); });
-    robot.handle(assign()); robot.navigationTick();
-    ASSERT_EQ(sent.back().type,MessageType::PassageRequest); EXPECT_EQ(robot.getX(),0);
-    auto grant = sent.back(); grant.type = MessageType::PassageGranted; robot.handle(grant); robot.navigationTick();
-    ASSERT_EQ(sent.back().type,MessageType::NavigationSetpoint); EXPECT_EQ(robot.getX(),0);
-    auto sensor = sensorFor(robot,1); sensor.position = {1,0}; sensor.step = 1; robot.handle(sensor); robot.navigationTick(); robot.statusTick();
-    EXPECT_EQ(robot.getX(),1); EXPECT_EQ(robot.getEstado(),RobotState::WAITING_TO_LOAD); EXPECT_EQ(robot.snapshot().distance,1u);
+    std::vector<Mensagem> sent; AgenteRobo robo(1,0,0,1,[&](Mensagem m) { sent.push_back(m); });
+    robo.processarMensagem(assign()); robo.avancarNavegacao();
+    ASSERT_EQ(sent.back().tipo,TipoMensagem::SolicitarAcessoTrecho); EXPECT_EQ(robo.obterX(),0);
+    auto grant = sent.back(); grant.tipo = TipoMensagem::AcessoTrechoConcedido; robo.processarMensagem(grant); robo.avancarNavegacao();
+    ASSERT_EQ(sent.back().tipo,TipoMensagem::DestinoNavegacao); EXPECT_EQ(robo.obterX(),0);
+    auto leitura_sensores = sensorFor(robo,1); leitura_sensores.posicao = {1,0}; leitura_sensores.passo = 1; robo.processarMensagem(leitura_sensores); robo.avancarNavegacao(); robo.atualizarStatus();
+    EXPECT_EQ(robo.obterX(),1); EXPECT_EQ(robo.obterEstado(),EstadoRobo::AGUARDANDO_EQUIPE); EXPECT_EQ(robo.capturarEstado().distancia,1u);
 }
 TEST(RobotAgentTest, RejectsObsoleteRevisionAndStopsOnFailure) {
-    std::vector<Message> sent; RobotAgent robot(1,0,0,1,[&](Message m) { sent.push_back(m); }); robot.handle(assign());
-    auto old = sensorFor(robot,1); old.revision = 0; old.position = {8,8}; robot.handle(old); EXPECT_EQ(robot.getX(),0);
-    auto fault = sensorFor(robot,2); fault.failure = true; robot.handle(fault);
-    const auto count = sent.size(); robot.navigationTick(); EXPECT_EQ(sent.size(),count); EXPECT_EQ(robot.getEstado(),RobotState::ERROR);
-    fault.sensor_sequence = 3; fault.failure = false; robot.handle(fault); EXPECT_EQ(robot.getEstado(),RobotState::SUSPENDED);
+    std::vector<Mensagem> sent; AgenteRobo robo(1,0,0,1,[&](Mensagem m) { sent.push_back(m); }); robo.processarMensagem(assign());
+    auto old = sensorFor(robo,1); old.revisao = 0; old.posicao = {8,8}; robo.processarMensagem(old); EXPECT_EQ(robo.obterX(),0);
+    auto fault = sensorFor(robo,2); fault.falha = true; robo.processarMensagem(fault);
+    const auto count = sent.size(); robo.avancarNavegacao(); EXPECT_EQ(sent.size(),count); EXPECT_EQ(robo.obterEstado(),EstadoRobo::COM_FALHA);
+    fault.sequencia_sensor = 3; fault.falha = false; robo.processarMensagem(fault); EXPECT_EQ(robo.obterEstado(),EstadoRobo::SUSPENSO);
 }
 TEST(RobotAgentTest, CountsAllPendingSensorSegments) {
-    RobotAgent robot(1,0,0);
-    const Pos path[]{{1,0},{1,1},{0,1},{0,0}};
-    for (int i = 0; i < 4; ++i) { auto m = sensorFor(robot,i+1); m.position = path[i]; robot.handle(m); }
-    robot.statusTick(); EXPECT_EQ(robot.snapshot().distance,4u);
+    AgenteRobo robo(1,0,0);
+    const Posicao path[]{{1,0},{1,1},{0,1},{0,0}};
+    for (int i = 0; i < 4; ++i) { auto m = sensorFor(robo,i+1); m.posicao = path[i]; robo.processarMensagem(m); }
+    robo.atualizarStatus(); EXPECT_EQ(robo.capturarEstado().distancia,4u);
 }
 TEST(RobotAgentTest, RejectsPrematureCouplingAndDuplicateCommandDoesNotResetRoute) {
-    std::vector<Message> sent; RobotAgent robot(1,0,0,1,[&](Message m) { sent.push_back(m); }); auto mission = assign(); robot.handle(mission);
-    auto invalid = mission; invalid.type = MessageType::Couple; invalid.command_id = 2; robot.handle(invalid);
-    EXPECT_FALSE(sent.back().accepted); EXPECT_EQ(robot.getEstado(),RobotState::NAVIGATING_TO_PICKUP);
-    robot.handle(mission); EXPECT_FALSE(sent.back().accepted);
+    std::vector<Mensagem> sent; AgenteRobo robo(1,0,0,1,[&](Mensagem m) { sent.push_back(m); }); auto missao = assign(); robo.processarMensagem(missao);
+    auto invalid = missao; invalid.tipo = TipoMensagem::Acoplar; invalid.id_comando = 2; robo.processarMensagem(invalid);
+    EXPECT_FALSE(sent.back().aceito); EXPECT_EQ(robo.obterEstado(),EstadoRobo::INDO_PARA_COLETA);
+    robo.processarMensagem(missao); EXPECT_FALSE(sent.back().aceito);
 }
-TEST(RobotAgentTest, RepeatedStartStopIsSafe) { RobotAgent robot(1,0,0); robot.start(); robot.start(); robot.stop(); robot.stop(); robot.start(); robot.stop(); }
+TEST(RobotAgentTest, RepeatedStartStopIsSafe) { AgenteRobo robo(1,0,0); robo.iniciar(); robo.iniciar(); robo.parar(); robo.parar(); robo.iniciar(); robo.parar(); }
 TEST(RobotAgentTest, ChargeEndsOnlyAtFullBattery) {
-    RobotAgent robot(1,0,0); robot.setRobotStatus(10,false);
-    auto m = assign(); m.mission_id = 0; m.phase = MissionPhase::TO_CHARGE; m.route.clear(); m.target = {0,0}; robot.handle(m); robot.navigationTick();
-    EXPECT_EQ(robot.getEstado(),RobotState::CHARGING); robot.setRobotStatus(95,false); robot.statusTick(); EXPECT_EQ(robot.getEstado(),RobotState::CHARGING);
-    robot.setRobotStatus(100,false); robot.statusTick(); EXPECT_EQ(robot.getEstado(),RobotState::IDLE);
+    AgenteRobo robo(1,0,0); robo.atualizarEstadoRobo(10,false);
+    auto m = assign(); m.id_missao = 0; m.fase = FaseMissao::INDO_PARA_RECARGA; m.rota.clear(); m.destino = {0,0}; robo.processarMensagem(m); robo.avancarNavegacao();
+    EXPECT_EQ(robo.obterEstado(),EstadoRobo::RECARREGANDO); robo.atualizarEstadoRobo(95,false); robo.atualizarStatus(); EXPECT_EQ(robo.obterEstado(),EstadoRobo::RECARREGANDO);
+    robo.atualizarEstadoRobo(100,false); robo.atualizarStatus(); EXPECT_EQ(robo.obterEstado(),EstadoRobo::DISPONIVEL);
 }
 TEST(RobotAgentTest, PublishesTransientFaultBeforeFollowingRecovery) {
-    std::vector<Message> sent; RobotAgent robot(1,0,0,1,[&](Message m) { sent.push_back(m); });
-    robot.setRobotStatus(50,true); robot.setRobotStatus(50,false);
-    ASSERT_GE(sent.size(),2u); EXPECT_TRUE(sent[sent.size()-2].failure); EXPECT_FALSE(sent.back().failure);
+    std::vector<Mensagem> sent; AgenteRobo robo(1,0,0,1,[&](Mensagem m) { sent.push_back(m); });
+    robo.atualizarEstadoRobo(50,true); robo.atualizarEstadoRobo(50,false);
+    ASSERT_GE(sent.size(),2u); EXPECT_TRUE(sent[sent.size()-2].falha); EXPECT_FALSE(sent.back().falha);
 }

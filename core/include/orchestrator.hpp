@@ -8,38 +8,38 @@
 #include <string>
 #include <vector>
 
-struct RobotProcess {
+struct ProcessoRobo {
     int id = -1;
     int pid = -1;
-    std::uint64_t generation = 0;
-    bool ready = false;
-    bool stopping = false;
+    std::uint64_t geracao = 0;
+    bool pronto = false;
+    bool encerrando = false;
 };
 
-class Orchestrator {
+class GestorRobos {
 public:
-    using Handler = std::function<void(const Message&)>;
-    explicit Orchestrator(std::string executable = {});
-    ~Orchestrator();
-    Orchestrator(const Orchestrator&) = delete;
-    Orchestrator& operator=(const Orchestrator&) = delete;
-    bool spawnRobot(int id, int start_x, int start_y);
-    bool terminateRobot(int id);
-    bool send(int id, Message message);
-    void setMessageHandler(Handler handler);
-    void setPositionValidator(std::function<bool(Pos)> validator);
-    std::vector<RobotProcess> processes() const;
-    std::size_t getActiveRobotCount() const;
-    bool robotExists(int id) const;
-    void printAllRobotsStatus() const;
-    void checkError() const;
-    const FleetStateStore& fleet() const;
-    void stop();
+    using Handler = std::function<void(const Mensagem&)>;
+    explicit GestorRobos(std::string executavel = {});
+    ~GestorRobos();
+    GestorRobos(const GestorRobos&) = delete;
+    GestorRobos& operator=(const GestorRobos&) = delete;
+    bool iniciarProcessoRobo(int id, int start_x, int start_y);
+    bool encerrarProcessoRobo(int id);
+    bool enviar(int id, Mensagem mensagem);
+    void definirTratadorMensagem(Handler tratador);
+    void definirValidadorPosicao(std::function<bool(Posicao)> validador);
+    std::vector<ProcessoRobo> processos() const;
+    std::size_t quantidadeRobosAtivos() const;
+    bool existeProcessoRobo(int id) const;
+    void imprimirEstadosRobos() const;
+    void verificarFalha() const;
+    const EstadoFrota& frota() const;
+    void parar();
 private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
 
-int runRobotWorker(int fd, int id, std::uint64_t generation, Pos start);
+int executarAgenteRobo(int fd, int id, std::uint64_t geracao, Posicao inicio);
 
 #endif

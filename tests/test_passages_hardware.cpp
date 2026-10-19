@@ -3,41 +3,41 @@
 #include "hardware.hpp"
 
 namespace {
-Message at(int id, Pos p, std::uint64_t sequence = 0) { Message m; m.robot_id = id; m.generation = 1; m.position = p; m.sensor_sequence = sequence; return m; }
+Mensagem at(int id, Posicao p, std::uint64_t sequencia = 0) { Mensagem m; m.id_robo = id; m.geracao = 1; m.posicao = p; m.sequencia_sensor = sequencia; return m; }
 }
 TEST(PassageTest, PreservesCapacityAndQueuesOppositeFlowUntilExit) {
-    WarehouseGrid map(5,3); map.addPassage({1,2,{{2,1}}}); std::vector<Message> grants;
-    PassageCoordinator coordinator(map,[&](Message m) { grants.push_back(m); });
-    for (int id : {1,2}) coordinator.confirm(at(id,{1,1})); coordinator.confirm(at(3,{3,1}));
-    auto one = at(1,{1,1}); one.target = {2,1}; coordinator.request(one);
-    auto two = one; two.robot_id = 2; coordinator.request(two);
-    auto opposite = at(3,{3,1}); opposite.target = {2,1}; coordinator.request(opposite);
-    ASSERT_EQ(grants.size(),2u); EXPECT_EQ(coordinator.snapshot()[0].occupied,2);
-    coordinator.confirm(at(1,{2,1},1)); coordinator.cancel(1,0); EXPECT_EQ(coordinator.snapshot()[0].occupied,2);
-    coordinator.confirm(at(1,{3,1},2)); EXPECT_EQ(grants.size(),2u);
-    coordinator.confirm(at(2,{2,1},1)); coordinator.confirm(at(2,{3,1},2));
-    ASSERT_EQ(grants.size(),3u); EXPECT_EQ(grants.back().robot_id,3); EXPECT_EQ(coordinator.snapshot()[0].maximum,2);
+    MapaGalpao map(5,3); map.adicionarTrecho({1,2,{{2,1}}}); std::vector<Mensagem> liberacoes;
+    ControlePassagens coordinator(map,[&](Mensagem m) { liberacoes.push_back(m); });
+    for (int id : {1,2}) coordinator.confirmar(at(id,{1,1})); coordinator.confirmar(at(3,{3,1}));
+    auto one = at(1,{1,1}); one.destino = {2,1}; coordinator.solicitarAcesso(one);
+    auto two = one; two.id_robo = 2; coordinator.solicitarAcesso(two);
+    auto opposite = at(3,{3,1}); opposite.destino = {2,1}; coordinator.solicitarAcesso(opposite);
+    ASSERT_EQ(liberacoes.size(),2u); EXPECT_EQ(coordinator.capturarEstado()[0].ocupado,2);
+    coordinator.confirmar(at(1,{2,1},1)); coordinator.cancelar(1,0); EXPECT_EQ(coordinator.capturarEstado()[0].ocupado,2);
+    coordinator.confirmar(at(1,{3,1},2)); EXPECT_EQ(liberacoes.size(),2u);
+    coordinator.confirmar(at(2,{2,1},1)); coordinator.confirmar(at(2,{3,1},2));
+    ASSERT_EQ(liberacoes.size(),3u); EXPECT_EQ(liberacoes.back().id_robo,3); EXPECT_EQ(coordinator.capturarEstado()[0].maximo,2);
 }
 TEST(PassageTest, TeamReservationIsIndivisible) {
-    WarehouseGrid map(5,3); map.addPassage({1,2,{{2,1}}}); std::vector<Message> grants;
-    PassageCoordinator coordinator(map,[&](Message m) { grants.push_back(m); });
-    coordinator.confirm(at(1,{1,1})); coordinator.confirm(at(2,{1,1}));
-    auto m = at(1,{1,1}); m.coupled = true; m.mission_id = 1; m.members = {1,2}; m.team_size = 2; m.target = {2,1}; coordinator.request(m);
-    EXPECT_EQ(coordinator.snapshot()[0].occupied,2); m.robot_id = 2; coordinator.request(m); EXPECT_EQ(coordinator.snapshot()[0].occupied,2);
-    m.mission_id = 2; m.members.push_back(3); m.team_size = 3; EXPECT_THROW(coordinator.request(m),std::runtime_error);
+    MapaGalpao map(5,3); map.adicionarTrecho({1,2,{{2,1}}}); std::vector<Mensagem> liberacoes;
+    ControlePassagens coordinator(map,[&](Mensagem m) { liberacoes.push_back(m); });
+    coordinator.confirmar(at(1,{1,1})); coordinator.confirmar(at(2,{1,1}));
+    auto m = at(1,{1,1}); m.acoplado = true; m.id_missao = 1; m.integrantes = {1,2}; m.quantidade_integrantes = 2; m.destino = {2,1}; coordinator.solicitarAcesso(m);
+    EXPECT_EQ(coordinator.capturarEstado()[0].ocupado,2); m.id_robo = 2; coordinator.solicitarAcesso(m); EXPECT_EQ(coordinator.capturarEstado()[0].ocupado,2);
+    m.id_missao = 2; m.integrantes.push_back(3); m.quantidade_integrantes = 3; EXPECT_THROW(coordinator.solicitarAcesso(m),std::runtime_error);
 }
 TEST(HardwareTest, GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision) {
-    WarehouseGrid map(4,3); std::vector<Message> sensors;
-    LocalHardwareAdapter hardware(map,[&](Message m) { sensors.push_back(m); });
+    MapaGalpao map(4,3); std::vector<Mensagem> sensors;
+    AdaptadorHardwareLocal hardware(map,[&](Mensagem m) { sensors.push_back(m); });
     for (int id : {1,2}) {
-        RobotSnapshot s; s.id = id; s.generation = 1; hardware.registerRobot(s);
-        Message m; m.robot_id = id; m.generation = 1; m.type = MessageType::AssignMission; m.command_id = 1; m.mission_id = 1; m.phase = MissionPhase::TO_PICKUP; m.members = {id}; hardware.commandAccepted(m);
-        m.type = MessageType::Couple; m.command_id = 2; hardware.commandAccepted(m);
-        m.type = MessageType::AssignMission; m.command_id = 3; m.phase = MissionPhase::TO_DELIVERY; m.members = {1,2}; hardware.commandAccepted(m);
+        EstadoAtualRobo s; s.id = id; s.geracao = 1; hardware.registrarRobo(s);
+        Mensagem m; m.id_robo = id; m.geracao = 1; m.tipo = TipoMensagem::AtribuirMissao; m.id_comando = 1; m.id_missao = 1; m.fase = FaseMissao::INDO_PARA_COLETA; m.integrantes = {id}; hardware.confirmarComandoAceito(m);
+        m.tipo = TipoMensagem::Acoplar; m.id_comando = 2; hardware.confirmarComandoAceito(m);
+        m.tipo = TipoMensagem::AtribuirMissao; m.id_comando = 3; m.fase = FaseMissao::INDO_PARA_ENTREGA; m.integrantes = {1,2}; hardware.confirmarComandoAceito(m);
     }
-    auto first = *hardware.reading(1); first.target = {1,0}; first.step = 1; hardware.setpoint(first); EXPECT_EQ(hardware.reading(1)->position,(Pos{0,0}));
-    auto second = *hardware.reading(2); second.target = {1,0}; second.step = 1; hardware.setpoint(second);
-    EXPECT_EQ(hardware.reading(1)->position,(Pos{1,0})); EXPECT_EQ(hardware.reading(2)->position,(Pos{1,0})); EXPECT_EQ(hardware.reading(1)->battery,99);
-    auto pause = first; pause.type = MessageType::PauseMission; pause.command_id = 4; hardware.commandAccepted(pause);
-    first.step = 2; first.position = {1,0}; first.target = {2,0}; hardware.setpoint(first); EXPECT_EQ(hardware.reading(1)->position,(Pos{1,0}));
+    auto first = *hardware.lerLeitura(1); first.destino = {1,0}; first.passo = 1; hardware.setpoint(first); EXPECT_EQ(hardware.lerLeitura(1)->posicao,(Posicao{0,0}));
+    auto second = *hardware.lerLeitura(2); second.destino = {1,0}; second.passo = 1; hardware.setpoint(second);
+    EXPECT_EQ(hardware.lerLeitura(1)->posicao,(Posicao{1,0})); EXPECT_EQ(hardware.lerLeitura(2)->posicao,(Posicao{1,0})); EXPECT_EQ(hardware.lerLeitura(1)->bateria,99);
+    auto pause = first; pause.tipo = TipoMensagem::PausarMissao; pause.id_comando = 4; hardware.confirmarComandoAceito(pause);
+    first.passo = 2; first.posicao = {1,0}; first.destino = {2,0}; hardware.setpoint(first); EXPECT_EQ(hardware.lerLeitura(1)->posicao,(Posicao{1,0}));
 }

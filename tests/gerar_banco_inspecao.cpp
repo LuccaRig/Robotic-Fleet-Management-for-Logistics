@@ -11,25 +11,25 @@ int main() {
         const std::filesystem::path caminho = "logs/test_events_inspecao.db";
         std::filesystem::create_directories(caminho.parent_path());
 
-        DataCollector collector(caminho.string());
-        collector.start();
-        Buffer buffer(collector, 3);
+        ColetorDados collector(caminho.string());
+        collector.iniciar();
+        BufferEventos buffer(collector, 3);
 
-        buffer.addEvent(RobotEvent(1, -1, -1, {0, 0}, EventType::ROBOT_CREATED,
+        buffer.adicionarEvento(EventoRobo(1, -1, -1, {0, 0}, TipoEvento::ROBO_CRIADO,
                                    "Robo 1 inicializado", ""));
-        buffer.addEvent(RobotEvent(1, 7, 2, {3, 4}, EventType::ROBOT_MOVING,
+        buffer.adicionarEvento(EventoRobo(1, 7, 2, {3, 4}, TipoEvento::ROBO_EM_MOVIMENTO,
                                    "Robo 1 em deslocamento", "Baia 2"));
-        buffer.addEvent(RobotEvent(2, 7, 2, {8, 4}, EventType::CARGO_PICKUP,
+        buffer.adicionarEvento(EventoRobo(2, 7, 2, {8, 4}, TipoEvento::CARGA_COLETADA,
                                    "Carga coletada", "Estoque"));
-        buffer.addEvent(RobotEvent(1, 7, 2, {10, 5}, EventType::CARGO_DELIVERED,
+        buffer.adicionarEvento(EventoRobo(1, 7, 2, {10, 5}, TipoEvento::CARGA_ENTREGUE,
                                    "Carga entregue", "Expedicao"));
 
         // Garante que todos os eventos aceitos foram processados antes de sair.
-        collector.stop();
+        collector.parar();
 
         std::cout << "Banco preservado: " << std::filesystem::absolute(caminho) << '\n';
-        std::cout << "4 eventos enviados; buffer conserva " << buffer.size()
-                  << " eventos recentes (capacidade " << buffer.capacity() << ").\n";
+        std::cout << "4 eventos enviados; buffer conserva " << buffer.quantidade()
+                  << " eventos recentes (capacidade " << buffer.capacidade() << ").\n";
         std::cout << "Novas execucoes acrescentam registros ao mesmo banco.\n";
         return 0;
     } catch (const std::exception& e) {

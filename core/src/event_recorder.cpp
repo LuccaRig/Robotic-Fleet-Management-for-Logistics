@@ -1,57 +1,57 @@
 #include "event_recorder.hpp"
 
-EventRecorder::EventRecorder(Buffer& buffer, Observer observer) : buffer_(buffer), observer_(std::move(observer)) {}
-void EventRecorder::record(RobotEvent event) { buffer_.addEvent(event); if (observer_) observer_(event); }
-void EventRecorder::onRobot(const Message& m) {
-    std::vector<RobotEvent> events;
+GravadorEventos::GravadorEventos(BufferEventos& buffer, Observador observador) : buffer_(buffer), observador_(std::move(observador)) {}
+void GravadorEventos::registrar(EventoRobo event) { buffer_.adicionarEvento(event); if (observador_) observador_(event); }
+void GravadorEventos::aoReceberEventoRobo(const Mensagem& m) {
+    std::vector<EventoRobo> eventos;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        auto add = [&](EventType type, const std::string& description, Pos position) {
-            RobotEvent e(m.robot_id, static_cast<int>(m.team_id), m.bay_id, position, type, description, "");
-            e.trace(m.cargo_id, m.mission_id, m.generation, "robo:" + std::to_string(m.robot_id), m.sequence ? m.sequence : ++sequence_, m.occurred_at_ms ? m.occurred_at_ms : epochMilliseconds());
-            events.push_back(std::move(e));
+        auto add = [&](TipoEvento tipo, const std::string& descricao, Posicao posicao) {
+            EventoRobo e(m.id_robo, static_cast<int>(m.id_equipe), m.id_baia, posicao, tipo, descricao, "");
+            e.rastrear(m.id_carga, m.id_missao, m.geracao, "robo:" + std::to_string(m.id_robo), m.sequencia ? m.sequencia : ++sequencia_, m.ocorrido_em_ms ? m.ocorrido_em_ms : instanteUnixMs());
+            eventos.push_back(std::move(e));
         };
-        const auto old = previous_.find(m.robot_id);
-        const bool known = old != previous_.end() && old->second.generation == m.generation;
-        const auto position = known ? old->second.position : m.position;
-        if (m.type == MessageType::RobotHello) add(EventType::ROBOT_CREATED, "Processo do robô criado", m.position);
-        else if (m.type == MessageType::RobotReady) add(EventType::ROBOT_READY, "Robô pronto para receber tarefas", m.position);
-        else if (m.type == MessageType::RobotDisconnected) add(EventType::ROBOT_DISCONNECTED, "Robô desconectado: " + m.text, position);
-        else if (m.type == MessageType::RobotStopped) add(EventType::ROBOT_STOPPED, "Processo do robô finalizado", position);
-        if (m.type == MessageType::RobotSnapshot || m.type == MessageType::RobotReady) {
-            const auto s = snapshotFromMessage(m);
-            if (known && s.sequence <= old->second.sequence) return;
-            if (known && s.position != old->second.position) add(EventType::ROBOT_MOVING, "Posição confirmada atualizada", s.position);
-            if (s.failure && (!known || !old->second.failure)) add(EventType::ROBOT_FAILURE, "Falha identificada", s.position);
-            if (!s.failure && known && old->second.failure) add(EventType::ROBOT_RECOVERED, "Falha removida; missão exige retomada explícita", s.position);
-            if (s.battery <= 15 && (!known || old->second.battery > 15)) add(EventType::LOW_BATTERY, "Bateria baixa", s.position);
-            if (s.state == RobotState::CHARGING && (!known || old->second.state != RobotState::CHARGING)) add(EventType::ROBOT_CHARGING, "Recarga iniciada", s.position);
-            if (s.state == RobotState::IDLE && s.battery == 100 && known && old->second.state == RobotState::CHARGING) add(EventType::RECHARGE_COMPLETED, "Recarga concluída", s.position);
-            if ((s.state == RobotState::WAITING_TO_LOAD || s.state == RobotState::WAITING_TO_UNLOAD) && (!known || s.state != old->second.state)) add(EventType::ROBOT_ARRIVED, "Chegada confirmada", s.position);
-            previous_[m.robot_id] = s;
+        const auto old = estados_anteriores_.find(m.id_robo);
+        const bool known = old != estados_anteriores_.end() && old->second.geracao == m.geracao;
+        const auto posicao = known ? old->second.posicao : m.posicao;
+        if (m.tipo == TipoMensagem::SaudacaoRobo) add(TipoEvento::ROBO_CRIADO, "Processo do robô criado", m.posicao);
+        else if (m.tipo == TipoMensagem::RoboPronto) add(TipoEvento::ROBO_PRONTO, "Robô pronto para receber tarefas", m.posicao);
+        else if (m.tipo == TipoMensagem::RoboDesconectado) add(TipoEvento::ROBO_DESCONECTADO, "Robô desconectado: " + m.texto, posicao);
+        else if (m.tipo == TipoMensagem::RoboEncerrado) add(TipoEvento::ROBO_ENCERRADO, "Processo do robô finalizado", posicao);
+        if (m.tipo == TipoMensagem::EstadoAtualRobo || m.tipo == TipoMensagem::RoboPronto) {
+            const auto s = estadoRoboDaMensagem(m);
+            if (known && s.sequencia <= old->second.sequencia) return;
+            if (known && s.posicao != old->second.posicao) add(TipoEvento::ROBO_EM_MOVIMENTO, "Posição confirmada atualizada", s.posicao);
+            if (s.falha && (!known || !old->second.falha)) add(TipoEvento::FALHA_NO_ROBO, "Falha identificada", s.posicao);
+            if (!s.falha && known && old->second.falha) add(TipoEvento::ROBO_RECUPERADO, "Falha removida; missão exige retomada explícita", s.posicao);
+            if (s.bateria <= 15 && (!known || old->second.bateria > 15)) add(TipoEvento::BATERIA_BAIXA, "Bateria baixa", s.posicao);
+            if (s.estado == EstadoRobo::RECARREGANDO && (!known || old->second.estado != EstadoRobo::RECARREGANDO)) add(TipoEvento::ROBO_RECARREGANDO, "Recarga iniciada", s.posicao);
+            if (s.estado == EstadoRobo::DISPONIVEL && s.bateria == 100 && known && old->second.estado == EstadoRobo::RECARREGANDO) add(TipoEvento::RECARGA_CONCLUIDA, "Recarga concluída", s.posicao);
+            if ((s.estado == EstadoRobo::AGUARDANDO_EQUIPE || s.estado == EstadoRobo::AGUARDANDO_DESCARGA) && (!known || s.estado != old->second.estado)) add(TipoEvento::ROBO_CHEGOU, "Chegada confirmada", s.posicao);
+            estados_anteriores_[m.id_robo] = s;
         }
     }
-    for (auto& event : events) record(std::move(event));
+    for (auto& event : eventos) registrar(std::move(event));
 }
-void EventRecorder::onLogistics(const LogisticsNotice& n) {
-    EventType type; std::string description;
-    switch (n.kind) {
-    case LogisticsNotice::Kind::Assigned: type = EventType::MISSION_ASSIGNED; description = "Equipe completa reservada"; break;
-    case LogisticsNotice::Kind::Gathered: type = EventType::TEAM_GATHERED; description = "Todos os integrantes chegaram à baía"; break;
-    case LogisticsNotice::Kind::Coupled: type = EventType::CARGO_PICKUP; description = "Acoplamento de todos os integrantes confirmado"; break;
-    case LogisticsNotice::Kind::TransportStarted: type = EventType::TRANSPORT_STARTED; description = "Transporte colaborativo liberado"; break;
-    case LogisticsNotice::Kind::Delivered: type = EventType::CARGO_DELIVERED; description = "Entrega e desacoplamento de todos os integrantes confirmados"; break;
-    case LogisticsNotice::Kind::Cancelled: type = EventType::MISSION_CANCELLED; description = "Reserva cancelada: " + n.cargo.reason; break;
-    case LogisticsNotice::Kind::Suspended: type = EventType::MISSION_SUSPENDED; description = "Missão suspensa: " + n.cargo.reason; break;
-    case LogisticsNotice::Kind::Resumed: type = EventType::MISSION_RESUMED; description = "Retomada autorizada após recuperação"; break;
+void GravadorEventos::aoReceberEventoLogistica(const AvisoLogistica& n) {
+    TipoEvento tipo; std::string descricao;
+    switch (n.tipo) {
+    case AvisoLogistica::TipoAviso::MissaoAtribuida: tipo = TipoEvento::MISSAO_ATRIBUIDA; descricao = "Equipe completa reservada"; break;
+    case AvisoLogistica::TipoAviso::EquipeReunida: tipo = TipoEvento::EQUIPE_REUNIDA; descricao = "Todos os integrantes chegaram à baía"; break;
+    case AvisoLogistica::TipoAviso::EquipeAcoplada: tipo = TipoEvento::CARGA_COLETADA; descricao = "Acoplamento de todos os integrantes confirmado"; break;
+    case AvisoLogistica::TipoAviso::TransporteIniciado: tipo = TipoEvento::TRANSPORTE_INICIADO; descricao = "Transporte colaborativo liberado"; break;
+    case AvisoLogistica::TipoAviso::CargaEntregue: tipo = TipoEvento::CARGA_ENTREGUE; descricao = "Entrega e desacoplamento de todos os integrantes confirmados"; break;
+    case AvisoLogistica::TipoAviso::MissaoCancelada: tipo = TipoEvento::MISSAO_CANCELADA; descricao = "Reserva cancelada: " + n.carga.motivo; break;
+    case AvisoLogistica::TipoAviso::MissaoSuspensa: tipo = TipoEvento::MISSAO_SUSPENSA; descricao = "Missão suspensa: " + n.carga.motivo; break;
+    case AvisoLogistica::TipoAviso::MissaoRetomada: tipo = TipoEvento::MISSAO_RETOMADA; descricao = "Retomada autorizada após recuperação"; break;
     }
-    Pos position; if (!n.mission.reports.empty()) position = n.mission.reports.begin()->second.position;
-    RobotEvent e(-1, static_cast<int>(n.mission.id), n.cargo.bay_id, position, type, description, "Zona " + std::to_string(n.cargo.destination_id));
-    e.trace(n.cargo.id, n.mission.id, 0, "logistica", ++sequence_, n.occurred_at_ms, n.mission.members); record(std::move(e));
+    Posicao posicao; if (!n.missao.relatos.empty()) posicao = n.missao.relatos.begin()->second.posicao;
+    EventoRobo e(-1, static_cast<int>(n.missao.id), n.carga.id_baia, posicao, tipo, descricao, "Zona " + std::to_string(n.carga.id_destino));
+    e.rastrear(n.carga.id, n.missao.id, 0, "logistica", ++sequencia_, n.ocorrido_em_ms, n.missao.integrantes); registrar(std::move(e));
 }
-void EventRecorder::onPassage(const PassageNotice& n) {
-    const auto& m = n.context;
-    RobotEvent e(m.robot_id, static_cast<int>(m.team_id), m.bay_id, m.target, n.entered ? EventType::PASSAGE_ENTERED : EventType::PASSAGE_EXITED,
-        std::string(n.entered ? "Entrada na passagem " : "Saída da passagem ") + std::to_string(n.passage_id) + " com " + std::to_string(n.slots) + " vaga(s)", "");
-    e.trace(m.cargo_id, m.mission_id, m.generation, "passagens", ++sequence_, epochMilliseconds(), m.members); record(std::move(e));
+void GravadorEventos::aoReceberEventoPassagem(const AvisoPassagem& n) {
+    const auto& m = n.mensagem;
+    EventoRobo e(m.id_robo, static_cast<int>(m.id_equipe), m.id_baia, m.destino, n.entrou ? TipoEvento::ENTRADA_EM_TRECHO : TipoEvento::SAIDA_DE_TRECHO,
+        std::string(n.entrou ? "Entrada na passagem " : "Saída da passagem ") + std::to_string(n.id_trecho) + " com " + std::to_string(n.vagas) + " vaga(s)", "");
+    e.rastrear(m.id_carga, m.id_missao, m.geracao, "passagens", ++sequencia_, instanteUnixMs(), m.integrantes); registrar(std::move(e));
 }

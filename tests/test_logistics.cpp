@@ -3,64 +3,64 @@
 #include <algorithm>
 
 namespace {
-WarehouseGrid layout() { WarehouseGrid map(6,5); map.addBay({1,{1,1},{}}); map.addDestination({1,{4,1}}); map.setCell(0,0,CellState::CHARGING_STATION); return map; }
-void registerRobot(FleetStateStore& fleet, int id) {
-    fleet.registerRobot(id,1,{0,1}); RobotSnapshot s; s.id = id; s.generation = 1; s.sequence = 1; s.position = {0,1}; s.available = true; s.connected = true; fleet.update(s);
+MapaGalpao layout() { MapaGalpao map(6,5); map.adicionarBaia({1,{1,1},{}}); map.adicionarDestino({1,{4,1}}); map.definirCelula(0,0,EstadoCelula::ESTACAO_RECARGA); return map; }
+void registrarRobo(EstadoFrota& frota, int id) {
+    frota.registrarRobo(id,1,{0,1}); EstadoAtualRobo s; s.id = id; s.geracao = 1; s.sequencia = 1; s.posicao = {0,1}; s.disponivel = true; s.conectado = true; frota.atualizar(s);
 }
-Cargo load(int size) { Cargo c; c.id = 1; c.size = size; c.bay_id = 1; c.destination_id = 1; return c; }
-Message report(int id, RobotState state, MissionPhase phase, bool coupled = false) {
-    Message m; m.type = MessageType::RobotSnapshot; m.robot_id = id; m.generation = 1; m.sequence = 2; m.mission_id = 1;
-    m.state = state; m.phase = phase; m.coupled = coupled; m.position = {1,1}; return m;
+Carga load(int tamanho) { Carga c; c.id = 1; c.tamanho = tamanho; c.id_baia = 1; c.id_destino = 1; return c; }
+Mensagem report(int id, EstadoRobo estado, FaseMissao fase, bool acoplado = false) {
+    Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = id; m.geracao = 1; m.sequencia = 2; m.id_missao = 1;
+    m.estado = estado; m.fase = fase; m.acoplado = acoplado; m.posicao = {1,1}; return m;
 }
 }
 TEST(LogisticsTest, WaitsForCompleteTeamAndAllArrivalReports) {
-    auto map = layout(); FleetStateStore fleet; registerRobot(fleet,1); std::vector<Message> sent;
-    LogisticsOrganizer organizer(map,fleet,{load(2)},[&](int,Message m) { sent.push_back(m); return true; });
-    organizer.processOnce(); EXPECT_TRUE(sent.empty()); EXPECT_EQ(organizer.cargos()[0].state,CargoState::PENDING);
-    registerRobot(fleet,2); organizer.processOnce(); ASSERT_EQ(sent.size(),2u); EXPECT_EQ(sent[0].type,MessageType::AssignMission);
-    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::PICKUP_READY)); organizer.processOnce(); EXPECT_EQ(sent.size(),2u);
-    organizer.onMessage(report(2,RobotState::WAITING_TO_LOAD,MissionPhase::PICKUP_READY)); organizer.processOnce(); ASSERT_EQ(sent.size(),4u); EXPECT_EQ(sent.back().type,MessageType::Couple);
-    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::COUPLING,true)); organizer.processOnce(); EXPECT_EQ(sent.size(),4u);
-    organizer.onMessage(report(2,RobotState::WAITING_TO_LOAD,MissionPhase::COUPLING,true)); organizer.processOnce(); ASSERT_EQ(sent.size(),6u); EXPECT_EQ(sent.back().phase,MissionPhase::TO_DELIVERY);
-    for (int id : {1,2}) organizer.onMessage(report(id,RobotState::WAITING_TO_UNLOAD,MissionPhase::DELIVERY_READY,true)); organizer.processOnce(); ASSERT_EQ(sent.size(),8u);
-    organizer.onMessage(report(1,RobotState::WAITING_TO_UNLOAD,MissionPhase::UNCOUPLING,false)); organizer.processOnce(); EXPECT_NE(organizer.cargos()[0].state,CargoState::DELIVERED);
-    organizer.onMessage(report(2,RobotState::WAITING_TO_UNLOAD,MissionPhase::UNCOUPLING,false)); organizer.processOnce(); EXPECT_EQ(organizer.cargos()[0].state,CargoState::DELIVERED);
+    auto map = layout(); EstadoFrota frota; registrarRobo(frota,1); std::vector<Mensagem> sent;
+    OrganizadorLogistica organizer(map,frota,{load(2)},[&](int,Mensagem m) { sent.push_back(m); return true; });
+    organizer.processarUmaVez(); EXPECT_TRUE(sent.empty()); EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::PENDENTE);
+    registrarRobo(frota,2); organizer.processarUmaVez(); ASSERT_EQ(sent.size(),2u); EXPECT_EQ(sent[0].tipo,TipoMensagem::AtribuirMissao);
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)); organizer.processarUmaVez(); EXPECT_EQ(sent.size(),2u);
+    organizer.aoReceberMensagem(report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)); organizer.processarUmaVez(); ASSERT_EQ(sent.size(),4u); EXPECT_EQ(sent.back().tipo,TipoMensagem::Acoplar);
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)); organizer.processarUmaVez(); EXPECT_EQ(sent.size(),4u);
+    organizer.aoReceberMensagem(report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)); organizer.processarUmaVez(); ASSERT_EQ(sent.size(),6u); EXPECT_EQ(sent.back().fase,FaseMissao::INDO_PARA_ENTREGA);
+    for (int id : {1,2}) organizer.aoReceberMensagem(report(id,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::ENTREGA_PRONTA,true)); organizer.processarUmaVez(); ASSERT_EQ(sent.size(),8u);
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::DESACOPLANDO,false)); organizer.processarUmaVez(); EXPECT_NE(organizer.cargos()[0].estado,EstadoCarga::ENTREGUE);
+    organizer.aoReceberMensagem(report(2,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::DESACOPLANDO,false)); organizer.processarUmaVez(); EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::ENTREGUE);
 }
 TEST(LogisticsTest, CancelsBeforeCouplingAndPreservesQueue) {
-    auto map = layout(); FleetStateStore fleet; registerRobot(fleet,1); registerRobot(fleet,2);
-    LogisticsOrganizer organizer(map,fleet,{load(2)},[](int,Message) { return true; }); organizer.processOnce();
-    auto failure = report(1,RobotState::ERROR,MissionPhase::TO_PICKUP); failure.failure = true;
-    auto s = snapshotFromMessage(failure); s.sequence = 3; fleet.update(s); organizer.onMessage(failure); organizer.processOnce();
-    EXPECT_EQ(organizer.cargos()[0].state,CargoState::PENDING); EXPECT_EQ(organizer.missions()[0].phase,MissionPhase::NONE);
+    auto map = layout(); EstadoFrota frota; registrarRobo(frota,1); registrarRobo(frota,2);
+    OrganizadorLogistica organizer(map,frota,{load(2)},[](int,Mensagem) { return true; }); organizer.processarUmaVez();
+    auto falha = report(1,EstadoRobo::COM_FALHA,FaseMissao::INDO_PARA_COLETA); falha.falha = true;
+    auto s = estadoRoboDaMensagem(falha); s.sequencia = 3; frota.atualizar(s); organizer.aoReceberMensagem(falha); organizer.processarUmaVez();
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::PENDENTE); EXPECT_EQ(organizer.missoes()[0].fase,FaseMissao::NENHUMA);
 }
 TEST(LogisticsTest, SuspendsPartiallyCoupledTeamInsteadOfReassigning) {
-    auto map = layout(); FleetStateStore fleet; registerRobot(fleet,1); registerRobot(fleet,2);
-    LogisticsOrganizer organizer(map,fleet,{load(2)},[](int,Message) { return true; }); organizer.processOnce();
-    for (int id : {1,2}) organizer.onMessage(report(id,RobotState::WAITING_TO_LOAD,MissionPhase::PICKUP_READY)); organizer.processOnce();
-    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::COUPLING,true));
-    auto failure = report(2,RobotState::ERROR,MissionPhase::COUPLING); failure.failure = true; organizer.onMessage(failure); organizer.processOnce();
-    EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED); EXPECT_EQ(organizer.missions().size(),1u);
-    organizer.requestResume(1); organizer.processOnce(); EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
+    auto map = layout(); EstadoFrota frota; registrarRobo(frota,1); registrarRobo(frota,2);
+    OrganizadorLogistica organizer(map,frota,{load(2)},[](int,Mensagem) { return true; }); organizer.processarUmaVez();
+    for (int id : {1,2}) organizer.aoReceberMensagem(report(id,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)); organizer.processarUmaVez();
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true));
+    auto falha = report(2,EstadoRobo::COM_FALHA,FaseMissao::ACOPLANDO); falha.falha = true; organizer.aoReceberMensagem(falha); organizer.processarUmaVez();
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::SUSPENSO); EXPECT_EQ(organizer.missoes().size(),1u);
+    organizer.solicitarRetomada(1); organizer.processarUmaVez(); EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::SUSPENSO);
 }
 TEST(LogisticsTest, ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults) {
-    auto map = layout(); FleetStateStore fleet; registerRobot(fleet,1);
-    std::vector<LogisticsNotice::Kind> notices;
-    LogisticsOrganizer organizer(map,fleet,{load(1)},[](int,Message) { return true; },[&](const LogisticsNotice& n) { notices.push_back(n.kind); });
-    organizer.processOnce();
-    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::PICKUP_READY)); organizer.processOnce();
-    organizer.onMessage(report(1,RobotState::WAITING_TO_LOAD,MissionPhase::COUPLING,true)); organizer.processOnce();
-    auto failure = report(1,RobotState::ERROR,MissionPhase::TO_DELIVERY,true);
-    failure.type = MessageType::SensorUpdate; failure.sensor_sequence = 1; failure.revision = 3; failure.failure = true;
-    organizer.onMessage(failure); organizer.processOnce(); ASSERT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
-    auto recovered = failure; recovered.failure = false; recovered.sensor_sequence = 2; recovered.revision = 4;
-    organizer.onMessage(recovered); organizer.processOnce();
-    auto old = snapshotFromMessage(failure); old.failure = false; old.state = RobotState::SUSPENDED; old.sequence = 3;
-    ASSERT_TRUE(fleet.update(old)); organizer.requestResume(1); organizer.processOnce();
-    EXPECT_EQ(organizer.cargos()[0].state,CargoState::SUSPENDED);
-    auto current = snapshotFromMessage(recovered); current.state = RobotState::SUSPENDED; current.sequence = 4;
-    ASSERT_TRUE(fleet.update(current)); organizer.requestResume(1); organizer.processOnce();
-    ASSERT_EQ(organizer.cargos()[0].state,CargoState::TRANSPORTING);
-    organizer.onMessage(failure); organizer.processOnce();
-    EXPECT_EQ(organizer.cargos()[0].state,CargoState::TRANSPORTING);
-    EXPECT_EQ(std::count(notices.begin(),notices.end(),LogisticsNotice::Kind::Suspended),1);
+    auto map = layout(); EstadoFrota frota; registrarRobo(frota,1);
+    std::vector<AvisoLogistica::TipoAviso> avisos;
+    OrganizadorLogistica organizer(map,frota,{load(1)},[](int,Mensagem) { return true; },[&](const AvisoLogistica& n) { avisos.push_back(n.tipo); });
+    organizer.processarUmaVez();
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)); organizer.processarUmaVez();
+    organizer.aoReceberMensagem(report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)); organizer.processarUmaVez();
+    auto falha = report(1,EstadoRobo::COM_FALHA,FaseMissao::INDO_PARA_ENTREGA,true);
+    falha.tipo = TipoMensagem::AtualizarSensores; falha.sequencia_sensor = 1; falha.revisao = 3; falha.falha = true;
+    organizer.aoReceberMensagem(falha); organizer.processarUmaVez(); ASSERT_EQ(organizer.cargos()[0].estado,EstadoCarga::SUSPENSO);
+    auto recovered = falha; recovered.falha = false; recovered.sequencia_sensor = 2; recovered.revisao = 4;
+    organizer.aoReceberMensagem(recovered); organizer.processarUmaVez();
+    auto old = estadoRoboDaMensagem(falha); old.falha = false; old.estado = EstadoRobo::SUSPENSO; old.sequencia = 3;
+    ASSERT_TRUE(frota.atualizar(old)); organizer.solicitarRetomada(1); organizer.processarUmaVez();
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::SUSPENSO);
+    auto atual = estadoRoboDaMensagem(recovered); atual.estado = EstadoRobo::SUSPENSO; atual.sequencia = 4;
+    ASSERT_TRUE(frota.atualizar(atual)); organizer.solicitarRetomada(1); organizer.processarUmaVez();
+    ASSERT_EQ(organizer.cargos()[0].estado,EstadoCarga::EM_TRANSPORTE);
+    organizer.aoReceberMensagem(falha); organizer.processarUmaVez();
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::EM_TRANSPORTE);
+    EXPECT_EQ(std::count(avisos.begin(),avisos.end(),AvisoLogistica::TipoAviso::MissaoSuspensa),1);
 }

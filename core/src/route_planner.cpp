@@ -1,35 +1,76 @@
 #include "route_planner.hpp"
+
 #include <algorithm>
 #include <queue>
 
-std::optional<std::vector<Pos>> RoutePlanner::route(Pos start, Pos target, int team_size) const {
-    if (team_size < 1 || team_size > 4) return std::nullopt;
-    auto allowed = [&](Pos p) { const auto* passage = warehouse_.passageAt(p); return warehouse_.traversable(p) && (!passage || passage->capacity >= team_size); };
-    if (!allowed(start) || !allowed(target)) return std::nullopt;
-    const int width = warehouse_.getWidth();
-    const auto index = [width](Pos p) { return p.y * width + p.x; };
-    const auto position = [width](int n) { return Pos{n % width, n / width}; };
-    std::vector<int> parent(static_cast<std::size_t>(width) * warehouse_.getHeight(), -1);
-    std::queue<Pos> queue; queue.push(start); parent[index(start)] = index(start);
-    const Pos deltas[]{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-    while (!queue.empty() && parent[index(target)] < 0) {
-        const auto current = queue.front(); queue.pop();
-        for (const auto delta : deltas) {
-            Pos next{current.x + delta.x, current.y + delta.y};
-            if (!allowed(next) || parent[index(next)] >= 0) continue;
-            parent[index(next)] = index(current); queue.push(next);
+std::optional<std::vector<Posicao>> PlanejadorRotas::calcularRota(
+    Posicao inicio, Posicao destino, int quantidade_integrantes) const {
+    if (quantidade_integrantes < 1 || quantidade_integrantes > 4) {
+        return std::nullopt;
+    }
+
+    const auto podeUsar = [&](Posicao posicao) {
+        const auto* trecho = galpao_.trechoEm(posicao);
+        return galpao_.podeTransitar(posicao) &&
+               (!trecho || trecho->capacidade >= quantidade_integrantes);
+    };
+    if (!podeUsar(inicio) || !podeUsar(destino)) {
+        return std::nullopt;
+    }
+
+    const int largura = galpao_.largura();
+    const auto indice = [largura](Posicao posicao) {
+        return posicao.y * largura + posicao.x;
+    };
+    const auto posicaoNoIndice = [largura](int valor) {
+        return Posicao{valor % largura, valor / largura};
+    };
+
+    std::vector<int> anterior(
+        static_cast<std::size_t>(largura) * galpao_.altura(), -1);
+    std::queue<Posicao> fila;
+    fila.push(inicio);
+    anterior[indice(inicio)] = indice(inicio);
+
+    // A busca em largura encontra uma rota curta sem atravessar células incompatíveis.
+    const Posicao movimentos[]{{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+    while (!fila.empty() && anterior[indice(destino)] < 0) {
+        const Posicao atual = fila.front();
+        fila.pop();
+
+        for (const Posicao movimento : movimentos) {
+            const Posicao proxima{atual.x + movimento.x, atual.y + movimento.y};
+            if (!podeUsar(proxima) || anterior[indice(proxima)] >= 0) {
+                continue;
+            }
+
+            anterior[indice(proxima)] = indice(atual);
+            fila.push(proxima);
         }
     }
-    if (parent[index(target)] < 0) return std::nullopt;
-    std::vector<Pos> path;
-    for (int current = index(target); current != index(start); current = parent[current]) path.push_back(position(current));
-    std::reverse(path.begin(), path.end()); return path;
-}
-std::optional<std::pair<Pos, std::vector<Pos>>> RoutePlanner::nearestCharger(Pos start) const {
-    std::optional<std::pair<Pos, std::vector<Pos>>> result;
-    for (const auto charger : warehouse_.chargers()) {
-        auto path = route(start, charger);
-        if (path && (!result || path->size() < result->second.size())) result = std::make_pair(charger, std::move(*path));
+
+    if (anterior[indice(destino)] < 0) {
+        return std::nullopt;
     }
-    return result;
+
+    std::vector<Posicao> rota;
+    for (int atual = indice(destino); atual != indice(inicio); atual = anterior[atual]) {
+        rota.push_back(posicaoNoIndice(atual));
+    }
+    std::reverse(rota.begin(), rota.end());
+    return rota;
+}
+
+std::optional<std::pair<Posicao, std::vector<Posicao>>>
+PlanejadorRotas::carregadorMaisProximo(Posicao inicio) const {
+    std::optional<std::pair<Posicao, std::vector<Posicao>>> resultado;
+
+    for (const Posicao carregador : galpao_.carregadores()) {
+        auto rota = calcularRota(inicio, carregador);
+        if (rota && (!resultado || rota->size() < resultado->second.size())) {
+            resultado = std::make_pair(carregador, std::move(*rota));
+        }
+    }
+
+    return resultado;
 }

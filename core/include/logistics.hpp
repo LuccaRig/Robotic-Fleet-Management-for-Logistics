@@ -11,59 +11,60 @@
 #include <mutex>
 #include <thread>
 
-struct LogisticsNotice {
-    enum class Kind { Assigned, Gathered, Coupled, TransportStarted, Delivered, Cancelled, Suspended, Resumed };
-    Kind kind;
-    Cargo cargo;
-    TeamMission mission;
-    std::int64_t occurred_at_ms = epochMilliseconds();
+struct AvisoLogistica {
+    enum class TipoAviso { MissaoAtribuida, EquipeReunida, EquipeAcoplada, TransporteIniciado, CargaEntregue, MissaoCancelada, MissaoSuspensa, MissaoRetomada };
+    TipoAviso tipo;
+    Carga carga;
+    MissaoEquipe missao;
+    std::int64_t ocorrido_em_ms = instanteUnixMs();
 };
 
-class LogisticsOrganizer {
+// Avança cargas somente após receber as confirmações de toda a equipe.
+class OrganizadorLogistica {
 public:
-    using Sender = std::function<bool(int, Message)>;
-    using Observer = std::function<void(const LogisticsNotice&)>;
-    LogisticsOrganizer(const WarehouseGrid& warehouse, const FleetStateStore& fleet, std::vector<Cargo> cargo, Sender sender, Observer observer = {});
-    ~LogisticsOrganizer();
-    void start();
-    void stop();
-    void onMessage(const Message& message);
-    void requestResume(EntityId mission_id);
-    void processOnce();
-    std::vector<Cargo> cargos() const;
-    std::vector<TeamMission> missions() const;
-    bool allDelivered() const;
-    void checkError() const;
+    using Emissor = std::function<bool(int, Mensagem)>;
+    using Observador = std::function<void(const AvisoLogistica&)>;
+    OrganizadorLogistica(const MapaGalpao& galpao, const EstadoFrota& frota, std::vector<Carga> carga, Emissor emissor, Observador observador = {});
+    ~OrganizadorLogistica();
+    void iniciar();
+    void parar();
+    void aoReceberMensagem(const Mensagem& mensagem);
+    void solicitarRetomada(IdEntidade id_missao);
+    void processarUmaVez();
+    std::vector<Carga> cargos() const;
+    std::vector<MissaoEquipe> missoes() const;
+    bool todasCargasEntregues() const;
+    void verificarFalha() const;
 private:
-    const WarehouseGrid& warehouse_;
-    const FleetStateStore& fleet_;
-    RoutePlanner planner_;
-    Sender sender_;
-    Observer observer_;
-    mutable std::mutex state_mutex_;
-    std::map<EntityId, Cargo> cargo_;
-    std::map<int, LoadingBay> bays_;
-    std::map<EntityId, TeamMission> missions_;
-    EntityId next_mission_ = 0;
-    std::set<int> charging_;
-    std::map<int, RobotSnapshot> health_;
-    std::vector<std::pair<int, Message>> actions_;
-    std::vector<LogisticsNotice> notices_;
-    mutable std::mutex queue_mutex_;
+    const MapaGalpao& galpao_;
+    const EstadoFrota& frota_;
+    PlanejadorRotas planejador_;
+    Emissor emissor_;
+    Observador observador_;
+    mutable std::mutex mutex_estado_;
+    std::map<IdEntidade, Carga> cargas_;
+    std::map<int, BaiaCarregamento> baias_;
+    std::map<IdEntidade, MissaoEquipe> missoes_;
+    IdEntidade proxima_missao_ = 0;
+    std::set<int> em_recarga_;
+    std::map<int, EstadoAtualRobo> saude_;
+    std::vector<std::pair<int, Mensagem>> acoes_;
+    std::vector<AvisoLogistica> avisos_;
+    mutable std::mutex mutex_fila_;
     std::condition_variable cv_;
-    std::deque<Message> events_;
-    bool running_ = false;
+    std::deque<Mensagem> eventos_;
+    bool executando_ = false;
     std::thread thread_;
-    std::mutex lifecycle_;
-    std::exception_ptr error_;
-    void loop() noexcept;
-    void schedule();
-    void report(const Message& message);
-    void advance(TeamMission& mission);
-    void interrupt(TeamMission& mission, const std::string& reason);
-    void resume(TeamMission& mission);
-    void notice(LogisticsNotice::Kind kind, const TeamMission& mission);
-    void command(TeamMission& mission, MessageType type, MissionPhase phase);
+    std::mutex ciclo_vida_;
+    std::exception_ptr erro_;
+    void executarRotina() noexcept;
+    void agendarCargas();
+    void registrarMensagem(const Mensagem& mensagem);
+    void avancarMissao(MissaoEquipe& missao);
+    void interromper(MissaoEquipe& missao, const std::string& motivo);
+    void retomar(MissaoEquipe& missao);
+    void registrarAviso(AvisoLogistica::TipoAviso tipo, const MissaoEquipe& missao);
+    void executarComando(MissaoEquipe& missao, TipoMensagem tipo, FaseMissao fase);
 };
 
 #endif

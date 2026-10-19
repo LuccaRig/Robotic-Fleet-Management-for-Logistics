@@ -16,10 +16,10 @@ protected:
     void TearDown() override { std::filesystem::remove(path); }
 };
 TEST_P(Etapa1Integration, CompletesScenarioAndReapsEveryWorker) {
-    ControlRuntime runtime(SIMULATOR_EXECUTABLE_PATH,path,makeScenario(GetParam())); ScenarioScript script(GetParam()); runtime.start();
-    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(120);
-    while (!script.complete(runtime) && std::chrono::steady_clock::now() < deadline) { runtime.tick(); script.tick(runtime); std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
-    ASSERT_TRUE(script.complete(runtime)); runtime.stop(); EXPECT_TRUE(runtime.processes().empty());
+    AplicacaoCentral runtime(SIMULATOR_EXECUTABLE_PATH,path,criarCenario(GetParam())); RoteiroCenario script(GetParam()); runtime.iniciar();
+    const auto prazo = std::chrono::steady_clock::now() + std::chrono::seconds(120);
+    while (!script.concluido(runtime) && std::chrono::steady_clock::now() < prazo) { runtime.avancarCiclo(); script.avancarCiclo(runtime); std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+    ASSERT_TRUE(script.concluido(runtime)); runtime.parar(); EXPECT_TRUE(runtime.processos().empty());
     sqlite3* db = nullptr; ASSERT_EQ(sqlite3_open_v2(path.c_str(),&db,SQLITE_OPEN_READONLY,nullptr),SQLITE_OK);
     sqlite3_stmt* statement = nullptr;
     ASSERT_EQ(sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM runs WHERE status='encerrada' AND ended_at_ms IS NOT NULL",-1,&statement,nullptr),SQLITE_OK);
@@ -35,12 +35,12 @@ TEST(Etapa1Shutdown, StopsActiveWorkersAndDrainsAcceptedEvents) {
     std::filesystem::create_directories(TEST_DB_DIRECTORY);
     const auto path = std::string(TEST_DB_DIRECTORY) + "/encerramento_" + std::to_string(getpid()) + ".db"; std::filesystem::remove(path);
     {
-        ControlRuntime runtime(SIMULATOR_EXECUTABLE_PATH,path,makeScenario("base")); runtime.start();
-        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-        while ((!runtime.fleet().get(1) || !runtime.fleet().get(1)->connected) && std::chrono::steady_clock::now() < deadline) { runtime.tick(); std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
-        ASSERT_TRUE(runtime.fleet().get(1)); ASSERT_TRUE(runtime.fleet().get(1)->connected);
-        ASSERT_EQ(runtime.processes().size(),1u); EXPECT_NE(runtime.processes()[0].pid,getpid());
-        runtime.stop(); EXPECT_TRUE(runtime.processes().empty()); EXPECT_GE(runtime.eventCount(EventType::ROBOT_STOPPED),1u);
+        AplicacaoCentral runtime(SIMULATOR_EXECUTABLE_PATH,path,criarCenario("base")); runtime.iniciar();
+        const auto prazo = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+        while ((!runtime.frota().obter(1) || !runtime.frota().obter(1)->conectado) && std::chrono::steady_clock::now() < prazo) { runtime.avancarCiclo(); std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+        ASSERT_TRUE(runtime.frota().obter(1)); ASSERT_TRUE(runtime.frota().obter(1)->conectado);
+        ASSERT_EQ(runtime.processos().size(),1u); EXPECT_NE(runtime.processos()[0].pid,getpid());
+        runtime.parar(); EXPECT_TRUE(runtime.processos().empty()); EXPECT_GE(runtime.quantidadeEventos(TipoEvento::ROBO_ENCERRADO),1u);
     }
     std::filesystem::remove(path);
 }

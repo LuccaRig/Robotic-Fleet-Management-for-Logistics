@@ -9,45 +9,46 @@
 #include <mutex>
 #include <optional>
 
-class HardwareAdapter {
+class AdaptadorHardware {
 public:
-    virtual ~HardwareAdapter() = default;
-    virtual void commandAccepted(const Message& command) = 0;
-    virtual void setpoint(const Message& message) = 0;
-    virtual void tick() = 0;
+    virtual ~AdaptadorHardware() = default;
+    virtual void confirmarComandoAceito(const Mensagem& executarComando) = 0;
+    virtual void setpoint(const Mensagem& mensagem) = 0;
+    virtual void avancarCiclo() = 0;
 };
 
-class LocalHardwareAdapter : public HardwareAdapter {
+// Simula movimentos e sensores, confirmando cada passo antes do próximo.
+class AdaptadorHardwareLocal : public AdaptadorHardware {
 public:
-    using SensorSink = std::function<void(Message)>;
-    explicit LocalHardwareAdapter(const WarehouseGrid& warehouse, SensorSink sink);
-    void registerRobot(const RobotSnapshot& snapshot);
-    bool contains(int id) const;
-    void disconnect(int id);
-    bool removeRobot(int id);
-    void commandAccepted(const Message& command) override;
-    void setpoint(const Message& message) override;
-    void tick() override;
-    void observe(const RobotSnapshot& snapshot);
-    bool inject(int id, std::optional<int> battery, std::optional<bool> failure);
-    std::optional<Message> reading(int id) const;
-    void setMovementValidator(std::function<bool(const Message&)> validator);
+    using SensorSink = std::function<void(Mensagem)>;
+    explicit AdaptadorHardwareLocal(const MapaGalpao& galpao, SensorSink sink);
+    void registrarRobo(const EstadoAtualRobo& capturarEstado);
+    bool contemRobo(int id) const;
+    void desconectar(int id);
+    bool removerRobo(int id);
+    void confirmarComandoAceito(const Mensagem& executarComando) override;
+    void setpoint(const Mensagem& mensagem) override;
+    void avancarCiclo() override;
+    void registrarObservacao(const EstadoAtualRobo& capturarEstado);
+    bool injetarLeitura(int id, std::optional<int> bateria, std::optional<bool> falha);
+    std::optional<Mensagem> lerLeitura(int id) const;
+    void definirValidadorMovimento(std::function<bool(const Mensagem&)> validador);
 private:
-    struct Unit {
-        Message sensor;
-        std::vector<int> members;
+    struct Unidade {
+        Mensagem leitura_sensores;
+        std::vector<int> integrantes;
         bool paused = false;
-        RobotState observed = RobotState::IDLE;
+        EstadoRobo observed = EstadoRobo::DISPONIVEL;
         std::chrono::steady_clock::time_point last_charge = std::chrono::steady_clock::now();
     };
-    const WarehouseGrid& warehouse_;
+    const MapaGalpao& galpao_;
     SensorSink sink_;
     mutable std::mutex mutex_;
-    std::map<int, Unit> units_;
-    std::map<EntityId, std::map<int, Message>> proposals_;
-    std::function<bool(const Message&)> validator_;
-    Message sensor(Unit& unit);
-    void deliver(std::vector<Message> messages);
+    std::map<int, Unidade> units_;
+    std::map<IdEntidade, std::map<int, Mensagem>> proposals_;
+    std::function<bool(const Mensagem&)> validator_;
+    Mensagem leitura_sensores(Unidade& unit);
+    void deliver(std::vector<Mensagem> mensagens);
 };
 
 #endif

@@ -5,13 +5,13 @@
 #include <optional>
 #include <utility>
 
-class RoutePlanner {
+class PlanejadorRotas {
 public:
-    explicit RoutePlanner(const WarehouseGrid& warehouse) : warehouse_(warehouse) {}
-    std::optional<std::vector<Pos>> route(Pos start, Pos target, int team_size = 1) const;
-    std::optional<std::pair<Pos, std::vector<Pos>>> nearestCharger(Pos start) const;
+    explicit PlanejadorRotas(const MapaGalpao& galpao) : galpao_(galpao) {}
+    std::optional<std::vector<Posicao>> calcularRota(Posicao inicio, Posicao destino, int quantidade_integrantes = 1) const;
+    std::optional<std::pair<Posicao, std::vector<Posicao>>> carregadorMaisProximo(Posicao inicio) const;
 private:
-    const WarehouseGrid& warehouse_;
+    const MapaGalpao& galpao_;
 };
 
 #endif

@@ -8,15 +8,15 @@ struct Writer {
     void number(std::uint64_t value) {
         for (int i = 7; i >= 0; --i) bytes.push_back(static_cast<std::uint8_t>(value >> (i * 8)));
     }
-    void point(Pos p) { number(static_cast<std::uint32_t>(p.x)); number(static_cast<std::uint32_t>(p.y)); }
+    void point(Posicao p) { number(static_cast<std::uint32_t>(p.x)); number(static_cast<std::uint32_t>(p.y)); }
 };
 struct Reader {
     const std::vector<std::uint8_t>& bytes;
-    std::size_t offset = 0;
+    std::size_t deslocamento = 0;
     std::uint64_t number() {
-        if (bytes.size() - offset < 8) throw std::runtime_error("Mensagem IPC incompleta");
+        if (bytes.size() - deslocamento < 8) throw std::runtime_error("Mensagem IPC incompleta");
         std::uint64_t value = 0;
-        for (int i = 0; i < 8; ++i) value = (value << 8) | bytes[offset++];
+        for (int i = 0; i < 8; ++i) value = (value << 8) | bytes[deslocamento++];
         return value;
     }
     int integer() {
@@ -30,73 +30,73 @@ struct Reader {
         if (v > 1) throw std::runtime_error("Valor booleano IPC inválido");
         return v != 0;
     }
-    Pos point() { const int x = integer(); const int y = integer(); return {x, y}; }
+    Posicao point() { const int x = integer(); const int y = integer(); return {x, y}; }
     std::size_t count(std::size_t unit) {
         const auto n = number();
-        if (n > (bytes.size() - offset) / unit) throw std::runtime_error("Comprimento IPC inválido");
+        if (n > (bytes.size() - deslocamento) / unit) throw std::runtime_error("Comprimento IPC inválido");
         return static_cast<std::size_t>(n);
     }
 };
 }
 
-std::vector<std::uint8_t> encodeMessage(const Message& m) {
+std::vector<std::uint8_t> codificarMensagem(const Mensagem& m) {
     Writer w;
-    w.number(PROTOCOL_VERSION); w.number(static_cast<std::uint32_t>(m.type));
-    w.number(static_cast<std::uint32_t>(m.robot_id)); w.number(m.generation); w.number(m.sequence);
-    w.number(m.command_id); w.number(m.revision); w.number(m.mission_id); w.number(m.cargo_id); w.number(m.team_id);
-    w.number(static_cast<std::uint32_t>(m.bay_id)); w.number(static_cast<unsigned>(m.phase));
-    w.number(static_cast<unsigned>(m.state)); w.point(m.position); w.point(m.target);
-    w.number(static_cast<std::uint32_t>(m.battery)); w.number(m.failure); w.number(m.coupled); w.number(m.accepted);
-    w.number(m.distance); w.number(m.step); w.number(m.sensor_sequence); w.number(m.occurred_at_ms);
-    w.number(static_cast<std::uint32_t>(m.passage_id)); w.number(static_cast<std::uint32_t>(m.direction)); w.number(m.team_size);
-    w.number(m.route.size()); for (const auto p : m.route) w.point(p);
-    w.number(m.members.size()); for (const int id : m.members) w.number(static_cast<std::uint32_t>(id));
-    w.number(m.text.size()); w.bytes.insert(w.bytes.end(), m.text.begin(), m.text.end());
-    if (w.bytes.size() > MAX_MESSAGE_BYTES) throw std::runtime_error("Mensagem IPC excede 64 KiB");
+    w.number(VERSAO_PROTOCOLO); w.number(static_cast<std::uint32_t>(m.tipo));
+    w.number(static_cast<std::uint32_t>(m.id_robo)); w.number(m.geracao); w.number(m.sequencia);
+    w.number(m.id_comando); w.number(m.revisao); w.number(m.id_missao); w.number(m.id_carga); w.number(m.id_equipe);
+    w.number(static_cast<std::uint32_t>(m.id_baia)); w.number(static_cast<unsigned>(m.fase));
+    w.number(static_cast<unsigned>(m.estado)); w.point(m.posicao); w.point(m.destino);
+    w.number(static_cast<std::uint32_t>(m.bateria)); w.number(m.falha); w.number(m.acoplado); w.number(m.aceito);
+    w.number(m.distancia); w.number(m.passo); w.number(m.sequencia_sensor); w.number(m.ocorrido_em_ms);
+    w.number(static_cast<std::uint32_t>(m.id_trecho)); w.number(static_cast<std::uint32_t>(m.sentido)); w.number(m.quantidade_integrantes);
+    w.number(m.rota.size()); for (const auto p : m.rota) w.point(p);
+    w.number(m.integrantes.size()); for (const int id : m.integrantes) w.number(static_cast<std::uint32_t>(id));
+    w.number(m.texto.size()); w.bytes.insert(w.bytes.end(), m.texto.begin(), m.texto.end());
+    if (w.bytes.size() > TAMANHO_MAXIMO_MENSAGEM) throw std::runtime_error("Mensagem IPC excede 64 KiB");
     return w.bytes;
 }
 
-Message decodeMessage(const std::vector<std::uint8_t>& bytes) {
-    if (bytes.size() > MAX_MESSAGE_BYTES) throw std::runtime_error("Mensagem IPC excede 64 KiB");
+Mensagem decodificarMensagem(const std::vector<std::uint8_t>& bytes) {
+    if (bytes.size() > TAMANHO_MAXIMO_MENSAGEM) throw std::runtime_error("Mensagem IPC excede 64 KiB");
     Reader r{bytes};
-    if (r.number() != PROTOCOL_VERSION) throw std::runtime_error("Versão IPC incompatível");
-    const auto type = r.number();
-    if (type < 1 || type > static_cast<unsigned>(MessageType::RobotDisconnected)) throw std::runtime_error("Tipo IPC inválido");
-    Message m; m.type = static_cast<MessageType>(type); m.robot_id = r.integer();
-    m.generation = r.number(); m.sequence = r.number(); m.command_id = r.number(); m.revision = r.number();
-    m.mission_id = static_cast<EntityId>(r.number()); m.cargo_id = static_cast<EntityId>(r.number()); m.team_id = static_cast<EntityId>(r.number());
-    m.bay_id = r.integer();
-    const auto phase = r.number(), state = r.number();
-    if (phase > static_cast<unsigned>(MissionPhase::SUSPENDED) || state > static_cast<unsigned>(RobotState::STOPPED)) throw std::runtime_error("Estado IPC inválido");
-    m.phase = static_cast<MissionPhase>(phase); m.state = static_cast<RobotState>(state);
-    m.position = r.point(); m.target = r.point(); m.battery = r.integer();
-    m.failure = r.boolean(); m.coupled = r.boolean(); m.accepted = r.boolean();
-    m.distance = r.number(); m.step = r.number(); m.sensor_sequence = r.number(); m.occurred_at_ms = static_cast<std::int64_t>(r.number());
-    m.passage_id = r.integer(); m.direction = r.integer(); m.team_size = r.integer();
-    if (m.battery < 0 || m.battery > 100 || m.team_size < 1 || m.team_size > 4) throw std::runtime_error("Dados IPC fora dos limites");
-    const auto route_count = r.count(16); for (std::size_t i = 0; i < route_count; ++i) m.route.push_back(r.point());
-    const auto member_count = r.count(8); for (std::size_t i = 0; i < member_count; ++i) m.members.push_back(r.integer());
-    const auto length = r.count(1); m.text.assign(bytes.begin() + r.offset, bytes.begin() + r.offset + length); r.offset += length;
-    if (r.offset != bytes.size()) throw std::runtime_error("Dados extras na mensagem IPC");
+    if (r.number() != VERSAO_PROTOCOLO) throw std::runtime_error("Versão IPC incompatível");
+    const auto tipo = r.number();
+    if (tipo < 1 || tipo > static_cast<unsigned>(TipoMensagem::RoboDesconectado)) throw std::runtime_error("Tipo IPC inválido");
+    Mensagem m; m.tipo = static_cast<TipoMensagem>(tipo); m.id_robo = r.integer();
+    m.geracao = r.number(); m.sequencia = r.number(); m.id_comando = r.number(); m.revisao = r.number();
+    m.id_missao = static_cast<IdEntidade>(r.number()); m.id_carga = static_cast<IdEntidade>(r.number()); m.id_equipe = static_cast<IdEntidade>(r.number());
+    m.id_baia = r.integer();
+    const auto fase = r.number(), estado = r.number();
+    if (fase > static_cast<unsigned>(FaseMissao::SUSPENSO) || estado > static_cast<unsigned>(EstadoRobo::ENCERRADO)) throw std::runtime_error("Estado IPC inválido");
+    m.fase = static_cast<FaseMissao>(fase); m.estado = static_cast<EstadoRobo>(estado);
+    m.posicao = r.point(); m.destino = r.point(); m.bateria = r.integer();
+    m.falha = r.boolean(); m.acoplado = r.boolean(); m.aceito = r.boolean();
+    m.distancia = r.number(); m.passo = r.number(); m.sequencia_sensor = r.number(); m.ocorrido_em_ms = static_cast<std::int64_t>(r.number());
+    m.id_trecho = r.integer(); m.sentido = r.integer(); m.quantidade_integrantes = r.integer();
+    if (m.bateria < 0 || m.bateria > 100 || m.quantidade_integrantes < 1 || m.quantidade_integrantes > 4) throw std::runtime_error("Dados IPC fora dos limites");
+    const auto route_count = r.count(16); for (std::size_t i = 0; i < route_count; ++i) m.rota.push_back(r.point());
+    const auto member_count = r.count(8); for (std::size_t i = 0; i < member_count; ++i) m.integrantes.push_back(r.integer());
+    const auto length = r.count(1); m.texto.assign(bytes.begin() + r.deslocamento, bytes.begin() + r.deslocamento + length); r.deslocamento += length;
+    if (r.deslocamento != bytes.size()) throw std::runtime_error("Dados extras na mensagem IPC");
     return m;
 }
 
-RobotSnapshot snapshotFromMessage(const Message& m) {
-    RobotSnapshot s;
-    s.id = m.robot_id; s.generation = m.generation; s.sequence = m.sequence;
-    s.position = m.position; s.target = m.target; s.state = m.state; s.phase = m.phase;
-    s.battery = m.battery; s.failure = m.failure; s.coupled = m.coupled;
-    s.connected = true; s.available = m.state == RobotState::IDLE && !m.failure && !m.coupled && m.battery > 15 && m.mission_id == 0;
-    s.mission_id = m.mission_id; s.cargo_id = m.cargo_id; s.team_id = m.team_id; s.bay_id = m.bay_id;
-    s.revision = m.revision; s.step = m.step; s.sensor_sequence = m.sensor_sequence; s.distance = m.distance; s.updated_at_ms = m.occurred_at_ms;
+EstadoAtualRobo estadoRoboDaMensagem(const Mensagem& m) {
+    EstadoAtualRobo s;
+    s.id = m.id_robo; s.geracao = m.geracao; s.sequencia = m.sequencia;
+    s.posicao = m.posicao; s.destino = m.destino; s.estado = m.estado; s.fase = m.fase;
+    s.bateria = m.bateria; s.falha = m.falha; s.acoplado = m.acoplado;
+    s.conectado = true; s.disponivel = m.estado == EstadoRobo::DISPONIVEL && !m.falha && !m.acoplado && m.bateria > 15 && m.id_missao == 0;
+    s.id_missao = m.id_missao; s.id_carga = m.id_carga; s.id_equipe = m.id_equipe; s.id_baia = m.id_baia;
+    s.revisao = m.revisao; s.passo = m.passo; s.sequencia_sensor = m.sequencia_sensor; s.distancia = m.distancia; s.atualizado_em_ms = m.ocorrido_em_ms;
     return s;
 }
 
-Message messageFromSnapshot(const RobotSnapshot& s) {
-    Message m; m.type = MessageType::RobotSnapshot; m.robot_id = s.id; m.generation = s.generation;
-    m.sequence = s.sequence; m.position = s.position; m.target = s.target; m.state = s.state; m.phase = s.phase;
-    m.battery = s.battery; m.failure = s.failure; m.coupled = s.coupled; m.distance = s.distance;
-    m.mission_id = s.mission_id; m.cargo_id = s.cargo_id; m.team_id = s.team_id; m.bay_id = s.bay_id;
-    m.revision = s.revision; m.step = s.step; m.sensor_sequence = s.sensor_sequence; m.occurred_at_ms = s.updated_at_ms;
+Mensagem mensagemDoEstadoRobo(const EstadoAtualRobo& s) {
+    Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = s.id; m.geracao = s.geracao;
+    m.sequencia = s.sequencia; m.posicao = s.posicao; m.destino = s.destino; m.estado = s.estado; m.fase = s.fase;
+    m.bateria = s.bateria; m.falha = s.falha; m.acoplado = s.acoplado; m.distancia = s.distancia;
+    m.id_missao = s.id_missao; m.id_carga = s.id_carga; m.id_equipe = s.id_equipe; m.id_baia = s.id_baia;
+    m.revisao = s.revisao; m.passo = s.passo; m.sequencia_sensor = s.sequencia_sensor; m.ocorrido_em_ms = s.atualizado_em_ms;
     return m;
 }

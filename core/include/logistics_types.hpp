@@ -8,43 +8,43 @@
 #include <string>
 #include <vector>
 
-enum class CargoState { PENDING, RESERVED, GATHERING, COUPLING, TRANSPORTING, UNCOUPLING, DELIVERED, SUSPENDED };
-inline std::string cargoStateName(CargoState state) {
-    switch (state) {
-    case CargoState::PENDING: return "Pendente";
-    case CargoState::RESERVED: return "Reservada";
-    case CargoState::GATHERING: return "Reunindo equipe";
-    case CargoState::COUPLING: return "Acoplando";
-    case CargoState::TRANSPORTING: return "Em transporte";
-    case CargoState::UNCOUPLING: return "Desacoplando";
-    case CargoState::DELIVERED: return "Entregue";
-    case CargoState::SUSPENDED: return "Suspensa";
+enum class EstadoCarga { PENDENTE, RESERVADA, REUNINDO_EQUIPE, ACOPLANDO, EM_TRANSPORTE, DESACOPLANDO, ENTREGUE, SUSPENSO };
+inline std::string nomeEstadoCarga(EstadoCarga estado) {
+    switch (estado) {
+    case EstadoCarga::PENDENTE: return "Pendente";
+    case EstadoCarga::RESERVADA: return "Reservada";
+    case EstadoCarga::REUNINDO_EQUIPE: return "Reunindo equipe";
+    case EstadoCarga::ACOPLANDO: return "Acoplando";
+    case EstadoCarga::EM_TRANSPORTE: return "Em transporte";
+    case EstadoCarga::DESACOPLANDO: return "Desacoplando";
+    case EstadoCarga::ENTREGUE: return "Entregue";
+    case EstadoCarga::SUSPENSO: return "Suspensa";
     }
     return "Desconhecido";
 }
-struct Cargo {
-    EntityId id = 0;
-    int size = 1;
-    int bay_id = -1;
-    int destination_id = -1;
-    CargoState state = CargoState::PENDING;
-    EntityId mission_id = 0;
-    std::string reason;
+struct Carga {
+    IdEntidade id = 0;
+    int tamanho = 1;
+    int id_baia = -1;
+    int id_destino = -1;
+    EstadoCarga estado = EstadoCarga::PENDENTE;
+    IdEntidade id_missao = 0;
+    std::string motivo;
 };
-struct LoadingBay { int id; Pos position; std::deque<EntityId> cargo_queue; };
-struct Destination { int id; Pos position; };
-struct Passage { int id; int capacity; std::vector<Pos> cells; };
-struct TeamMission {
-    EntityId id = 0;
-    EntityId cargo_id = 0;
-    MissionPhase phase = MissionPhase::TO_PICKUP;
-    MissionPhase suspended_phase = MissionPhase::NONE;
-    std::vector<int> members;
-    std::map<int, std::uint64_t> generations;
-    std::map<int, RobotSnapshot> reports;
-    std::vector<Pos> delivery_route;
-    std::set<int> coupled_members;
-    bool ever_coupled = false;
+struct BaiaCarregamento { int id; Posicao posicao; std::deque<IdEntidade> fila_cargas; };
+struct DestinoEntrega { int id; Posicao posicao; };
+struct TrechoRestrito { int id; int capacidade; std::vector<Posicao> cells; };
+struct MissaoEquipe {
+    IdEntidade id = 0;
+    IdEntidade id_carga = 0;
+    FaseMissao fase = FaseMissao::INDO_PARA_COLETA;
+    FaseMissao fase_suspensa = FaseMissao::NENHUMA;
+    std::vector<int> integrantes;
+    std::map<int, std::uint64_t> geracoes;
+    std::map<int, EstadoAtualRobo> relatos;
+    std::vector<Posicao> rota_entrega;
+    std::set<int> integrantes_acoplados;
+    bool ja_acoplou = false;
 };
 
 #endif

@@ -7,50 +7,50 @@
 #include <string>
 #include <vector>
 
-constexpr std::uint32_t PROTOCOL_VERSION = 1;
-constexpr std::size_t MAX_MESSAGE_BYTES = 64 * 1024;
+constexpr std::uint32_t VERSAO_PROTOCOLO = 1;
+constexpr std::size_t TAMANHO_MAXIMO_MENSAGEM = 64 * 1024;
 
-enum class MessageType : std::uint32_t {
-    RobotHello = 1, RobotReady, AssignMission, CancelMission, CommandAck,
-    SensorUpdate, RobotSnapshot, NavigationSetpoint, PassageRequest,
-    PassageGranted, PassageReleased, Couple, Uncouple, PauseMission,
-    ResumeMission, Shutdown, RobotStopped, RobotDisconnected
+enum class TipoMensagem : std::uint32_t {
+    SaudacaoRobo = 1, RoboPronto, AtribuirMissao, CancelarMissao, ConfirmacaoComando,
+    AtualizarSensores, EstadoAtualRobo, DestinoNavegacao, SolicitarAcessoTrecho,
+    AcessoTrechoConcedido, AcessoTrechoLiberado, Acoplar, Desacoplar, PausarMissao,
+    RetomarMissao, Encerrar, RoboEncerrado, RoboDesconectado
 };
 
-struct Message {
-    MessageType type = MessageType::RobotHello;
-    int robot_id = -1;
-    std::uint64_t generation = 0;
-    std::uint64_t sequence = 0;
-    std::uint64_t command_id = 0;
-    std::uint64_t revision = 0;
-    EntityId mission_id = 0;
-    EntityId cargo_id = 0;
-    EntityId team_id = 0;
-    int bay_id = -1;
-    MissionPhase phase = MissionPhase::NONE;
-    RobotState state = RobotState::IDLE;
-    Pos position;
-    Pos target;
-    int battery = 100;
-    bool failure = false;
-    bool coupled = false;
-    bool accepted = true;
-    std::uint64_t distance = 0;
-    std::uint64_t step = 0;
-    std::uint64_t sensor_sequence = 0;
-    std::int64_t occurred_at_ms = 0;
-    int passage_id = -1;
-    int direction = 0;
-    int team_size = 1;
-    std::vector<Pos> route;
-    std::vector<int> members;
-    std::string text;
+struct Mensagem {
+    TipoMensagem tipo = TipoMensagem::SaudacaoRobo;
+    int id_robo = -1;
+    std::uint64_t geracao = 0;
+    std::uint64_t sequencia = 0;
+    std::uint64_t id_comando = 0;
+    std::uint64_t revisao = 0;
+    IdEntidade id_missao = 0;
+    IdEntidade id_carga = 0;
+    IdEntidade id_equipe = 0;
+    int id_baia = -1;
+    FaseMissao fase = FaseMissao::NENHUMA;
+    EstadoRobo estado = EstadoRobo::DISPONIVEL;
+    Posicao posicao;
+    Posicao destino;
+    int bateria = 100;
+    bool falha = false;
+    bool acoplado = false;
+    bool aceito = true;
+    std::uint64_t distancia = 0;
+    std::uint64_t passo = 0;
+    std::uint64_t sequencia_sensor = 0;
+    std::int64_t ocorrido_em_ms = 0;
+    int id_trecho = -1;
+    int sentido = 0;
+    int quantidade_integrantes = 1;
+    std::vector<Posicao> rota;
+    std::vector<int> integrantes;
+    std::string texto;
 };
 
-std::vector<std::uint8_t> encodeMessage(const Message& message);
-Message decodeMessage(const std::vector<std::uint8_t>& bytes);
-RobotSnapshot snapshotFromMessage(const Message& message);
-Message messageFromSnapshot(const RobotSnapshot& snapshot);
+std::vector<std::uint8_t> codificarMensagem(const Mensagem& mensagem);
+Mensagem decodificarMensagem(const std::vector<std::uint8_t>& bytes);
+EstadoAtualRobo estadoRoboDaMensagem(const Mensagem& mensagem);
+Mensagem mensagemDoEstadoRobo(const EstadoAtualRobo& capturarEstado);
 
 #endif

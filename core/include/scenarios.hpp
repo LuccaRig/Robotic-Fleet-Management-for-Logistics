@@ -3,13 +3,13 @@
 
 #include "runtime.hpp"
 
-Scenario makeScenario(const std::string& name);
-std::string scenarioNames();
-class ScenarioScript {
+Cenario criarCenario(const std::string& nome);
+std::string nomesCenarios();
+class RoteiroCenario {
 public:
-    explicit ScenarioScript(std::string name) : name_(std::move(name)) {}
-    void tick(ControlRuntime& runtime);
-    bool complete(const ControlRuntime& runtime) const;
+    explicit RoteiroCenario(std::string nome) : name_(std::move(nome)) {}
+    void avancarCiclo(AplicacaoCentral& runtime);
+    bool concluido(const AplicacaoCentral& runtime) const;
 private:
     std::string name_;
     int stage_ = 0;

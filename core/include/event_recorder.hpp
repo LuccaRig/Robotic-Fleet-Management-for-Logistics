@@ -9,20 +9,20 @@
 #include <map>
 #include <mutex>
 
-class EventRecorder {
+class GravadorEventos {
 public:
-    using Observer = std::function<void(const RobotEvent&)>;
-    explicit EventRecorder(Buffer& buffer, Observer observer = {});
-    void onRobot(const Message& message);
-    void onLogistics(const LogisticsNotice& notice);
-    void onPassage(const PassageNotice& notice);
+    using Observador = std::function<void(const EventoRobo&)>;
+    explicit GravadorEventos(BufferEventos& buffer, Observador observador = {});
+    void aoReceberEventoRobo(const Mensagem& mensagem);
+    void aoReceberEventoLogistica(const AvisoLogistica& aviso);
+    void aoReceberEventoPassagem(const AvisoPassagem& aviso);
 private:
-    Buffer& buffer_;
-    Observer observer_;
+    BufferEventos& buffer_;
+    Observador observador_;
     std::mutex mutex_;
-    std::map<int, RobotSnapshot> previous_;
-    std::atomic<std::uint64_t> sequence_{0};
-    void record(RobotEvent event);
+    std::map<int, EstadoAtualRobo> estados_anteriores_;
+    std::atomic<std::uint64_t> sequencia_{0};
+    void registrar(EventoRobo event);
 };
 
 #endif

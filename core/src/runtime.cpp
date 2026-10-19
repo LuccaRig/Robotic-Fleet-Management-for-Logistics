@@ -5,132 +5,132 @@
 #include <stdexcept>
 #include <unistd.h>
 
-ControlRuntime::ControlRuntime(std::string executable, std::string database, Scenario scenario)
-    : warehouse_(std::move(scenario.warehouse)), initial_(std::move(scenario.robots)), collector_(database), buffer_(collector_, 100),
-      recorder_(buffer_, [this](const RobotEvent& event) { { std::lock_guard<std::mutex> lock(metrics_mutex_); ++metrics_[event.getType()]; } print("Evento: " + event.getDescription() + " | robô " + std::to_string(event.getRobotId()) + " | missão " + std::to_string(event.missionId())); }),
-      manager_(std::move(executable)),
-      passages_(warehouse_, [this](Message m) { manager_.send(m.robot_id, std::move(m)); }, [this](const PassageNotice& n) { recorder_.onPassage(n); }),
-      hardware_(warehouse_, [this](Message m) { onSensor(std::move(m)); }),
-      logistics_(warehouse_, manager_.fleet(), std::move(scenario.cargos), [this](int id, Message m) { return sendCommand(id, std::move(m)); }, [this](const LogisticsNotice& n) { recorder_.onLogistics(n); }) {
-    warehouse_.validate();
-    manager_.setPositionValidator([this](Pos p) { return warehouse_.traversable(p) && !warehouse_.passageAt(p); });
-    hardware_.setMovementValidator([this](const Message& m) { return passages_.permits(m); });
-    manager_.setMessageHandler([this](const Message& m) { onMessage(m); });
+AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario)
+    : galpao_(std::move(cenario.galpao)), initial_(std::move(cenario.robos)), collector_(banco), buffer_(collector_, 100),
+      recorder_(buffer_, [this](const EventoRobo& event) { { std::lock_guard<std::mutex> lock(metrics_mutex_); ++metrics_[event.tipo()]; } imprimir("Evento: " + event.descricao() + " | robô " + std::to_string(event.idRobo()) + " | missão " + std::to_string(event.idMissao())); }),
+      manager_(std::move(executavel)),
+      passages_(galpao_, [this](Mensagem m) { manager_.enviar(m.id_robo, std::move(m)); }, [this](const AvisoPassagem& n) { recorder_.aoReceberEventoPassagem(n); }),
+      hardware_(galpao_, [this](Mensagem m) { aoReceberLeitura(std::move(m)); }),
+      logistics_(galpao_, manager_.frota(), std::move(cenario.cargos), [this](int id, Mensagem m) { return sendCommand(id, std::move(m)); }, [this](const AvisoLogistica& n) { recorder_.aoReceberEventoLogistica(n); }) {
+    galpao_.validar();
+    manager_.definirValidadorPosicao([this](Posicao p) { return galpao_.podeTransitar(p) && !galpao_.trechoEm(p); });
+    hardware_.definirValidadorMovimento([this](const Mensagem& m) { return passages_.permiteMovimento(m); });
+    manager_.definirTratadorMensagem([this](const Mensagem& m) { aoReceberMensagem(m); });
 }
-ControlRuntime::~ControlRuntime() { try { stop(); } catch (const std::exception& e) { print("Falha no encerramento: " + std::string(e.what())); } }
-void ControlRuntime::start() {
+AplicacaoCentral::~AplicacaoCentral() { try { parar(); } catch (const std::exception& e) { imprimir("Falha no encerramento: " + std::string(e.what())); } }
+void AplicacaoCentral::iniciar() {
     if (started_) return;
-    collector_.start(); started_ = true; logistics_.start();
-    for (const auto& robot : initial_) if (!addRobot(robot.id, robot.position)) throw std::runtime_error("Não foi possível disponibilizar o robô " + std::to_string(robot.id));
-    print("Sistema iniciado. Execução " + std::to_string(collector_.runId()));
+    collector_.iniciar(); started_ = true; logistics_.iniciar();
+    for (const auto& robo : initial_) if (!adicionarRobo(robo.id, robo.posicao)) throw std::runtime_error("Não foi possível disponibilizar o robô " + std::to_string(robo.id));
+    imprimir("Sistema iniciado. Execução " + std::to_string(collector_.idExecucao()));
 }
-void ControlRuntime::stop() {
+void AplicacaoCentral::parar() {
     if (stopped_) return;
     stopped_ = true;
     std::exception_ptr error;
-    logistics_.stop();
-    try { manager_.stop(); } catch (...) { error = std::current_exception(); }
-    manager_.setMessageHandler({});
-    try { collector_.stop(); } catch (...) { if (!error) error = std::current_exception(); }
+    logistics_.parar();
+    try { manager_.parar(); } catch (...) { error = std::current_exception(); }
+    manager_.definirTratadorMensagem({});
+    try { collector_.parar(); } catch (...) { if (!error) error = std::current_exception(); }
     if (error) std::rethrow_exception(error);
 }
-bool ControlRuntime::sendCommand(int id, Message message) {
-    const auto robot = manager_.fleet().get(id); if (!robot || !robot->connected) return false;
-    message.robot_id = id; message.generation = robot->generation; message.command_id = ++commands_; message.revision = message.command_id;
-    { std::lock_guard<std::mutex> lock(pending_mutex_); pending_[message.command_id] = message; }
+bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem) {
+    const auto robo = manager_.frota().obter(id); if (!robo || !robo->conectado) return false;
+    mensagem.id_robo = id; mensagem.geracao = robo->geracao; mensagem.id_comando = ++commands_; mensagem.revisao = mensagem.id_comando;
+    { std::lock_guard<std::mutex> lock(pending_mutex_); pending_[mensagem.id_comando] = mensagem; }
     try {
-        if (manager_.send(id, message)) return true;
-    } catch (...) { std::lock_guard<std::mutex> lock(pending_mutex_); pending_.erase(message.command_id); throw; }
-    std::lock_guard<std::mutex> lock(pending_mutex_); pending_.erase(message.command_id); return false;
+        if (manager_.enviar(id, mensagem)) return true;
+    } catch (...) { std::lock_guard<std::mutex> lock(pending_mutex_); pending_.erase(mensagem.id_comando); throw; }
+    std::lock_guard<std::mutex> lock(pending_mutex_); pending_.erase(mensagem.id_comando); return false;
 }
-void ControlRuntime::onSensor(Message sensor) {
-    passages_.confirm(sensor);
-    logistics_.onMessage(sensor);
-    manager_.send(sensor.robot_id, std::move(sensor));
+void AplicacaoCentral::aoReceberLeitura(Mensagem leitura_sensores) {
+    passages_.confirmar(leitura_sensores);
+    logistics_.aoReceberMensagem(leitura_sensores);
+    manager_.enviar(leitura_sensores.id_robo, std::move(leitura_sensores));
 }
-void ControlRuntime::onMessage(const Message& m) {
-    if (m.type == MessageType::RobotReady) {
-        hardware_.registerRobot(snapshotFromMessage(m)); passages_.confirm(m);
-        print("Robô " + std::to_string(m.robot_id) + " pronto, geração " + std::to_string(m.generation));
+void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
+    if (m.tipo == TipoMensagem::RoboPronto) {
+        hardware_.registrarRobo(estadoRoboDaMensagem(m)); passages_.confirmar(m);
+        imprimir("Robô " + std::to_string(m.id_robo) + " pronto, geração " + std::to_string(m.geracao));
     }
-    if (m.type == MessageType::CommandAck) {
-        std::optional<Message> original;
+    if (m.tipo == TipoMensagem::ConfirmacaoComando) {
+        std::optional<Mensagem> original;
         {
-            std::lock_guard<std::mutex> lock(pending_mutex_); auto it = pending_.find(m.command_id);
+            std::lock_guard<std::mutex> lock(pending_mutex_); auto it = pending_.find(m.id_comando);
             if (it != pending_.end()) {
-                if (it->second.robot_id == m.robot_id && it->second.generation == m.generation) original = it->second;
+                if (it->second.id_robo == m.id_robo && it->second.geracao == m.geracao) original = it->second;
                 pending_.erase(it);
             }
         }
-        if (original && m.accepted) {
-            hardware_.commandAccepted(*original);
-            if (original->type == MessageType::CancelMission || original->type == MessageType::PauseMission) passages_.cancel(m.robot_id, original->mission_id);
+        if (original && m.aceito) {
+            hardware_.confirmarComandoAceito(*original);
+            if (original->tipo == TipoMensagem::CancelarMissao || original->tipo == TipoMensagem::PausarMissao) passages_.cancelar(m.id_robo, original->id_missao);
         }
-    } else if (m.type == MessageType::PassageRequest) {
-        const auto reading = hardware_.reading(m.robot_id);
-        if (reading && reading->generation == m.generation && reading->mission_id == m.mission_id && reading->revision == m.revision && !reading->failure && reading->position == m.position) passages_.request(m);
-    } else if (m.type == MessageType::NavigationSetpoint) hardware_.setpoint(m);
-    else if (m.type == MessageType::RobotSnapshot) hardware_.observe(snapshotFromMessage(m));
-    else if (m.type == MessageType::RobotDisconnected) {
-        hardware_.disconnect(m.robot_id);
-        const auto reading = hardware_.reading(m.robot_id); passages_.cancel(m.robot_id, reading ? reading->mission_id : 0);
+    } else if (m.tipo == TipoMensagem::SolicitarAcessoTrecho) {
+        const auto lerLeitura = hardware_.lerLeitura(m.id_robo);
+        if (lerLeitura && lerLeitura->geracao == m.geracao && lerLeitura->id_missao == m.id_missao && lerLeitura->revisao == m.revisao && !lerLeitura->falha && lerLeitura->posicao == m.posicao) passages_.solicitarAcesso(m);
+    } else if (m.tipo == TipoMensagem::DestinoNavegacao) hardware_.setpoint(m);
+    else if (m.tipo == TipoMensagem::EstadoAtualRobo) hardware_.registrarObservacao(estadoRoboDaMensagem(m));
+    else if (m.tipo == TipoMensagem::RoboDesconectado) {
+        hardware_.desconectar(m.id_robo);
+        const auto lerLeitura = hardware_.lerLeitura(m.id_robo); passages_.cancelar(m.id_robo, lerLeitura ? lerLeitura->id_missao : 0);
         std::lock_guard<std::mutex> lock(pending_mutex_);
-        for (auto it = pending_.begin(); it != pending_.end();) { if (it->second.robot_id == m.robot_id) it = pending_.erase(it); else ++it; }
+        for (auto it = pending_.begin(); it != pending_.end();) { if (it->second.id_robo == m.id_robo) it = pending_.erase(it); else ++it; }
     }
-    recorder_.onRobot(m); logistics_.onMessage(m);
+    recorder_.aoReceberEventoRobo(m); logistics_.aoReceberMensagem(m);
 }
-void ControlRuntime::tick() {
-    manager_.checkError(); logistics_.checkError(); collector_.checkError(); hardware_.tick();
+void AplicacaoCentral::avancarCiclo() {
+    manager_.verificarFalha(); logistics_.verificarFalha(); collector_.verificarFalha(); hardware_.avancarCiclo();
     for (auto it = removals_.begin(); it != removals_.end();) {
-        if (manager_.robotExists(*it)) { ++it; continue; }
-        if (!hardware_.removeRobot(*it)) throw std::runtime_error("Remoção física recusada");
-        passages_.removeRobot(*it); it = removals_.erase(it);
+        if (manager_.existeProcessoRobo(*it)) { ++it; continue; }
+        if (!hardware_.removerRobo(*it)) throw std::runtime_error("Remoção física recusada");
+        passages_.removerRobo(*it); it = removals_.erase(it);
     }
 }
-bool ControlRuntime::addRobot(int id, Pos position) { return !hardware_.contains(id) && manager_.spawnRobot(id, position.x, position.y); }
-bool ControlRuntime::removeRobot(int id) {
-    const auto robot = manager_.fleet().get(id);
-    if (!robot || robot->coupled || robot->mission_id || removals_.count(id)) return false;
-    removals_.insert(id); if (manager_.robotExists(id)) manager_.terminateRobot(id); return true;
+bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) { return !hardware_.contemRobo(id) && manager_.iniciarProcessoRobo(id, posicao.x, posicao.y); }
+bool AplicacaoCentral::removerRobo(int id) {
+    const auto robo = manager_.frota().obter(id);
+    if (!robo || robo->acoplado || robo->id_missao || removals_.count(id)) return false;
+    removals_.insert(id); if (manager_.existeProcessoRobo(id)) manager_.encerrarProcessoRobo(id); return true;
 }
-bool ControlRuntime::interruptRobot(int id) { for (const auto& p : manager_.processes()) if (p.id == id) return kill(p.pid, SIGTERM) == 0; return false; }
-bool ControlRuntime::setBattery(int id, int battery) { return hardware_.inject(id, battery, std::nullopt); }
-bool ControlRuntime::setFailure(int id, bool failure) { return hardware_.inject(id, std::nullopt, failure); }
-void ControlRuntime::resume(EntityId mission_id) { logistics_.requestResume(mission_id); }
-bool ControlRuntime::complete() const {
-    if (!logistics_.allDelivered()) return false;
-    for (const auto& robot : manager_.fleet().snapshot()) if (robot.connected && (robot.mission_id || robot.coupled || robot.state != RobotState::IDLE)) return false;
+bool AplicacaoCentral::interromperRobo(int id) { for (const auto& p : manager_.processos()) if (p.id == id) return kill(p.pid, SIGTERM) == 0; return false; }
+bool AplicacaoCentral::definirBateria(int id, int bateria) { return hardware_.injetarLeitura(id, bateria, std::nullopt); }
+bool AplicacaoCentral::definirFalha(int id, bool falha) { return hardware_.injetarLeitura(id, std::nullopt, falha); }
+void AplicacaoCentral::retomar(IdEntidade id_missao) { logistics_.solicitarRetomada(id_missao); }
+bool AplicacaoCentral::concluido() const {
+    if (!logistics_.todasCargasEntregues()) return false;
+    for (const auto& robo : manager_.frota().capturarEstado()) if (robo.conectado && (robo.id_missao || robo.acoplado || robo.estado != EstadoRobo::DISPONIVEL)) return false;
     return true;
 }
-std::size_t ControlRuntime::eventCount(EventType type) const { std::lock_guard<std::mutex> lock(metrics_mutex_); const auto it = metrics_.find(type); return it == metrics_.end() ? 0 : it->second; }
-void ControlRuntime::print(const std::string& message) const { std::lock_guard<std::mutex> lock(console_); std::cout << message << std::endl; }
-void ControlRuntime::command(const std::string& line) {
-    std::istringstream input(line); std::string action; input >> action;
+std::size_t AplicacaoCentral::quantidadeEventos(TipoEvento tipo) const { std::lock_guard<std::mutex> lock(metrics_mutex_); const auto it = metrics_.find(tipo); return it == metrics_.end() ? 0 : it->second; }
+void AplicacaoCentral::imprimir(const std::string& mensagem) const { std::lock_guard<std::mutex> lock(console_); std::cout << mensagem << std::endl; }
+void AplicacaoCentral::executarComando(const std::string& linha) {
+    std::istringstream input(linha); std::string action; input >> action;
     if (action.empty()) return;
     auto exhausted = [&] { std::string extra; if (input >> extra) throw std::invalid_argument("Argumentos adicionais inesperados"); };
     auto integer = [&] { int value; if (!(input >> value)) throw std::invalid_argument("Informe um número inteiro válido"); return value; };
     if (action == "sair") { exhausted(); exit_requested_ = true; }
     else if (action == "status") {
         exhausted();
-        for (const auto& s : fleet().snapshot()) print("Robô " + std::to_string(s.id) + " | " + robotStateName(s.state) + " | posição " + std::to_string(s.position.x) + "," + std::to_string(s.position.y) + " | bateria " + std::to_string(s.battery) + "% | distância " + std::to_string(s.distance) + " | " + (s.connected ? "Conectado" : "Desconectado"));
-        for (const auto& p : processes()) print("Processo do robô " + std::to_string(p.id) + " | PID " + std::to_string(p.pid) + " | geração " + std::to_string(p.generation));
+        for (const auto& s : frota().capturarEstado()) imprimir("Robô " + std::to_string(s.id) + " | " + nomeEstadoRobo(s.estado) + " | posição " + std::to_string(s.posicao.x) + "," + std::to_string(s.posicao.y) + " | bateria " + std::to_string(s.bateria) + "% | distância " + std::to_string(s.distancia) + " | " + (s.conectado ? "Conectado" : "Desconectado"));
+        for (const auto& p : processos()) imprimir("Processo do robô " + std::to_string(p.id) + " | PID " + std::to_string(p.pid) + " | geração " + std::to_string(p.geracao));
     } else if (action == "cargas") {
-        exhausted(); for (const auto& c : cargos()) print("Carga " + std::to_string(c.id) + " | " + cargoStateName(c.state) + " | missão " + std::to_string(c.mission_id) + " | " + c.reason);
+        exhausted(); for (const auto& c : cargos()) imprimir("Carga " + std::to_string(c.id) + " | " + nomeEstadoCarga(c.estado) + " | missão " + std::to_string(c.id_missao) + " | " + c.motivo);
     } else if (action == "passagens") {
-        exhausted(); for (const auto& p : passages()) print("Passagem " + std::to_string(p.id) + " | ocupação " + std::to_string(p.occupied) + "/" + std::to_string(p.capacity) + " | esperando " + std::to_string(p.waiting));
+        exhausted(); for (const auto& p : passagens()) imprimir("Passagem " + std::to_string(p.id) + " | ocupação " + std::to_string(p.ocupado) + "/" + std::to_string(p.capacidade) + " | esperando " + std::to_string(p.aguardando));
     } else if (action == "robo") {
         std::string operation; input >> operation; const auto id = integer(); bool ok = false;
-        if (operation == "adicionar") { const auto x = integer(); const auto y = integer(); exhausted(); ok = addRobot(id, {x, y}); }
-        else if (operation == "remover") { exhausted(); ok = removeRobot(id); }
-        else if (operation == "interromper") { exhausted(); ok = interruptRobot(id); }
+        if (operation == "adicionar") { const auto x = integer(); const auto y = integer(); exhausted(); ok = adicionarRobo(id, {x, y}); }
+        else if (operation == "remover") { exhausted(); ok = removerRobo(id); }
+        else if (operation == "interromper") { exhausted(); ok = interromperRobo(id); }
         else throw std::invalid_argument("Operação de robô desconhecida");
         if (!ok) throw std::runtime_error("Operação recusada: verifique ID, posição e missão do robô");
     } else if (action == "bateria" || action == "falha") {
         const auto id = integer(); const auto value = integer(); exhausted();
         if (action == "falha" && value != 0 && value != 1) throw std::invalid_argument("Falha deve ser 0 ou 1");
-        const bool ok = action == "bateria" ? setBattery(id, value) : setFailure(id, value != 0);
+        const bool ok = action == "bateria" ? definirBateria(id, value) : definirFalha(id, value != 0);
         if (!ok) throw std::runtime_error("Atualização recusada");
-    } else if (action == "retomar") { const auto id = integer(); exhausted(); resume(id); }
-    else if (action == "ajuda") { exhausted(); print("Comandos: status; cargas; passagens; robo adicionar ID X Y; robo remover ID; robo interromper ID; bateria ID 0..100; falha ID 0|1; retomar MISSÃO; sair"); }
+    } else if (action == "retomar") { const auto id = integer(); exhausted(); retomar(id); }
+    else if (action == "ajuda") { exhausted(); imprimir("Comandos: status; cargas; passagens; robo adicionar ID X Y; robo remover ID; robo interromper ID; bateria ID 0..100; falha ID 0|1; retomar MISSÃO; sair"); }
     else throw std::invalid_argument("Comando desconhecido. Digite ajuda");
 }

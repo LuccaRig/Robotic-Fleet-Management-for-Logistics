@@ -4,27 +4,27 @@
 #include <iostream>
 #include <mutex>
 
-int runRobotWorker(int fd, int id, std::uint64_t generation, Pos start) {
+int executarAgenteRobo(int fd, int id, std::uint64_t geracao, Posicao inicio) {
     try {
-        IpcChannel channel(fd); std::mutex send_mutex; std::uint64_t sequence = 0; RobotAgent* active = nullptr;
-        auto send = [&](Message m) {
+        CanalIpc channel(fd); std::mutex send_mutex; std::uint64_t sequencia = 0; AgenteRobo* active = nullptr;
+        auto enviar = [&](Mensagem m) {
             std::lock_guard<std::mutex> lock(send_mutex);
-            if (active && m.type == MessageType::RobotSnapshot) m = messageFromSnapshot(active->snapshot());
-            m.robot_id = id; m.generation = generation; m.sequence = ++sequence; m.occurred_at_ms = epochMilliseconds(); channel.send(m);
+            if (active && m.tipo == TipoMensagem::EstadoAtualRobo) m = mensagemDoEstadoRobo(active->capturarEstado());
+            m.id_robo = id; m.geracao = geracao; m.sequencia = ++sequencia; m.ocorrido_em_ms = instanteUnixMs(); channel.enviar(m);
         };
-        Message hello; hello.type = MessageType::RobotHello; hello.position = start; send(hello);
-        RobotAgent robot(id, start.x, start.y, generation, send); active = &robot;
-        Message ready = messageFromSnapshot(robot.snapshot()); ready.type = MessageType::RobotReady; send(ready);
-        robot.start();
+        Mensagem hello; hello.tipo = TipoMensagem::SaudacaoRobo; hello.posicao = inicio; enviar(hello);
+        AgenteRobo robo(id, inicio.x, inicio.y, geracao, enviar); active = &robo;
+        Mensagem pronto = mensagemDoEstadoRobo(robo.capturarEstado()); pronto.tipo = TipoMensagem::RoboPronto; enviar(pronto);
+        robo.iniciar();
         while (true) {
-            robot.checkError();
-            const auto m = channel.receive(std::chrono::milliseconds(100));
+            robo.verificarFalha();
+            const auto m = channel.receber(std::chrono::milliseconds(100));
             if (!m) continue;
-            if (m->robot_id != id || m->generation != generation) throw std::runtime_error("Identidade do comando inválida");
-            robot.handle(*m);
-            if (m->type == MessageType::Shutdown) break;
+            if (m->id_robo != id || m->geracao != geracao) throw std::runtime_error("Identidade do comando inválida");
+            robo.processarMensagem(*m);
+            if (m->tipo == TipoMensagem::Encerrar) break;
         }
-        robot.stop(); robot.statusTick();
-        Message stopped = messageFromSnapshot(robot.snapshot()); stopped.type = MessageType::RobotStopped; stopped.state = RobotState::STOPPED; send(stopped); return 0;
+        robo.parar(); robo.atualizarStatus();
+        Mensagem stopped = mensagemDoEstadoRobo(robo.capturarEstado()); stopped.tipo = TipoMensagem::RoboEncerrado; stopped.estado = EstadoRobo::ENCERRADO; enviar(stopped); return 0;
     } catch (const std::exception& e) { std::cerr << "Processo do robô: " << e.what() << '\n'; return 1; }
 }
