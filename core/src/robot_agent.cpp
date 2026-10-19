@@ -11,7 +11,8 @@ AgenteRobo::~AgenteRobo() { parar(); }
 void AgenteRobo::iniciar() {
     std::lock_guard<std::mutex> lifecycle(ciclo_vida_);
     { std::lock_guard<std::mutex> lock(mutex_); if (executando_) return; executando_ = true; encerrando_ = false; erro_ = nullptr; }
-    try { thread_navegacao_ = std::thread(&AgenteRobo::executarRotina, this, true); thread_status_ = std::thread(&AgenteRobo::executarRotina, this, false); }
+    try { thread_navegacao_ = std::thread(&AgenteRobo::executarRotina, this, true); 
+        thread_status_ = std::thread(&AgenteRobo::executarRotina, this, false); }
     catch (...) {
         { std::lock_guard<std::mutex> lock(mutex_); executando_ = false; }
         cv_.notify_all(); if (thread_navegacao_.joinable()) thread_navegacao_.join(); throw;

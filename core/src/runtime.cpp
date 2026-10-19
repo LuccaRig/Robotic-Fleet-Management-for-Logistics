@@ -4,6 +4,8 @@
 #include <sstream>
 #include <stdexcept>
 #include <unistd.h>
+#include <fstream>
+#include <map>
 
 AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario)
     : galpao_(std::move(cenario.galpao)), initial_(std::move(cenario.robos)), collector_(banco),
@@ -129,6 +131,9 @@ void AplicacaoCentral::avancarCiclo() {
         tratarEfeitosPassagem(std::move(resultado));
         it = removals_.erase(it);
     }
+
+
+    exportarMapaTxt("mapa_execucao.txt");
 }
 bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) {
     if (hardware_.contemRobo(id) || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;
@@ -194,4 +199,93 @@ void AplicacaoCentral::executarComando(const std::string& linha) {
     } else if (action == "retomar") { const auto id = integer(); exhausted(); retomar(id); }
     else if (action == "ajuda") { exhausted(); imprimir("Comandos: status; cargas; passagens; robo adicionar ID X Y; robo remover ID; robo interromper ID; bateria ID 0..100; falha ID 0|1; retomar MISSÃO; sair"); }
     else throw std::invalid_argument("Comando desconhecido. Digite ajuda");
+}
+
+void AplicacaoCentral::exportarMapaTxt(const std::string& caminho_arquivo) const {
+    std::ofstream arquivo(caminho_arquivo);
+    if (!arquivo.is_open()) return;
+
+    auto frota = manager_.frota().capturarEstado();
+
+    std::map<std::pair<int, int>, std::vector<int>> robos_por_posicao;
+    for (const auto& robo : frota) {
+        if (robo.conectado) {
+            robos_por_posicao[{robo.posicao.x, robo.posicao.y}].push_back(robo.id);
+        }
+    }
+
+    arquivo << "=== MAPA DO GALPÃO (Tempo de Execução) ===\n";
+    
+    int cell_width = 5; 
+
+    arquivo << "+";
+    for (int x = 0; x < galpao_.largura_; ++x) {
+        arquivo << std::string(cell_width, '-');
+    }
+    arquivo << "+\n";
+
+    for (int y = 0; y < galpao_.altura_; ++y) {
+        arquivo << "|";
+        for (int x = 0; x < galpao_.largura_; ++x) {
+            auto it = robos_por_posicao.find({x, y});
+            
+            if (it != robos_por_posicao.end() && !it->second.empty()) {
+                const auto& ids = it->second;
+                if (ids.size() == 1) {
+                    std::string texto = "R" + std::to_string(ids[0]);
+                    int pad = cell_width - texto.length();
+                    int pad_l = pad / 2;
+                    int pad_r = pad - pad_l;
+                    arquivo << std::string(pad_l, ' ') << texto << std::string(pad_r, ' ');
+                } else {
+                    std::string texto = "[";
+                    for (size_t i = 0; i < ids.size(); ++i) {
+                        texto += std::to_string(ids[i]);
+                        if (i + 1 < ids.size()) texto += ",";
+                    }
+                    texto += "]";
+                    
+                    if (texto.length() > static_cast<size_t>(cell_width)) {
+                        texto = "!COL!";
+                    }
+                    
+                    int pad = cell_width - texto.length();
+                    int pad_l = pad / 2;
+                    int pad_r = pad - pad_l;
+                    arquivo << std::string(pad_l, ' ') << texto << std::string(pad_r, ' ');
+                }
+            } else {
+                int valor_celula = static_cast<int>(galpao_.obterCelula(x, y));
+                std::string simbolo = (valor_celula == 0) ? "." : std::to_string(valor_celula);
+                
+                int pad = cell_width - simbolo.length();
+                int pad_l = pad / 2;
+                int pad_r = pad - pad_l;
+                arquivo << std::string(pad_l, ' ') << simbolo << std::string(pad_r, ' ');
+            }
+        }
+        arquivo << "|\n";
+    }
+
+    arquivo << "+";
+    for (int x = 0; x < galpao_.largura_; ++x) {
+        arquivo << std::string(cell_width, '-');
+    }
+    arquivo << "+\n\n";
+
+    arquivo << "Legenda:\n";
+    arquivo << "  '.' = Livre | '1', '2'... = Tipos de célula do mapa | 'R0' = Robô único\n";
+    arquivo << "  '[0,1]' = Múltiplos robôs na mesma célula!\n\n";
+    
+    arquivo << "Posições ativas da Frota:\n";
+    for (const auto& robo : frota) {
+        if (robo.conectado) {
+            arquivo << "  - Robô " << robo.id 
+                    << " -> X: " << robo.posicao.x 
+                    << ", Y: " << robo.posicao.y 
+                    << " | Estado: " << nomeEstadoRobo(robo.estado) << "\n";
+        }
+    }
+
+    arquivo.close();
 }

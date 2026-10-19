@@ -30,6 +30,7 @@ public:
     bool definirFalha(int id, bool falha);
     void retomar(IdEntidade id_missao);
     bool concluido() const;
+    void exportarMapaTxt(const std::string& caminho_arquivo) const;
     std::size_t quantidadeEventos(TipoEvento tipo) const;
     void executarComando(const std::string& linha);
     void imprimir(const std::string& texto) const;

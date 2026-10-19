@@ -7,8 +7,13 @@
 #include <vector>
 
 enum class EstadoCelula : std::uint8_t {
-    LIVRE = 0, ROBO = 1, ESTACAO_RECARGA = 2, TRECHO_RESTRITO = 3,
-    BAIA_COLETA = 4, OBSTACULO = 5, AREA_ENTREGA = 6
+    LIVRE = 0, 
+    ROBO = 1, 
+    ESTACAO_RECARGA = 2, 
+    TRECHO_RESTRITO = 3,
+    BAIA_COLETA = 4, 
+    OBSTACULO = 5, 
+    AREA_ENTREGA = 6
 };
 
 class MapaGalpao {
@@ -31,9 +36,11 @@ public:
     const TrechoRestrito* trechoEm(Posicao p) const;
     std::vector<Posicao> carregadores() const;
     void validar() const;
-private:
     int largura_;
     int altura_;
+
+private:
+    
     std::vector<EstadoCelula> grade_;
     std::map<int, BaiaCarregamento> baias_;
     std::map<int, DestinoEntrega> destinations_;
