@@ -43,6 +43,18 @@ TEST(FleetStateTest, RejectsStateRegressionEvenWithHigherTransportSequence) {
     s.revisao = 5; s.sequencia_sensor = 3; EXPECT_FALSE(frota.atualizar(s));
     frota.desconectar(1,1); s.sequencia_sensor = 5; EXPECT_FALSE(frota.atualizar(s));
 }
+TEST(FleetStateTest, LocalSensorUpdatesPreserveTransportSequenceAndRejectOldReadings) {
+    EstadoFrota frota; ASSERT_TRUE(frota.registrarRobo(1,2,{0,0}));
+    EstadoAtualRobo estado; estado.id = 1; estado.geracao = 2; estado.sequencia = 1; estado.conectado = true; estado.bateria = 80;
+    ASSERT_TRUE(frota.atualizar(estado));
+    auto leitura = estado; leitura.sequencia = 0; leitura.sequencia_sensor = 2; leitura.bateria = 40;
+    ASSERT_TRUE(frota.atualizarLeituraSensores(leitura));
+    ASSERT_TRUE(frota.obter(1)); EXPECT_EQ(frota.obter(1)->sequencia,1u); EXPECT_EQ(frota.obter(1)->bateria,40);
+    auto status = leitura; status.sequencia = 2; status.estado = EstadoRobo::SUSPENSO;
+    ASSERT_TRUE(frota.atualizar(status));
+    leitura.sequencia_sensor = 1; leitura.bateria = 100; EXPECT_FALSE(frota.atualizarLeituraSensores(leitura));
+    EXPECT_EQ(frota.obter(1)->bateria,40);
+}
 TEST(IpcTest, ZeroTimeoutConsumesQueuedFrameBeforePeerExit) {
     int sockets[2]; ASSERT_EQ(socketpair(AF_UNIX,SOCK_STREAM,0,sockets),0);
     CanalIpc receiver(sockets[0]);
