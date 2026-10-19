@@ -24,11 +24,11 @@ public:
     bool iniciarProcessoRobo(int id, int start_x, int start_y);
     bool encerrarProcessoRobo(int id);
     bool enviar(int id, Mensagem mensagem);
+    bool atualizarLeituraSensores(const Mensagem& leitura);
     std::vector<Mensagem> processarCiclo();
     std::vector<ProcessoRobo> processos() const;
     std::size_t quantidadeRobosAtivos() const;
     bool existeProcessoRobo(int id) const;
-    void verificarFalha() const;
     const EstadoFrota& frota() const;
     std::vector<Mensagem> parar();
 private:

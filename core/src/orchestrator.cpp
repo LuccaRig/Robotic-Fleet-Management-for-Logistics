@@ -37,7 +37,6 @@ struct GestorRobos::Impl {
     EstadoFrota frota;
     std::uint64_t proxima_geracao = 0;
     bool encerrando = false;
-    std::exception_ptr erro;
 
     explicit Impl(std::string caminho_executavel) : executavel(std::move(caminho_executavel)) {}
 
@@ -234,21 +233,19 @@ bool GestorRobos::enviar(int id, Mensagem mensagem) {
     return true;
 }
 
+bool GestorRobos::atualizarLeituraSensores(const Mensagem& leitura) {
+    return impl_->frota.atualizarLeituraSensores(estadoRoboDaMensagem(leitura));
+}
+
 std::vector<Mensagem> GestorRobos::processarCiclo() {
-    verificarFalha();
     std::vector<Mensagem> recebidas;
-    try {
-        for (auto it = impl_->entradas.begin(); it != impl_->entradas.end();) {
-            auto& entrada = *it->second;
-            impl_->enviarPendentes(entrada, recebidas);
-            impl_->receberDisponiveis(entrada, recebidas);
-            impl_->verificarPrazos(entrada, recebidas);
-            if (impl_->recolher(entrada, recebidas)) it = impl_->entradas.erase(it);
-            else ++it;
-        }
-    } catch (...) {
-        impl_->erro = std::current_exception();
-        throw;
+    for (auto it = impl_->entradas.begin(); it != impl_->entradas.end();) {
+        auto& entrada = *it->second;
+        impl_->enviarPendentes(entrada, recebidas);
+        impl_->receberDisponiveis(entrada, recebidas);
+        impl_->verificarPrazos(entrada, recebidas);
+        if (impl_->recolher(entrada, recebidas)) it = impl_->entradas.erase(it);
+        else ++it;
     }
     return recebidas;
 }
@@ -262,7 +259,6 @@ std::vector<ProcessoRobo> GestorRobos::processos() const {
 std::size_t GestorRobos::quantidadeRobosAtivos() const { return impl_->entradas.size(); }
 bool GestorRobos::existeProcessoRobo(int id) const { return impl_->entradas.count(id) != 0; }
 const EstadoFrota& GestorRobos::frota() const { return impl_->frota; }
-void GestorRobos::verificarFalha() const { if (impl_->erro) std::rethrow_exception(impl_->erro); }
 
 std::vector<Mensagem> GestorRobos::parar() {
     if (impl_->encerrando && impl_->entradas.empty()) return {};
@@ -274,6 +270,5 @@ std::vector<Mensagem> GestorRobos::parar() {
         recebidas.insert(recebidas.end(), std::make_move_iterator(ciclo.begin()), std::make_move_iterator(ciclo.end()));
         if (!impl_->entradas.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-    verificarFalha();
     return recebidas;
 }

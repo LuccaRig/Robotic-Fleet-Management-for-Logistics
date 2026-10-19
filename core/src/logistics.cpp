@@ -2,33 +2,26 @@
 #include <algorithm>
 #include <stdexcept>
 
-OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, const EstadoFrota& frota, std::vector<Carga> carga, Emissor emissor, Observador observador)
-    : galpao_(galpao), frota_(frota), planejador_(galpao), emissor_(std::move(emissor)), observador_(std::move(observador)), baias_(galpao.baias()) {
+OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, std::vector<Carga> carga)
+    : galpao_(galpao), planejador_(galpao), baias_(galpao.baias()) {
     for (auto& pair : baias_) pair.second.fila_cargas.clear();
     for (auto c : carga) {
         if (c.id <= 0 || c.tamanho < 1 || c.tamanho > 4 || !baias_.count(c.id_baia) || !galpao.destinos().count(c.id_destino) || cargas_.count(c.id)) throw std::invalid_argument("Cadastro de carga inválido");
         c.estado = EstadoCarga::PENDENTE; c.id_missao = 0; baias_.at(c.id_baia).fila_cargas.push_back(c.id); cargas_.emplace(c.id, std::move(c));
     }
 }
-void OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens) {
-    std::vector<std::pair<int, Mensagem>> acoes;
-    std::vector<AvisoLogistica> avisos;
-    for (const auto& mensagem : mensagens) registrarMensagem(mensagem);
+ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota) {
+    for (const auto& mensagem : mensagens) registrarMensagem(mensagem, frota);
     for (auto& par : missoes_) avancarMissao(par.second);
-    agendarCargas();
-    acoes.swap(acoes_);
-    avisos.swap(avisos_);
-    for (auto& action : acoes) if (!emissor_(action.first, action.second)) {
-        Mensagem disconnected; disconnected.tipo = TipoMensagem::RoboDesconectado; disconnected.id_robo = action.first;
-        const auto robo = frota_.obter(action.first); if (robo) disconnected.geracao = robo->geracao;
-        disconnected.texto = "Não foi possível enviar comando"; registrarMensagem(disconnected);
-    }
-    for (const auto& item : avisos) if (observador_) observador_(item);
+    agendarCargas(frota);
+    ResultadoCicloLogistica resultado;
+    resultado.comandos.swap(acoes_);
+    resultado.eventos.swap(avisos_);
+    return resultado;
 }
-void OrganizadorLogistica::agendarCargas() {
+void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& frota) {
     std::set<int> robos_reservados;
     for (const auto& pair : missoes_) if (pair.second.fase != FaseMissao::NENHUMA) robos_reservados.insert(pair.second.integrantes.begin(), pair.second.integrantes.end());
-    const auto robos = frota_.capturarEstado();
     std::set<int> robos_que_precisam_recarga;
     for (auto& par_baia : baias_) {
         auto& baia = par_baia.second;
@@ -40,7 +33,7 @@ void OrganizadorLogistica::agendarCargas() {
         const auto rota_carregador = planejador_.carregadorMaisProximo(destino);
         if (!rota_entrega || !rota_carregador) { carga.motivo = "Sem rota compatível com a carga ou sem carregador alcançável"; continue; }
         std::vector<EstadoAtualRobo> equipe_escolhida;
-        for (const auto& robo : robos) {
+        for (const auto& robo : frota) {
             if (!robo.conectado || !robo.disponivel || robo.falha || robo.acoplado || robos_reservados.count(robo.id) || em_recarga_.count(robo.id)) continue;
             const auto rota_coleta = planejador_.calcularRota(robo.posicao, baia.posicao);
             if (!rota_coleta) continue;
@@ -61,7 +54,7 @@ void OrganizadorLogistica::agendarCargas() {
         }
         registrarAviso(AvisoLogistica::TipoAviso::MissaoAtribuida, missao_registrada);
     }
-    for (const auto& robo : robos) {
+    for (const auto& robo : frota) {
         if (em_recarga_.count(robo.id) && (!robo.conectado || (robo.estado == EstadoRobo::DISPONIVEL && robo.bateria == 100))) em_recarga_.erase(robo.id);
         if (!robo.conectado || robo.falha || robo.acoplado || robo.id_missao || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.estado != EstadoRobo::DISPONIVEL || robo.bateria == 100) continue;
         if (robo.bateria > 15 && !robos_que_precisam_recarga.count(robo.id)) continue;
@@ -72,9 +65,9 @@ void OrganizadorLogistica::agendarCargas() {
         em_recarga_.insert(robo.id); acoes_.emplace_back(robo.id, std::move(m));
     }
 }
-void OrganizadorLogistica::registrarMensagem(const Mensagem& m) {
+void OrganizadorLogistica::registrarMensagem(const Mensagem& m, const std::vector<EstadoAtualRobo>& frota) {
     if (m.tipo == TipoMensagem::RetomarMissao && m.id_robo == -1) {
-        const auto it = missoes_.find(m.id_missao); if (it != missoes_.end()) retomar(it->second); return;
+        const auto it = missoes_.find(m.id_missao); if (it != missoes_.end()) retomar(it->second, frota); return;
     }
     if (m.tipo == TipoMensagem::RoboDesconectado) {
         for (auto& pair : missoes_) {
@@ -137,18 +130,19 @@ void OrganizadorLogistica::interromper(MissaoEquipe& missao, const std::string& 
         executarComando(missao, TipoMensagem::PausarMissao, FaseMissao::SUSPENSO); registrarAviso(AvisoLogistica::TipoAviso::MissaoSuspensa, missao);
     }
 }
-void OrganizadorLogistica::retomar(MissaoEquipe& missao) {
+void OrganizadorLogistica::retomar(MissaoEquipe& missao, const std::vector<EstadoAtualRobo>& frota) {
     if (missao.fase != FaseMissao::SUSPENSO) return;
     auto& carga = cargas_.at(missao.id_carga);
     std::optional<Posicao> posicao;
     bool all_coupled = true;
     for (const auto id : missao.integrantes) {
-        const auto robo = frota_.obter(id);
-        if (!robo || !robo->conectado || robo->geracao != missao.geracoes.at(id) || robo->falha || robo->bateria <= 15 || robo->estado != EstadoRobo::SUSPENSO) {
+        const auto encontrado = std::find_if(frota.begin(), frota.end(), [id](const EstadoAtualRobo& estado) { return estado.id == id; });
+        if (encontrado == frota.end() || !encontrado->conectado || encontrado->geracao != missao.geracoes.at(id) || encontrado->falha || encontrado->bateria <= 15 || encontrado->estado != EstadoRobo::SUSPENSO) {
             carga.motivo = "Recupere todos os integrantes e aguarde confirmação de suspensão"; return;
         }
-        if (posicao && robo->posicao != *posicao) { carga.motivo = "Equipe fora da mesma posição lógica"; return; }
-        posicao = robo->posicao; all_coupled = all_coupled && robo->acoplado;
+        const auto& robo = *encontrado;
+        if (posicao && robo.posicao != *posicao) { carga.motivo = "Equipe fora da mesma posição lógica"; return; }
+        posicao = robo.posicao; all_coupled = all_coupled && robo.acoplado;
     }
     if (missao.fase_suspensa == FaseMissao::ACOPLANDO) {
         carga.estado = EstadoCarga::ACOPLANDO; executarComando(missao, TipoMensagem::RetomarMissao, FaseMissao::ACOPLANDO);

@@ -4,7 +4,6 @@
 #include "event_recorder.hpp"
 #include "hardware.hpp"
 #include "orchestrator.hpp"
-#include <atomic>
 #include <chrono>
 #include <map>
 #include <set>
@@ -44,17 +43,13 @@ private:
     MapaGalpao galpao_;
     std::vector<PosicaoInicialRobo> initial_;
     ColetorDados collector_;
-    BufferEventos buffer_;
-    mutable std::mutex console_;
-    mutable std::mutex metrics_mutex_;
     std::map<TipoEvento, std::size_t> metrics_;
     GravadorEventos recorder_;
     GestorRobos manager_;
     ControlePassagens passages_;
     AdaptadorHardwareLocal hardware_;
     OrganizadorLogistica logistics_;
-    std::atomic<std::uint64_t> commands_{0};
-    std::mutex pending_mutex_;
+    std::uint64_t commands_ = 0;
     std::map<std::uint64_t, Mensagem> pending_;
     std::vector<Mensagem> eventos_logistica_;
     std::set<int> removals_;
@@ -65,6 +60,8 @@ private:
     bool sendCommand(int id, Mensagem mensagem);
     void aoReceberMensagem(const Mensagem& mensagem);
     void aoReceberLeitura(Mensagem leitura_sensores);
+    void tratarLeiturasHardware(std::vector<Mensagem> leituras);
+    void tratarEfeitosPassagem(ResultadoPassagens resultado);
 };
 
 #endif

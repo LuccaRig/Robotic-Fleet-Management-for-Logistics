@@ -2,102 +2,161 @@
 #include <algorithm>
 #include <stdexcept>
 
-AdaptadorHardwareLocal::AdaptadorHardwareLocal(const MapaGalpao& galpao, SensorSink sink) : galpao_(galpao), sink_(std::move(sink)) {}
-Mensagem AdaptadorHardwareLocal::leitura_sensores(Unidade& unit) { unit.leitura_sensores.tipo = TipoMensagem::AtualizarSensores; ++unit.leitura_sensores.sequencia_sensor; unit.leitura_sensores.ocorrido_em_ms = instanteUnixMs(); return unit.leitura_sensores; }
-void AdaptadorHardwareLocal::deliver(std::vector<Mensagem> mensagens) { for (auto& mensagem : mensagens) sink_(std::move(mensagem)); }
-void AdaptadorHardwareLocal::registrarRobo(const EstadoAtualRobo& capturarEstado) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (units_.count(capturarEstado.id)) throw std::runtime_error("O robô ainda ocupa o ambiente; remova-o explicitamente antes de recriar");
-    Unidade unit; unit.leitura_sensores = mensagemDoEstadoRobo(capturarEstado); unit.integrantes = {capturarEstado.id}; units_.emplace(capturarEstado.id, std::move(unit));
+AdaptadorHardwareLocal::AdaptadorHardwareLocal(const MapaGalpao& galpao) : galpao_(galpao) {}
+
+Mensagem AdaptadorHardwareLocal::leitura_sensores(Unidade& unidade) {
+    unidade.leitura_sensores.tipo = TipoMensagem::AtualizarSensores;
+    ++unidade.leitura_sensores.sequencia_sensor;
+    unidade.leitura_sensores.ocorrido_em_ms = instanteUnixMs();
+    return unidade.leitura_sensores;
 }
-void AdaptadorHardwareLocal::desconectar(int id) { std::lock_guard<std::mutex> lock(mutex_); const auto it = units_.find(id); if (it != units_.end()) { it->second.paused = true; proposals_.erase(it->second.leitura_sensores.id_missao); } }
-bool AdaptadorHardwareLocal::contemRobo(int id) const { std::lock_guard<std::mutex> lock(mutex_); return units_.count(id) != 0; }
-bool AdaptadorHardwareLocal::removerRobo(int id) { std::lock_guard<std::mutex> lock(mutex_); auto it = units_.find(id); if (it == units_.end() || it->second.leitura_sensores.acoplado) return false; proposals_.erase(it->second.leitura_sensores.id_missao); units_.erase(it); return true; }
-void AdaptadorHardwareLocal::definirValidadorMovimento(std::function<bool(const Mensagem&)> validador) { std::lock_guard<std::mutex> lock(mutex_); validator_ = std::move(validador); }
-void AdaptadorHardwareLocal::confirmarComandoAceito(const Mensagem& m) {
-    std::vector<Mensagem> feedback;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = units_.find(m.id_robo); if (it == units_.end()) return;
-        auto& unit = it->second;
-        if (m.geracao != unit.leitura_sensores.geracao) return;
-        unit.leitura_sensores.revisao = m.id_comando;
-        if (m.tipo == TipoMensagem::CancelarMissao) {
-            proposals_.erase(unit.leitura_sensores.id_missao); unit.leitura_sensores.id_missao = 0; unit.leitura_sensores.id_carga = 0; unit.leitura_sensores.id_equipe = 0;
-            unit.leitura_sensores.fase = FaseMissao::NENHUMA; unit.leitura_sensores.passo = 0; unit.integrantes = {m.id_robo}; unit.paused = false;
-        } else if (m.tipo == TipoMensagem::PausarMissao) {
-            proposals_.erase(unit.leitura_sensores.id_missao); unit.paused = true; unit.leitura_sensores.fase = FaseMissao::SUSPENSO;
-        } else if (m.tipo == TipoMensagem::AtribuirMissao || m.tipo == TipoMensagem::RetomarMissao) {
-            unit.leitura_sensores.id_missao = m.id_missao; unit.leitura_sensores.id_carga = m.id_carga; unit.leitura_sensores.id_equipe = m.id_equipe;
-            unit.leitura_sensores.id_baia = m.id_baia; unit.leitura_sensores.fase = m.fase; unit.leitura_sensores.passo = 0; unit.integrantes = m.integrantes; unit.paused = false;
-            if (m.fase == FaseMissao::ACOPLANDO) unit.leitura_sensores.acoplado = true;
-            if (m.fase == FaseMissao::DESACOPLANDO) unit.leitura_sensores.acoplado = false;
-        } else if (m.tipo == TipoMensagem::Acoplar) { unit.leitura_sensores.fase = FaseMissao::ACOPLANDO; unit.leitura_sensores.acoplado = true; }
-        else if (m.tipo == TipoMensagem::Desacoplar) { unit.leitura_sensores.fase = FaseMissao::DESACOPLANDO; unit.leitura_sensores.acoplado = false; }
-        else return;
-        feedback.push_back(leitura_sensores(unit));
+
+void AdaptadorHardwareLocal::registrarRobo(const EstadoAtualRobo& estado) {
+    if (units_.count(estado.id)) throw std::runtime_error("O robô ainda ocupa o ambiente; remova-o explicitamente antes de recriar");
+    Unidade unidade;
+    unidade.leitura_sensores = mensagemDoEstadoRobo(estado);
+    unidade.integrantes = {estado.id};
+    units_.emplace(estado.id, std::move(unidade));
+}
+
+void AdaptadorHardwareLocal::desconectar(int id) {
+    const auto robo = units_.find(id);
+    if (robo == units_.end()) return;
+    robo->second.paused = true;
+    proposals_.erase(robo->second.leitura_sensores.id_missao);
+}
+
+bool AdaptadorHardwareLocal::contemRobo(int id) const { return units_.count(id) != 0; }
+
+bool AdaptadorHardwareLocal::removerRobo(int id) {
+    const auto robo = units_.find(id);
+    if (robo == units_.end() || robo->second.leitura_sensores.acoplado) return false;
+    proposals_.erase(robo->second.leitura_sensores.id_missao);
+    units_.erase(robo);
+    return true;
+}
+
+std::vector<Mensagem> AdaptadorHardwareLocal::confirmarComandoAceito(const Mensagem& mensagem) {
+    const auto encontrado = units_.find(mensagem.id_robo);
+    if (encontrado == units_.end()) return {};
+    auto& unidade = encontrado->second;
+    if (mensagem.geracao != unidade.leitura_sensores.geracao) return {};
+    unidade.leitura_sensores.revisao = mensagem.id_comando;
+
+    if (mensagem.tipo == TipoMensagem::CancelarMissao) {
+        proposals_.erase(unidade.leitura_sensores.id_missao);
+        unidade.leitura_sensores.id_missao = 0;
+        unidade.leitura_sensores.id_carga = 0;
+        unidade.leitura_sensores.id_equipe = 0;
+        unidade.leitura_sensores.fase = FaseMissao::NENHUMA;
+        unidade.leitura_sensores.passo = 0;
+        unidade.integrantes = {mensagem.id_robo};
+        unidade.paused = false;
+    } else if (mensagem.tipo == TipoMensagem::PausarMissao) {
+        proposals_.erase(unidade.leitura_sensores.id_missao);
+        unidade.paused = true;
+        unidade.leitura_sensores.fase = FaseMissao::SUSPENSO;
+    } else if (mensagem.tipo == TipoMensagem::AtribuirMissao || mensagem.tipo == TipoMensagem::RetomarMissao) {
+        unidade.leitura_sensores.id_missao = mensagem.id_missao;
+        unidade.leitura_sensores.id_carga = mensagem.id_carga;
+        unidade.leitura_sensores.id_equipe = mensagem.id_equipe;
+        unidade.leitura_sensores.id_baia = mensagem.id_baia;
+        unidade.leitura_sensores.fase = mensagem.fase;
+        unidade.leitura_sensores.passo = 0;
+        unidade.integrantes = mensagem.integrantes;
+        unidade.paused = false;
+        if (mensagem.fase == FaseMissao::ACOPLANDO) unidade.leitura_sensores.acoplado = true;
+        if (mensagem.fase == FaseMissao::DESACOPLANDO) unidade.leitura_sensores.acoplado = false;
+    } else if (mensagem.tipo == TipoMensagem::Acoplar) {
+        unidade.leitura_sensores.fase = FaseMissao::ACOPLANDO;
+        unidade.leitura_sensores.acoplado = true;
+    } else if (mensagem.tipo == TipoMensagem::Desacoplar) {
+        unidade.leitura_sensores.fase = FaseMissao::DESACOPLANDO;
+        unidade.leitura_sensores.acoplado = false;
+    } else {
+        return {};
     }
-    deliver(std::move(feedback));
+    return {leitura_sensores(unidade)};
 }
-void AdaptadorHardwareLocal::setpoint(const Mensagem& m) {
-    std::vector<Mensagem> feedback;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto it = units_.find(m.id_robo); if (it == units_.end()) throw std::runtime_error("Setpoint de robô inexistente");
-        auto& unit = it->second;
-        if (m.geracao != unit.leitura_sensores.geracao || m.id_missao != unit.leitura_sensores.id_missao || m.fase != unit.leitura_sensores.fase || m.revisao != unit.leitura_sensores.revisao || unit.paused) return;
-        if (unit.leitura_sensores.falha || unit.leitura_sensores.bateria == 0) return;
-        if (m.passo != unit.leitura_sensores.passo + 1 || m.posicao != unit.leitura_sensores.posicao || distanciaManhattan(unit.leitura_sensores.posicao, m.destino) != 1 || !galpao_.podeTransitar(m.destino)) throw std::runtime_error("Setpoint físico inválido");
-        if (validator_ && !validator_(m)) throw std::runtime_error("Movimento sem permissão de passagem");
-        if (!unit.leitura_sensores.acoplado) {
-            unit.leitura_sensores.posicao = m.destino; unit.leitura_sensores.passo = m.passo; --unit.leitura_sensores.bateria; feedback.push_back(leitura_sensores(unit));
-        } else {
-            auto& propostas = proposals_[m.id_missao]; propostas[m.id_robo] = m;
-            if (unit.integrantes.empty()) throw std::runtime_error("Equipe acoplada sem integrantes");
-            bool concluido = true;
-            for (const auto id : unit.integrantes) {
-                const auto robo = units_.find(id); const auto proposal = propostas.find(id);
-                if (robo == units_.end() || proposal == propostas.end() || robo->second.paused || robo->second.leitura_sensores.falha || robo->second.leitura_sensores.bateria <= 15 || !robo->second.leitura_sensores.acoplado || robo->second.leitura_sensores.id_missao != m.id_missao || proposal->second.destino != m.destino || proposal->second.passo != m.passo) { concluido = false; break; }
-            }
-            if (concluido) {
-                for (const auto id : unit.integrantes) {
-                    auto& member = units_.at(id); member.leitura_sensores.posicao = m.destino; member.leitura_sensores.passo = m.passo;
-                    --member.leitura_sensores.bateria; feedback.push_back(leitura_sensores(member));
-                }
-                proposals_.erase(m.id_missao);
-            }
-        }
+
+std::vector<Mensagem> AdaptadorHardwareLocal::setpoint(const Mensagem& mensagem) {
+    const auto encontrado = units_.find(mensagem.id_robo);
+    if (encontrado == units_.end()) throw std::runtime_error("Setpoint de robô inexistente");
+    auto& unidade = encontrado->second;
+    if (mensagem.geracao != unidade.leitura_sensores.geracao || mensagem.id_missao != unidade.leitura_sensores.id_missao ||
+        mensagem.fase != unidade.leitura_sensores.fase || mensagem.revisao != unidade.leitura_sensores.revisao || unidade.paused) return {};
+    if (unidade.leitura_sensores.falha || unidade.leitura_sensores.bateria == 0) return {};
+    if (mensagem.passo != unidade.leitura_sensores.passo + 1 || mensagem.posicao != unidade.leitura_sensores.posicao ||
+        distanciaManhattan(unidade.leitura_sensores.posicao, mensagem.destino) != 1 || !galpao_.podeTransitar(mensagem.destino)) {
+        throw std::runtime_error("Setpoint físico inválido");
     }
-    deliver(std::move(feedback));
-}
-void AdaptadorHardwareLocal::registrarObservacao(const EstadoAtualRobo& s) {
-    std::lock_guard<std::mutex> lock(mutex_); const auto it = units_.find(s.id);
-    if (it != units_.end() && it->second.leitura_sensores.geracao == s.geracao && it->second.leitura_sensores.id_missao == s.id_missao) it->second.observed = s.estado;
-}
-bool AdaptadorHardwareLocal::injetarLeitura(int id, std::optional<int> bateria, std::optional<bool> falha) {
-    if (bateria && (*bateria < 0 || *bateria > 100)) return false;
-    std::vector<Mensagem> feedback;
-    {
-        std::lock_guard<std::mutex> lock(mutex_); auto it = units_.find(id); if (it == units_.end()) return false;
-        if (bateria) it->second.leitura_sensores.bateria = *bateria;
-        if (falha) it->second.leitura_sensores.falha = *falha;
-        if (it->second.leitura_sensores.falha || it->second.leitura_sensores.bateria <= 15) proposals_.erase(it->second.leitura_sensores.id_missao);
-        feedback.push_back(leitura_sensores(it->second));
+
+    if (!unidade.leitura_sensores.acoplado) {
+        unidade.leitura_sensores.posicao = mensagem.destino;
+        unidade.leitura_sensores.passo = mensagem.passo;
+        --unidade.leitura_sensores.bateria;
+        return {leitura_sensores(unidade)};
     }
-    deliver(std::move(feedback)); return true;
-}
-void AdaptadorHardwareLocal::avancarCiclo() {
-    std::vector<Mensagem> feedback;
-    {
-        std::lock_guard<std::mutex> lock(mutex_); const auto now = std::chrono::steady_clock::now();
-        for (auto& pair : units_) {
-            auto& unit = pair.second;
-            if (unit.observed != EstadoRobo::RECARREGANDO || unit.leitura_sensores.falha || unit.leitura_sensores.bateria >= 100 || galpao_.obterCelula(unit.leitura_sensores.posicao.x, unit.leitura_sensores.posicao.y) != EstadoCelula::ESTACAO_RECARGA || now - unit.last_charge < std::chrono::milliseconds(500)) continue;
-            unit.last_charge = now; unit.leitura_sensores.bateria = std::min(100, unit.leitura_sensores.bateria + 5); feedback.push_back(leitura_sensores(unit));
-        }
+
+    auto& propostas = proposals_[mensagem.id_missao];
+    propostas[mensagem.id_robo] = mensagem;
+    if (unidade.integrantes.empty()) throw std::runtime_error("Equipe acoplada sem integrantes");
+    for (const auto id : unidade.integrantes) {
+        const auto membro = units_.find(id);
+        const auto proposta = propostas.find(id);
+        if (membro == units_.end() || proposta == propostas.end() || membro->second.paused || membro->second.leitura_sensores.falha ||
+            membro->second.leitura_sensores.bateria <= 15 || !membro->second.leitura_sensores.acoplado ||
+            membro->second.leitura_sensores.id_missao != mensagem.id_missao || proposta->second.destino != mensagem.destino ||
+            proposta->second.passo != mensagem.passo) return {};
     }
-    deliver(std::move(feedback));
+
+    std::vector<Mensagem> sensores;
+    for (const auto id : unidade.integrantes) {
+        auto& membro = units_.at(id);
+        membro.leitura_sensores.posicao = mensagem.destino;
+        membro.leitura_sensores.passo = mensagem.passo;
+        --membro.leitura_sensores.bateria;
+        sensores.push_back(leitura_sensores(membro));
+    }
+    proposals_.erase(mensagem.id_missao);
+    return sensores;
 }
+
+void AdaptadorHardwareLocal::registrarObservacao(const EstadoAtualRobo& estado) {
+    const auto robo = units_.find(estado.id);
+    if (robo != units_.end() && robo->second.leitura_sensores.geracao == estado.geracao &&
+        robo->second.leitura_sensores.id_missao == estado.id_missao) robo->second.observed = estado.estado;
+}
+
+std::optional<std::vector<Mensagem>> AdaptadorHardwareLocal::injetarLeitura(int id, std::optional<int> bateria, std::optional<bool> falha) {
+    if (bateria && (*bateria < 0 || *bateria > 100)) return std::nullopt;
+    const auto robo = units_.find(id);
+    if (robo == units_.end()) return std::nullopt;
+    if (bateria) robo->second.leitura_sensores.bateria = *bateria;
+    if (falha) robo->second.leitura_sensores.falha = *falha;
+    if (robo->second.leitura_sensores.falha || robo->second.leitura_sensores.bateria <= 15) {
+        proposals_.erase(robo->second.leitura_sensores.id_missao);
+    }
+    return std::vector<Mensagem>{leitura_sensores(robo->second)};
+}
+
+std::vector<Mensagem> AdaptadorHardwareLocal::avancarCiclo() {
+    std::vector<Mensagem> sensores;
+    const auto agora = std::chrono::steady_clock::now();
+    for (auto& par : units_) {
+        auto& unidade = par.second;
+        if (unidade.observed != EstadoRobo::RECARREGANDO || unidade.leitura_sensores.falha || unidade.leitura_sensores.bateria >= 100 ||
+            galpao_.obterCelula(unidade.leitura_sensores.posicao.x, unidade.leitura_sensores.posicao.y) != EstadoCelula::ESTACAO_RECARGA ||
+            agora - unidade.last_charge < std::chrono::milliseconds(500)) continue;
+        unidade.last_charge = agora;
+        unidade.leitura_sensores.bateria = std::min(100, unidade.leitura_sensores.bateria + 5);
+        sensores.push_back(leitura_sensores(unidade));
+    }
+    return sensores;
+}
+
 std::optional<Mensagem> AdaptadorHardwareLocal::lerLeitura(int id) const {
-    std::lock_guard<std::mutex> lock(mutex_); auto it = units_.find(id); if (it == units_.end()) return std::nullopt; return it->second.leitura_sensores;
+    const auto robo = units_.find(id);
+    if (robo == units_.end()) return std::nullopt;
+    return robo->second.leitura_sensores;
 }

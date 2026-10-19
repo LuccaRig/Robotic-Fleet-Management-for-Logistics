@@ -1,11 +1,10 @@
 #include "event_recorder.hpp"
 
-GravadorEventos::GravadorEventos(BufferEventos& buffer, Observador observador) : buffer_(buffer), observador_(std::move(observador)) {}
-void GravadorEventos::registrar(EventoRobo event) { buffer_.adicionarEvento(event); if (observador_) observador_(event); }
+GravadorEventos::GravadorEventos(ColetorDados& coletor, Observador observador) : coletor_(coletor), observador_(std::move(observador)) {}
+void GravadorEventos::registrar(EventoRobo event) { coletor_.enfileirarEvento(event); if (observador_) observador_(event); }
 void GravadorEventos::aoReceberEventoRobo(const Mensagem& m) {
     std::vector<EventoRobo> eventos;
     {
-        std::lock_guard<std::mutex> lock(mutex_);
         auto add = [&](TipoEvento tipo, const std::string& descricao, Posicao posicao) {
             EventoRobo e(m.id_robo, static_cast<int>(m.id_equipe), m.id_baia, posicao, tipo, descricao, "");
             e.rastrear(m.id_carga, m.id_missao, m.geracao, "robo:" + std::to_string(m.id_robo), m.sequencia ? m.sequencia : ++sequencia_, m.ocorrido_em_ms ? m.ocorrido_em_ms : instanteUnixMs());
