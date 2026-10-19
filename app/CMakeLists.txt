@@ -5,6 +5,5 @@ add_executable(simulador_exec
 )
 
 target_link_libraries(simulador_exec PRIVATE
-    communication_lib
     core_lib
 )

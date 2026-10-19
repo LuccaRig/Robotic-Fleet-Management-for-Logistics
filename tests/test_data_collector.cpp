@@ -72,12 +72,12 @@ int queryInt(const std::string& path, const char* sql) {
 } // namespace
 
 TEST_F(DataCollectorTest, PersistsRobotEventFieldsAndTimestamp) {
-    DataCollector collector(path);
-    collector.start();
-    RobotEvent e(7, 4, 3, {10, 25}, EventType::ROBOT_MOVING,
+    ColetorDados collector(path);
+    collector.iniciar();
+    EventoRobo e(7, 4, 3, {10, 25}, TipoEvento::ROBO_EM_MOVIMENTO,
                  "Deslocamento iniciado", "Baia 3");
-    collector.enqueueEvent(e);
-    collector.stop();
+    collector.enfileirarEvento(e);
+    collector.parar();
 
     EXPECT_EQ(countEvents(path), 1);
     EXPECT_EQ(queryInt(path, R"SQL(
@@ -90,11 +90,11 @@ TEST_F(DataCollectorTest, PersistsRobotEventFieldsAndTimestamp) {
 }
 
 TEST_F(DataCollectorTest, PersistsDeliveryDetails) {
-    DataCollector collector(path);
-    collector.start();
-    collector.enqueueEvent(RobotEvent(2, 8, 5, {6, 7}, EventType::CARGO_DELIVERED,
+    ColetorDados collector(path);
+    collector.iniciar();
+    collector.enfileirarEvento(EventoRobo(2, 8, 5, {6, 7}, TipoEvento::CARGA_ENTREGUE,
                                       "Carga entregue", "Estoque B"));
-    collector.stop();
+    collector.parar();
     EXPECT_EQ(queryInt(path, R"SQL(
         SELECT COUNT(*) FROM robot_events WHERE robot_id=2 AND team_id=8
           AND bay_id=5 AND position_x=6 AND position_y=7
@@ -103,67 +103,67 @@ TEST_F(DataCollectorTest, PersistsDeliveryDetails) {
 }
 
 TEST_F(DataCollectorTest, DrainsPendingEventsWhenStopped) {
-    DataCollector collector(path);
-    collector.start();
+    ColetorDados collector(path);
+    collector.iniciar();
     for (int i = 0; i < 200; ++i)
-        collector.enqueueEvent(RobotEvent(i, -1, -1, {i, 0},
-                                          EventType::ROBOT_ARRIVED, "Pendente", ""));
-    collector.stop();
+        collector.enfileirarEvento(EventoRobo(i, -1, -1, {i, 0},
+                                          TipoEvento::ROBO_CHEGOU, "Pendente", ""));
+    collector.parar();
     EXPECT_EQ(countEvents(path), 200);
     EXPECT_EQ(queryInt(path, "SELECT COUNT(*) FROM robot_events WHERE robot_id=199"), 1);
 }
 
 TEST_F(DataCollectorTest, HandlesConcurrentProducersWithoutLosingEvents) {
-    DataCollector collector(path);
-    collector.start();
+    ColetorDados collector(path);
+    collector.iniciar();
     std::vector<std::thread> threads;
     for (int p = 0; p < 4; ++p) {
         threads.emplace_back([&collector, p]() {
             for (int i = 0; i < 50; ++i)
-                collector.enqueueEvent(RobotEvent(p, p, -1, {i, p},
-                                      EventType::ROBOT_MOVING, "Concorrente", ""));
+                collector.enfileirarEvento(EventoRobo(p, p, -1, {i, p},
+                                      TipoEvento::ROBO_EM_MOVIMENTO, "Concorrente", ""));
         });
     }
     for (auto& thread : threads) thread.join();
-    collector.stop();
+    collector.parar();
     EXPECT_EQ(countEvents(path), 200);
 }
 
 TEST_F(DataCollectorTest, RejectsEventsBeforeStartAndAfterStop) {
-    DataCollector collector(path);
-    RobotEvent event;
-    EXPECT_THROW(collector.enqueueEvent(event), std::runtime_error);
-    collector.start();
-    collector.stop();
-    EXPECT_THROW(collector.enqueueEvent(event), std::runtime_error);
+    ColetorDados collector(path);
+    EventoRobo event;
+    EXPECT_THROW(collector.enfileirarEvento(event), std::runtime_error);
+    collector.iniciar();
+    collector.parar();
+    EXPECT_THROW(collector.enfileirarEvento(event), std::runtime_error);
     EXPECT_EQ(countEvents(path), 0);
 }
 
 TEST_F(DataCollectorTest, SupportsRepeatedStartStopAndRestart) {
-    DataCollector collector(path);
-    collector.start();
-    collector.start();
-    collector.enqueueEvent(RobotEvent());
-    collector.stop();
-    collector.stop();
-    collector.start();
-    collector.enqueueEvent(RobotEvent());
-    collector.stop();
+    ColetorDados collector(path);
+    collector.iniciar();
+    collector.iniciar();
+    collector.enfileirarEvento(EventoRobo());
+    collector.parar();
+    collector.parar();
+    collector.iniciar();
+    collector.enfileirarEvento(EventoRobo());
+    collector.parar();
     EXPECT_EQ(countEvents(path), 2);
 }
 
 TEST_F(DataCollectorTest, PersistsAcrossDistinctInstances) {
     {
-        DataCollector first(path);
-        first.start();
-        first.enqueueEvent(RobotEvent());
-        first.stop();
+        ColetorDados first(path);
+        first.iniciar();
+        first.enfileirarEvento(EventoRobo());
+        first.parar();
     }
     {
-        DataCollector second(path);
-        second.start();
-        second.enqueueEvent(RobotEvent());
-        second.stop();
+        ColetorDados second(path);
+        second.iniciar();
+        second.enfileirarEvento(EventoRobo());
+        second.parar();
     }
     EXPECT_EQ(countEvents(path), 2);
 }

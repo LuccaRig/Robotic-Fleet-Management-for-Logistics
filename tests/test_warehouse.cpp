@@ -1,34 +1,25 @@
 #include <gtest/gtest.h>
-#include "warehouse.hpp"
+#include "route_planner.hpp"
 
-// Teste para verificar se o grid inicializa corretamente com a matriz arbitrária
-TEST(WarehouseGridTest, InitializationAndGetCell) {
-    std::vector<std::vector<int>> mapa_inicial = {
-        {5, 5, 5},
-        {5, 2, 0},
-        {5, 4, 1}
-    };
-
-    WarehouseGrid warehouse(mapa_inicial);
-
-    // Verifica dimensões
-    EXPECT_EQ(warehouse.getWidth(), 3);
-    EXPECT_EQ(warehouse.getHeight(), 3);
-
-    // Verifica células específicas baseadas no enum CellState
-    // 0 = EMPTY, 1 = ROBOT, 2 = CHARGING_STATION, 4 = PICKUP_POINT, 5 = OBSTACLE
-    EXPECT_EQ(warehouse.getCell(1, 1), CellState::CHARGING_STATION);
-    EXPECT_EQ(warehouse.getCell(2, 1), CellState::EMPTY);
-    EXPECT_EQ(warehouse.getCell(2, 2), CellState::ROBOT);
-    EXPECT_EQ(warehouse.getCell(1, 2), CellState::PICKUP_POINT);
-    EXPECT_EQ(warehouse.getCell(0, 0), CellState::OBSTACLE);
+TEST(WarehouseGridTest, RejectsInvalidLayoutAndKeepsRobotOccupationSeparate) {
+    EXPECT_THROW(MapaGalpao(0,3),std::invalid_argument);
+    EXPECT_THROW((MapaGalpao(std::vector<std::vector<int>>{{0,0},{0}})),std::invalid_argument);
+    EXPECT_THROW((MapaGalpao(std::vector<std::vector<int>>{{1}})),std::invalid_argument);
+    MapaGalpao map(3,3); EXPECT_THROW(map.definirCelula(1,1,EstadoCelula::ROBO),std::invalid_argument);
+    EXPECT_EQ(map.obterCelula(-1,0),EstadoCelula::OBSTACULO);
 }
-
-// Teste de segurança para limites da matriz
-TEST(WarehouseGridTest, OutOfBoundsSafety) {
-    WarehouseGrid warehouse(3, 3);
-
-    // Acessar fora dos limites deve retornar OBSTACLE por segurança
-    EXPECT_EQ(warehouse.getCell(-1, 0), CellState::OBSTACLE);
-    EXPECT_EQ(warehouse.getCell(5, 5), CellState::OBSTACLE);
+TEST(RoutePlannerTest, AvoidsWallsAndInsufficientCapacity) {
+    MapaGalpao map(7,5);
+    for (int y = 0; y < 5; ++y) map.definirCelula(3,y,EstadoCelula::OBSTACULO);
+    map.definirCelula(3,1,EstadoCelula::LIVRE); map.adicionarTrecho({1,1,{{3,1}}});
+    map.definirCelula(3,4,EstadoCelula::LIVRE); map.adicionarTrecho({2,4,{{3,4}}});
+    PlanejadorRotas planner(map); auto solo = planner.calcularRota({1,1},{5,1},1); auto team = planner.calcularRota({1,1},{5,1},4);
+    ASSERT_TRUE(solo); ASSERT_TRUE(team); EXPECT_LT(solo->size(),team->size());
+    for (auto point : *team) EXPECT_NE(point,(Posicao{3,1}));
+    auto empty = planner.calcularRota({1,1},{1,1}); ASSERT_TRUE(empty); EXPECT_TRUE(empty->empty());
+    EXPECT_FALSE(planner.calcularRota({-1,0},{1,1}));
+}
+TEST(RoutePlannerTest, DistinguishesUnreachableCharger) {
+    MapaGalpao map(3,3); PlanejadorRotas planner(map); EXPECT_FALSE(planner.carregadorMaisProximo({1,1}));
+    map.definirCelula(0,0,EstadoCelula::ESTACAO_RECARGA); ASSERT_TRUE(planner.carregadorMaisProximo({1,1}));
 }

@@ -1,62 +1,68 @@
 #ifndef ROBOT_AGENT_HPP
 #define ROBOT_AGENT_HPP
 
-#include <thread>
+#include "protocol.hpp"
 #include <atomic>
-#include <chrono>
-#include <string>
+#include <condition_variable>
+#include <deque>
+#include <exception>
+#include <functional>
+#include <mutex>
+#include <thread>
 
-enum class RobotState {
-    IDLE,               
-    NAVIGATING_TO_PICKUP, 
-    WAITING_TO_LOAD,    
-    NAVIGATING_TO_DELIVERY, 
-    CHARGING,           
-    ERROR               
-};
-
-class RobotAgent {
-private:
-    int id;
-    int posicao_atual_x;
-    int posicao_atual_y;
-    bool carga_atracada;
-    int bateria;            // 0 a 100
-    bool falha;
-    
-    int setpoint_posicao_x;
-    int setpoint_posicao_y;
-    std::string tarefa_atual;
-    RobotState estado_atual;
-    bool em_processo_de_carga; 
-
-    std::thread navigation_thread;
-    std::thread status_thread;
-    std::atomic<bool> running;
-
-    void navigationLoop();
-    void statusLoop();
-
-    bool verificarSegurancaPassagemEstreita(int proximo_x, int proximo_y);
-
+// Mantém o estado local e separa a navegação do processamento de sensores.
+class AgenteRobo {
 public:
-    RobotAgent(int id, int start_x, int start_y);
-    ~RobotAgent();
-
-    void start();
-    void stop();
-
-    void atribuirTarefa(const std::string& descricao_tarefa, int destino_x, int destino_y);
-    void ComandoDeNavegacao(); 
-    void StatusDoRobo();       
-    void setRobotStatus(int nova_bateria, bool novo_estado_falha);
-
-    int getId() const;
-    int getX() const;
-    int getY() const;
-    int getBateria() const;
-    RobotState getEstado() const;
-    bool isFalha() const;
+    using Emissor = std::function<void(Mensagem)>;
+    AgenteRobo(int id, int x, int y, std::uint64_t geracao = 1, Emissor emissor = {});
+    ~AgenteRobo();
+    AgenteRobo(const AgenteRobo&) = delete;
+    AgenteRobo& operator=(const AgenteRobo&) = delete;
+    void iniciar();
+    void parar();
+    void processarMensagem(const Mensagem& mensagem);
+    void avancarNavegacao();
+    void atualizarStatus();
+    EstadoAtualRobo capturarEstado() const;
+    void verificarFalha() const;
+    void atribuirMissao(const std::string& descricao, int x, int y);
+    void comandarNavegacao() { avancarNavegacao(); }
+    void processarStatus() { atualizarStatus(); }
+    void atualizarEstadoRobo(int bateria, bool falha);
+    int obterId() const { return capturarEstado().id; }
+    int obterX() const { return capturarEstado().posicao.x; }
+    int obterY() const { return capturarEstado().posicao.y; }
+    int obterBateria() const { return capturarEstado().bateria; }
+    EstadoRobo obterEstado() const { return capturarEstado().estado; }
+    bool temFalha() const { return capturarEstado().falha; }
+private:
+    mutable std::mutex mutex_;
+    std::mutex ciclo_vida_;
+    std::condition_variable cv_;
+    EstadoAtualRobo estado_;
+    EstadoRobo estado_antes_falha_ = EstadoRobo::DISPONIVEL;
+    Emissor emissor_;
+    std::vector<Posicao> rota_;
+    std::vector<int> integrantes_;
+    std::deque<Mensagem> leituras_sensor_;
+    Posicao ultima_posicao_distancia_;
+    std::size_t indice_rota_ = 0;
+    bool aguardando_posicao_ = false;
+    bool aguardando_passagem_ = false;
+    bool passagem_liberada_ = false;
+    bool estado_alterado_ = true;
+    bool comando_pendente_ = false;
+    bool executando_ = false;
+    bool encerrando_ = false;
+    std::uint64_t ultimo_id_comando_ = 0;
+    bool ultimo_comando_aceito_ = true;
+    std::uint64_t sequencia_sensor_local_ = 0;
+    std::thread thread_navegacao_;
+    std::thread thread_status_;
+    std::exception_ptr erro_;
+    void emitirMensagem(Mensagem mensagem);
+    void publicarEstado();
+    void executarRotina(bool navegacao) noexcept;
 };
 
-#endif // ROBOT_AGENT_HPP
+#endif

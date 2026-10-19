@@ -50,66 +50,66 @@ protected:
 } // namespace
 
 TEST_F(BufferCollectorTest, CircularRetentionStillPersistsAllEvents) {
-    DataCollector collector(path);
-    collector.start();
-    Buffer buffer(collector, 3);
+    ColetorDados collector(path);
+    collector.iniciar();
+    BufferEventos buffer(collector, 3);
     for (int i = 0; i < 5; ++i) {
-        buffer.addEvent(RobotEvent(i, 9, 2, {i, i + 1}, EventType::ROBOT_MOVING,
+        buffer.adicionarEvento(EventoRobo(i, 9, 2, {i, i + 1}, TipoEvento::ROBO_EM_MOVIMENTO,
                                    "Movimento", "Destino"));
     }
-    ASSERT_EQ(buffer.size(), 3u);
-    const auto snapshot = buffer.snapshot();
-    ASSERT_EQ(snapshot.size(), 3u);
-    EXPECT_EQ(snapshot[0].getRobotId(), 2);
-    EXPECT_EQ(snapshot[1].getRobotId(), 3);
-    EXPECT_EQ(snapshot[2].getRobotId(), 4);
-    collector.stop();
+    ASSERT_EQ(buffer.quantidade(), 3u);
+    const auto eventos = buffer.capturarEventos();
+    ASSERT_EQ(eventos.size(), 3u);
+    EXPECT_EQ(eventos[0].idRobo(), 2);
+    EXPECT_EQ(eventos[1].idRobo(), 3);
+    EXPECT_EQ(eventos[2].idRobo(), 4);
+    collector.parar();
     EXPECT_EQ(count(), 5);
     EXPECT_EQ(count("robot_id=0 AND position_x=0 AND position_y=1"), 1);
     EXPECT_EQ(count("robot_id=4 AND position_x=4 AND position_y=5"), 1);
 }
 
 TEST_F(BufferCollectorTest, ClearDoesNotErasePersistedEvents) {
-    DataCollector collector(path);
-    collector.start();
-    Buffer buffer(collector, 5);
-    buffer.addEvent(RobotEvent(42, -1, -1, {4, 2}, EventType::ROBOT_CREATED,
+    ColetorDados collector(path);
+    collector.iniciar();
+    BufferEventos buffer(collector, 5);
+    buffer.adicionarEvento(EventoRobo(42, -1, -1, {4, 2}, TipoEvento::ROBO_CRIADO,
                                "Inicializado", ""));
-    buffer.clear();
-    EXPECT_EQ(buffer.size(), 0u);
-    EXPECT_TRUE(buffer.snapshot().empty());
-    collector.stop();
+    buffer.limpar();
+    EXPECT_EQ(buffer.quantidade(), 0u);
+    EXPECT_TRUE(buffer.capturarEventos().empty());
+    collector.parar();
     EXPECT_EQ(count("robot_id=42"), 1);
 }
 
 TEST_F(BufferCollectorTest, ConcurrentBufferWritersReachSQLite) {
-    DataCollector collector(path);
-    collector.start();
-    Buffer buffer(collector, 10);
+    ColetorDados collector(path);
+    collector.iniciar();
+    BufferEventos buffer(collector, 10);
     std::vector<std::thread> threads;
     for (int p = 0; p < 4; ++p) {
         threads.emplace_back([&buffer, p]() {
             for (int i = 0; i < 50; ++i)
-                buffer.addEvent(RobotEvent(p, p, -1, {i, p}, EventType::ROBOT_MOVING,
+                buffer.adicionarEvento(EventoRobo(p, p, -1, {i, p}, TipoEvento::ROBO_EM_MOVIMENTO,
                                            "Concorrente", ""));
         });
     }
     for (auto& thread : threads) thread.join();
-    EXPECT_EQ(buffer.size(), 10u);
-    collector.stop();
+    EXPECT_EQ(buffer.quantidade(), 10u);
+    collector.parar();
     EXPECT_EQ(count(), 200);
     for (int p = 0; p < 4; ++p)
         EXPECT_EQ(count(("robot_id=" + std::to_string(p)).c_str()), 50);
 }
 
 TEST_F(BufferCollectorTest, RejectedEventDoesNotStayInBuffer) {
-    DataCollector collector(path);
-    Buffer buffer(collector, 3);
-    EXPECT_THROW(buffer.addEvent(RobotEvent()), std::runtime_error);
-    EXPECT_EQ(buffer.size(), 0u);
-    collector.start();
-    collector.stop();
-    EXPECT_THROW(buffer.addEvent(RobotEvent()), std::runtime_error);
-    EXPECT_EQ(buffer.size(), 0u);
+    ColetorDados collector(path);
+    BufferEventos buffer(collector, 3);
+    EXPECT_THROW(buffer.adicionarEvento(EventoRobo()), std::runtime_error);
+    EXPECT_EQ(buffer.quantidade(), 0u);
+    collector.iniciar();
+    collector.parar();
+    EXPECT_THROW(buffer.adicionarEvento(EventoRobo()), std::runtime_error);
+    EXPECT_EQ(buffer.quantidade(), 0u);
     EXPECT_EQ(count(), 0);
 }

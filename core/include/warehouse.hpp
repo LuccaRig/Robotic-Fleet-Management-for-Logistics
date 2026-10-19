@@ -1,42 +1,44 @@
 #ifndef WAREHOUSE_HPP
 #define WAREHOUSE_HPP
 
-#include <vector>
+#include "logistics_types.hpp"
 #include <cstdint>
-#include <iostream>
+#include <map>
+#include <vector>
 
-enum class CellState : uint8_t {
-    EMPTY = 0,          // Espaço livre 
-    ROBOT,              // Robô ocupando a célula
-    CHARGING_STATION,   // Ponto de abastecimento de energia
-    NARROW_TUNNEL,      // Túnel estreito (restrição de n robô por vez)
-    PICKUP_POINT,       // Ponto de retirada de carga
-    OBSTACLE            // Parede ou obstáculo fixo
+enum class EstadoCelula : std::uint8_t {
+    LIVRE = 0, ROBO = 1, ESTACAO_RECARGA = 2, TRECHO_RESTRITO = 3,
+    BAIA_COLETA = 4, OBSTACULO = 5, AREA_ENTREGA = 6
 };
 
-class WarehouseGrid {
-private:
-    int width;
-    int height;
-    std::vector<CellState> grid;
-
-    inline int getIndex(int x, int y) const {
-        return y * width + x;
-    }
-
+class MapaGalpao {
 public:
-    // Construtor 1: Cria um grid vazio com dimensões específicas
-    WarehouseGrid(int width, int height);
-    // Construtor 2: Inicializa o grid a partir de uma matriz 
-    WarehouseGrid(const std::vector<std::vector<int>>& initial_layout);
-
-
-    void setCell(int x, int y, CellState state);
-    CellState getCell(int x, int y) const;
-    int getWidth() const;
-    int getHeight() const;
-    void printGrid() const;
-    void clear();
+    MapaGalpao(int width, int height);
+    explicit MapaGalpao(const std::vector<std::vector<int>>& layout);
+    void definirCelula(int x, int y, EstadoCelula estado);
+    EstadoCelula obterCelula(int x, int y) const;
+    bool podeTransitar(Posicao p) const;
+    int largura() const { return largura_; }
+    int altura() const { return altura_; }
+    void imprimirMapa() const;
+    void limpar();
+    void adicionarBaia(BaiaCarregamento bay);
+    void adicionarDestino(DestinoEntrega destino);
+    void adicionarTrecho(TrechoRestrito passage);
+    const std::map<int, BaiaCarregamento>& baias() const { return baias_; }
+    const std::map<int, DestinoEntrega>& destinos() const { return destinations_; }
+    const std::map<int, TrechoRestrito>& passagens() const { return passages_; }
+    const TrechoRestrito* trechoEm(Posicao p) const;
+    std::vector<Posicao> carregadores() const;
+    void validar() const;
+private:
+    int largura_;
+    int altura_;
+    std::vector<EstadoCelula> grade_;
+    std::map<int, BaiaCarregamento> baias_;
+    std::map<int, DestinoEntrega> destinations_;
+    std::map<int, TrechoRestrito> passages_;
+    std::size_t index(int x, int y) const { return static_cast<std::size_t>(y) * largura_ + x; }
 };
 
-#endif // WAREHOUSE_HPP
+#endif

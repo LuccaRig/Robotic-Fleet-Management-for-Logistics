@@ -9,65 +9,59 @@
 #include <stdexcept>
 #include <vector>
 
-// Buffer local de eventos: mantem um historico limitado e encaminha
-// cada evento aceito para a fila assincrona do DataCollector.
-// Nao e um mecanismo de IPC entre processos.
-class Buffer {
+// Mantém um histórico recente e encaminha os eventos ao coletor assíncrono.
+class BufferEventos {
 private:
-    DataCollector& collector_;
-    const std::size_t capacity_;
+    ColetorDados& coletor_;
+    const std::size_t capacidade_;
     mutable std::mutex mutex_;
-    std::deque<RobotEvent> events_;
+    std::deque<EventoRobo> eventos_;
 
 public:
-    explicit Buffer(DataCollector& collector, std::size_t capacity = 100)
-        : collector_(collector), capacity_(capacity) {
-        if (capacity_ == 0) {
+    explicit BufferEventos(ColetorDados& coletor, std::size_t capacidade = 100)
+        : coletor_(coletor), capacidade_(capacidade) {
+        if (capacidade_ == 0) {
             throw std::invalid_argument("A capacidade do Buffer deve ser maior que zero");
         }
     }
 
-    Buffer(const Buffer&) = delete;
-    Buffer& operator=(const Buffer&) = delete;
+    BufferEventos(const BufferEventos&) = delete;
+    BufferEventos& operator=(const BufferEventos&) = delete;
 
-    // Thread-safe: ao retornar sem excecao, o evento ja foi aceito pela
-    // fila do coletor; nao significa que o SQLite ja concluiu a escrita.
-    // O mutex tambem preserva a ordem de encaminhamento entre produtores.
-    void addEvent(const RobotEvent& event) {
+    // Só registra no histórico após o coletor aceitar o evento.
+    void adicionarEvento(const EventoRobo& evento) {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        events_.push_back(event);
+        eventos_.push_back(evento);
         try {
-            collector_.enqueueEvent(event);
+            coletor_.enfileirarEvento(evento);
         } catch (...) {
-            events_.pop_back();
+            eventos_.pop_back();
             throw;
         }
 
-        // O limite se aplica apenas ao historico local. Os eventos mais
-        // antigos ja foram encaminhados ao DataCollector para persistencia.
-        if (events_.size() > capacity_) {
-            events_.pop_front();
+        if (eventos_.size() > capacidade_) {
+            eventos_.pop_front();
         }
     }
 
-    std::vector<RobotEvent> snapshot() const {
+    std::vector<EventoRobo> capturarEventos() const {
         std::lock_guard<std::mutex> lock(mutex_);
-        return {events_.begin(), events_.end()};
+        return {eventos_.begin(), eventos_.end()};
     }
 
-    void clear() {
+    void limpar() {
         std::lock_guard<std::mutex> lock(mutex_);
-        events_.clear();
+        eventos_.clear();
     }
 
-    std::size_t size() const {
+    std::size_t quantidade() const {
         std::lock_guard<std::mutex> lock(mutex_);
-        return events_.size();
+        return eventos_.size();
     }
 
-    std::size_t capacity() const noexcept {
-        return capacity_;
+    std::size_t capacidade() const noexcept {
+        return capacidade_;
     }
 };
 

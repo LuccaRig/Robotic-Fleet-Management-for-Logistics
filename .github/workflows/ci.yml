@@ -2,30 +2,21 @@ name: C++ CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout do código
-      uses: actions/checkout@v4
-
-    - name: Instalar dependências (CMake, Build Essential)
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y cmake build-essential
-
-    - name: Configurar o CMake
-      run: cmake -B build -S .
-
-    - name: Compilar o Projeto e os Testes
-      run: cmake --build build --config Release
-
-    - name: Executar os Testes Unitários
-      run: |
-        cd build
-        ctest --output-on-failure
+      - name: Obter o código
+        uses: actions/checkout@v4
+      - name: Instalar dependências no Linux
+        run: sudo apt-get update && sudo apt-get install -y cmake build-essential libsqlite3-dev
+      - name: Configurar os testes
+        run: cmake -B build -S . -DBUILD_TESTING=ON
+      - name: Compilar
+        run: cmake --build build --parallel 2
+      - name: Executar os testes
+        run: ctest --test-dir build --output-on-failure
