@@ -13,9 +13,7 @@ AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Ce
       hardware_(galpao_, [this](Mensagem m) { aoReceberLeitura(std::move(m)); }),
       logistics_(galpao_, manager_.frota(), std::move(cenario.cargos), [this](int id, Mensagem m) { return sendCommand(id, std::move(m)); }, [this](const AvisoLogistica& n) { recorder_.aoReceberEventoLogistica(n); }) {
     galpao_.validar();
-    manager_.definirValidadorPosicao([this](Posicao p) { return galpao_.podeTransitar(p) && !galpao_.trechoEm(p); });
     hardware_.definirValidadorMovimento([this](const Mensagem& m) { return passages_.permiteMovimento(m); });
-    manager_.definirTratadorMensagem([this](const Mensagem& m) { aoReceberMensagem(m); });
 }
 AplicacaoCentral::~AplicacaoCentral() { try { parar(); } catch (const std::exception& e) { imprimir("Falha no encerramento: " + std::string(e.what())); } }
 void AplicacaoCentral::iniciar() {
@@ -29,8 +27,9 @@ void AplicacaoCentral::parar() {
     stopped_ = true;
     std::exception_ptr error;
     logistics_.parar();
-    try { manager_.parar(); } catch (...) { error = std::current_exception(); }
-    manager_.definirTratadorMensagem({});
+    try {
+        for (const auto& mensagem : manager_.parar()) aoReceberMensagem(mensagem);
+    } catch (...) { error = std::current_exception(); }
     try { collector_.parar(); } catch (...) { if (!error) error = std::current_exception(); }
     if (error) std::rethrow_exception(error);
 }
@@ -80,6 +79,7 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
     recorder_.aoReceberEventoRobo(m); logistics_.aoReceberMensagem(m);
 }
 void AplicacaoCentral::avancarCiclo() {
+    for (const auto& mensagem : manager_.processarCiclo()) aoReceberMensagem(mensagem);
     manager_.verificarFalha(); logistics_.verificarFalha(); collector_.verificarFalha(); hardware_.avancarCiclo();
     for (auto it = removals_.begin(); it != removals_.end();) {
         if (manager_.existeProcessoRobo(*it)) { ++it; continue; }
@@ -87,7 +87,10 @@ void AplicacaoCentral::avancarCiclo() {
         passages_.removerRobo(*it); it = removals_.erase(it);
     }
 }
-bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) { return !hardware_.contemRobo(id) && manager_.iniciarProcessoRobo(id, posicao.x, posicao.y); }
+bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) {
+    if (hardware_.contemRobo(id) || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;
+    return manager_.iniciarProcessoRobo(id, posicao.x, posicao.y);
+}
 bool AplicacaoCentral::removerRobo(int id) {
     const auto robo = manager_.frota().obter(id);
     if (!robo || robo->acoplado || robo->id_missao || removals_.count(id)) return false;

@@ -1,14 +1,13 @@
 #include "orchestrator.hpp"
 #include "ipc_channel.hpp"
 #include <cerrno>
-#include <condition_variable>
+#include <chrono>
 #include <csignal>
 #include <deque>
 #include <exception>
 #include <fcntl.h>
-#include <iostream>
+#include <iterator>
 #include <map>
-#include <mutex>
 #include <spawn.h>
 #include <stdexcept>
 #include <sys/socket.h>
@@ -19,209 +18,262 @@
 extern char** environ;
 
 struct GestorRobos::Impl {
-    struct Entry {
-        ProcessoRobo process;
-        std::shared_ptr<CanalIpc> channel;
-        std::deque<Mensagem> outgoing;
-        std::map<std::uint64_t, std::chrono::steady_clock::time_point> pendente;
-        std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
-        std::chrono::steady_clock::time_point seen = started;
-        std::chrono::steady_clock::time_point stopping_at;
-        int escalation = 0;
-        std::uint64_t sent = 0;
-        std::uint64_t received = 0;
+    struct Entrada {
+        ProcessoRobo processo;
+        std::unique_ptr<CanalIpc> canal;
+        std::deque<Mensagem> saida;
+        std::map<std::uint64_t, std::chrono::steady_clock::time_point> comandos_pendentes;
+        std::chrono::steady_clock::time_point iniciado = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point ultima_mensagem = iniciado;
+        std::chrono::steady_clock::time_point encerramento_solicitado;
+        int escalonamento = 0;
+        std::uint64_t sequencia_enviada = 0;
+        std::uint64_t sequencia_recebida = 0;
         bool conectado = true;
     };
-    std::string executavel;
-    mutable std::mutex mutex;
-    std::condition_variable cv;
-    std::map<int, std::shared_ptr<Entry>> entries;
-    EstadoFrota frota;
-    Handler tratador;
-    std::function<bool(Posicao)> validador;
-    std::thread gateway;
-    std::mutex lifecycle;
-    std::uint64_t geracao = 0;
-    bool encerrando = false;
-    std::exception_ptr error;
 
-    explicit Impl(std::string path) : executavel(std::move(path)) { gateway = std::thread(&Impl::loop, this); }
-    void notify(const Mensagem& mensagem) {
-        if (mensagem.tipo == TipoMensagem::RoboPronto || mensagem.tipo == TipoMensagem::EstadoAtualRobo) { if (!frota.atualizar(estadoRoboDaMensagem(mensagem))) return; }
-        if (mensagem.tipo == TipoMensagem::RoboDesconectado) frota.desconectar(mensagem.id_robo, mensagem.geracao);
-        Handler callback;
-        { std::lock_guard<std::mutex> lock(mutex); callback = tratador; }
-        if (callback) callback(mensagem);
-    }
-    void desconectar(const std::shared_ptr<Entry>& entry, const std::string& motivo) {
-        Mensagem mensagem;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            if (!entry->conectado) return;
-            entry->conectado = false;
-            entry->process.pronto = false;
-            entry->process.encerrando = true;
-            entry->stopping_at = std::chrono::steady_clock::now();
-            entry->channel->interromper();
-            entry->outgoing.clear(); entry->pendente.clear();
-            mensagem.tipo = TipoMensagem::RoboDesconectado; mensagem.id_robo = entry->process.id;
-            mensagem.geracao = entry->process.geracao; mensagem.texto = motivo; mensagem.ocorrido_em_ms = instanteUnixMs();
-        }
-        notify(mensagem);
-    }
-    void consume(const std::shared_ptr<Entry>& entry, const Mensagem& mensagem) {
-        if (mensagem.id_robo != entry->process.id || mensagem.geracao != entry->process.geracao || mensagem.sequencia <= entry->received)
+    std::string executavel;
+    std::map<int, std::unique_ptr<Entrada>> entradas;
+    EstadoFrota frota;
+    std::uint64_t proxima_geracao = 0;
+    bool encerrando = false;
+    std::exception_ptr erro;
+
+    explicit Impl(std::string caminho_executavel) : executavel(std::move(caminho_executavel)) {}
+
+    void registrarMensagem(Entrada& entrada, const Mensagem& mensagem, std::vector<Mensagem>& recebidas) {
+        if (mensagem.id_robo != entrada.processo.id || mensagem.geracao != entrada.processo.geracao || mensagem.sequencia <= entrada.sequencia_recebida) {
             throw std::runtime_error("Identidade ou sequência IPC inválida");
-        entry->received = mensagem.sequencia;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-            entry->seen = std::chrono::steady_clock::now();
-            if (mensagem.tipo == TipoMensagem::RoboPronto) entry->process.pronto = true;
-            if (mensagem.tipo == TipoMensagem::ConfirmacaoComando) entry->pendente.erase(mensagem.id_comando);
         }
-        notify(mensagem);
+        entrada.sequencia_recebida = mensagem.sequencia;
+        entrada.ultima_mensagem = std::chrono::steady_clock::now();
+        if (mensagem.tipo == TipoMensagem::RoboPronto) entrada.processo.pronto = true;
+        if (mensagem.tipo == TipoMensagem::ConfirmacaoComando) entrada.comandos_pendentes.erase(mensagem.id_comando);
+
+        if (mensagem.tipo == TipoMensagem::RoboPronto || mensagem.tipo == TipoMensagem::EstadoAtualRobo) {
+            if (!frota.atualizar(estadoRoboDaMensagem(mensagem))) return;
+        }
+        recebidas.push_back(mensagem);
     }
-    void loop() noexcept {
-        try {
-            while (true) {
-                std::vector<std::shared_ptr<Entry>> atual;
-                {
-                    std::unique_lock<std::mutex> lock(mutex);
-                    if (encerrando && entries.empty()) break;
-                    for (const auto& pair : entries) atual.push_back(pair.second);
-                }
-                for (const auto& entry : atual) {
-                    std::deque<Mensagem> outgoing;
-                    { std::lock_guard<std::mutex> lock(mutex); outgoing.swap(entry->outgoing); }
-                    std::string send_error;
-                    try { for (const auto& mensagem : outgoing) entry->channel->enviar(mensagem); }
-                    catch (const std::exception& e) { send_error = e.what(); }
-                    try {
-                        while (entry->conectado) {
-                            const auto received = entry->channel->receber(std::chrono::milliseconds(0));
-                            if (!received) break;
-                            consume(entry, *received);
-                        }
-                    } catch (const std::exception& e) { desconectar(entry, e.what()); }
-                    if (!send_error.empty()) desconectar(entry, send_error);
-                    bool expired = false;
-                    {
-                        std::lock_guard<std::mutex> lock(mutex);
-                        const auto now = std::chrono::steady_clock::now();
-                        expired = entry->conectado && !entry->process.encerrando &&
-                            ((!entry->process.pronto && now - entry->started > std::chrono::seconds(2)) ||
-                             (entry->process.pronto && now - entry->seen > std::chrono::seconds(3)));
-                        for (const auto& pendente : entry->pendente) if (now > pendente.second) expired = true;
-                        if (entry->process.encerrando) {
-                            const auto elapsed = now - entry->stopping_at;
-                            if (elapsed > std::chrono::seconds(3) && entry->escalation < 2) { kill(entry->process.pid, SIGKILL); entry->escalation = 2; }
-                            else if (elapsed > std::chrono::seconds(2) && entry->escalation < 1) { kill(entry->process.pid, SIGTERM); entry->escalation = 1; }
-                        }
-                    }
-                    if (expired) desconectar(entry, "Prazo de comunicação com o robô excedido");
-                    int status = 0;
-                    const auto pid = waitpid(entry->process.pid, &status, WNOHANG);
-                    if (pid > 0 || (pid < 0 && errno == ECHILD)) {
-                        if (entry->conectado) {
-                            try {
-                                while (const auto mensagem = entry->channel->receber(std::chrono::milliseconds(0))) consume(entry, *mensagem);
-                            } catch (const std::exception& e) { desconectar(entry, e.what()); }
-                        }
-                        desconectar(entry, "Processo do robô encerrado");
-                        std::lock_guard<std::mutex> lock(mutex);
-                        entries.erase(entry->process.id); cv.notify_all();
-                    }
-                }
-                std::unique_lock<std::mutex> lock(mutex);
-                cv.wait_for(lock, std::chrono::milliseconds(10));
+
+    void desconectar(Entrada& entrada, const std::string& motivo, std::vector<Mensagem>& recebidas) {
+        if (!entrada.conectado) return;
+        entrada.conectado = false;
+        entrada.processo.pronto = false;
+        entrada.processo.encerrando = true;
+        entrada.encerramento_solicitado = std::chrono::steady_clock::now();
+        entrada.canal->interromper();
+        entrada.saida.clear();
+        entrada.comandos_pendentes.clear();
+        frota.desconectar(entrada.processo.id, entrada.processo.geracao);
+
+        Mensagem mensagem;
+        mensagem.tipo = TipoMensagem::RoboDesconectado;
+        mensagem.id_robo = entrada.processo.id;
+        mensagem.geracao = entrada.processo.geracao;
+        mensagem.texto = motivo;
+        mensagem.ocorrido_em_ms = instanteUnixMs();
+        recebidas.push_back(std::move(mensagem));
+    }
+
+    void enviarPendentes(Entrada& entrada, std::vector<Mensagem>& recebidas) {
+        while (entrada.conectado && !entrada.saida.empty()) {
+            auto mensagem = std::move(entrada.saida.front());
+            entrada.saida.pop_front();
+            try {
+                entrada.canal->enviar(mensagem);
+            } catch (const std::exception& erro_envio) {
+                desconectar(entrada, erro_envio.what(), recebidas);
             }
-        } catch (...) {
-            std::lock_guard<std::mutex> lock(mutex); error = std::current_exception();
-            for (auto& pair : entries) { pair.second->channel->interromper(); kill(pair.second->process.pid, SIGKILL); }
         }
+    }
+
+    void receberDisponiveis(Entrada& entrada, std::vector<Mensagem>& recebidas) {
+        try {
+            while (entrada.conectado) {
+                const auto mensagem = entrada.canal->receber(std::chrono::milliseconds(0));
+                if (!mensagem) break;
+                registrarMensagem(entrada, *mensagem, recebidas);
+            }
+        } catch (const std::exception& erro_recepcao) {
+            desconectar(entrada, erro_recepcao.what(), recebidas);
+        }
+    }
+
+    void verificarPrazos(Entrada& entrada, std::vector<Mensagem>& recebidas) {
+        const auto agora = std::chrono::steady_clock::now();
+        bool expirado = entrada.conectado && !entrada.processo.encerrando &&
+            ((!entrada.processo.pronto && agora - entrada.iniciado > std::chrono::seconds(2)) ||
+             (entrada.processo.pronto && agora - entrada.ultima_mensagem > std::chrono::seconds(3)));
+        for (const auto& comando : entrada.comandos_pendentes) {
+            if (agora > comando.second) expirado = true;
+        }
+        if (expirado) desconectar(entrada, "Prazo de comunicação com o robô excedido", recebidas);
+
+        if (!entrada.processo.encerrando) return;
+        const auto decorrido = agora - entrada.encerramento_solicitado;
+        if (decorrido > std::chrono::seconds(3) && entrada.escalonamento < 2) {
+            kill(entrada.processo.pid, SIGKILL);
+            entrada.escalonamento = 2;
+        } else if (decorrido > std::chrono::seconds(2) && entrada.escalonamento < 1) {
+            kill(entrada.processo.pid, SIGTERM);
+            entrada.escalonamento = 1;
+        }
+    }
+
+    bool recolher(Entrada& entrada, std::vector<Mensagem>& recebidas) {
+        int status = 0;
+        const auto resultado = waitpid(entrada.processo.pid, &status, WNOHANG);
+        if (resultado == 0 || (resultado < 0 && errno != ECHILD)) return false;
+        receberDisponiveis(entrada, recebidas);
+        desconectar(entrada, "Processo do robô encerrado", recebidas);
+        return true;
     }
 };
 
 GestorRobos::GestorRobos(std::string executavel) : impl_(std::make_unique<Impl>(std::move(executavel))) {}
 GestorRobos::~GestorRobos() { try { parar(); } catch (...) {} }
-void GestorRobos::definirTratadorMensagem(Handler tratador) { std::lock_guard<std::mutex> lock(impl_->mutex); impl_->tratador = std::move(tratador); }
-void GestorRobos::definirValidadorPosicao(std::function<bool(Posicao)> validador) { std::lock_guard<std::mutex> lock(impl_->mutex); impl_->validador = std::move(validador); }
 
 bool GestorRobos::iniciarProcessoRobo(int id, int x, int y) {
-    std::lock_guard<std::mutex> lock(impl_->mutex);
-    if (id < 0 || impl_->encerrando || impl_->executavel.empty() || impl_->entries.count(id) || (impl_->validador && !impl_->validador({x, y}))) return false;
-    int fds[2];
-    if (socketpair(AF_UNIX, SOCK_STREAM, 0, fds) != 0) throw std::runtime_error("Não foi possível criar o canal do robô");
-    if (fcntl(fds[0], F_SETFD, FD_CLOEXEC) < 0 || fcntl(fds[1], F_SETFD, FD_CLOEXEC) < 0) { close(fds[0]); close(fds[1]); throw std::runtime_error("Falha ao proteger descritores IPC"); }
-    const auto geracao = ++impl_->geracao;
-    std::vector<std::string> args{impl_->executavel, "--robot-worker", "3", std::to_string(id), std::to_string(geracao), std::to_string(x), std::to_string(y)};
-    std::vector<char*> argv; for (auto& arg : args) argv.push_back(arg.data()); argv.push_back(nullptr);
-    posix_spawn_file_actions_t acoes;
-    int action_error = posix_spawn_file_actions_init(&acoes);
-    if (action_error != 0) { close(fds[0]); close(fds[1]); return false; }
-    action_error = posix_spawn_file_actions_addclose(&acoes, fds[0]);
-    if (!action_error) action_error = posix_spawn_file_actions_adddup2(&acoes, fds[1], 3);
-    if (!action_error && fds[1] != 3) action_error = posix_spawn_file_actions_addclose(&acoes, fds[1]);
-    if (action_error) { posix_spawn_file_actions_destroy(&acoes); close(fds[0]); close(fds[1]); return false; }
-    pid_t pid = -1;
-    const int result = posix_spawn(&pid, impl_->executavel.c_str(), &acoes, nullptr, argv.data(), environ);
-    posix_spawn_file_actions_destroy(&acoes); close(fds[1]);
-    if (result != 0) { close(fds[0]); return false; }
-    try {
-        auto channel = std::make_shared<CanalIpc>(fds[0]);
-        auto entry = std::make_shared<Impl::Entry>();
-        entry->process = {id, static_cast<int>(pid), geracao, false, false}; entry->channel = std::move(channel);
-        impl_->frota.registrarRobo(id, geracao, {x, y}); impl_->entries.emplace(id, std::move(entry));
-    } catch (...) { kill(pid, SIGKILL); while (waitpid(pid, nullptr, 0) < 0 && errno == EINTR) {} throw; }
-    impl_->cv.notify_all(); return true;
-}
-
-bool GestorRobos::enviar(int id, Mensagem mensagem) {
-    std::lock_guard<std::mutex> lock(impl_->mutex);
-    const auto it = impl_->entries.find(id);
-    if (it == impl_->entries.end() || !it->second->conectado) return false;
-    auto& entry = *it->second;
-    if (entry.process.encerrando && mensagem.tipo != TipoMensagem::Encerrar) return false;
-    if (!entry.process.pronto && mensagem.tipo != TipoMensagem::Encerrar) return false;
-    if (entry.outgoing.size() >= 1024) throw std::runtime_error("Fila de envio IPC esgotada");
-    mensagem.id_robo = id; mensagem.geracao = entry.process.geracao; mensagem.sequencia = ++entry.sent;
-    mensagem.ocorrido_em_ms = instanteUnixMs();
-    switch (mensagem.tipo) {
-    case TipoMensagem::AtribuirMissao: case TipoMensagem::CancelarMissao: case TipoMensagem::Acoplar:
-    case TipoMensagem::Desacoplar: case TipoMensagem::PausarMissao: case TipoMensagem::RetomarMissao: case TipoMensagem::Encerrar:
-        if (!mensagem.id_comando) mensagem.id_comando = mensagem.sequencia;
-        entry.pendente[mensagem.id_comando] = std::chrono::steady_clock::now() + std::chrono::seconds(3); break;
-    default: break;
+    if (id < 0 || impl_->encerrando || impl_->executavel.empty() || impl_->entradas.count(id)) return false;
+    int descritores[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, descritores) != 0) throw std::runtime_error("Não foi possível criar o canal do robô");
+    if (fcntl(descritores[0], F_SETFD, FD_CLOEXEC) < 0 || fcntl(descritores[1], F_SETFD, FD_CLOEXEC) < 0) {
+        close(descritores[0]);
+        close(descritores[1]);
+        throw std::runtime_error("Falha ao proteger descritores IPC");
     }
-    entry.outgoing.push_back(std::move(mensagem)); impl_->cv.notify_all(); return true;
+
+    const auto geracao = ++impl_->proxima_geracao;
+    std::vector<std::string> argumentos{impl_->executavel, "--robot-worker", "3", std::to_string(id), std::to_string(geracao), std::to_string(x), std::to_string(y)};
+    std::vector<char*> argv;
+    for (auto& argumento : argumentos) argv.push_back(argumento.data());
+    argv.push_back(nullptr);
+
+    posix_spawn_file_actions_t acoes;
+    int erro_acoes = posix_spawn_file_actions_init(&acoes);
+    if (erro_acoes != 0) {
+        close(descritores[0]);
+        close(descritores[1]);
+        return false;
+    }
+    erro_acoes = posix_spawn_file_actions_addclose(&acoes, descritores[0]);
+    if (!erro_acoes) erro_acoes = posix_spawn_file_actions_adddup2(&acoes, descritores[1], 3);
+    if (!erro_acoes && descritores[1] != 3) erro_acoes = posix_spawn_file_actions_addclose(&acoes, descritores[1]);
+    if (erro_acoes) {
+        posix_spawn_file_actions_destroy(&acoes);
+        close(descritores[0]);
+        close(descritores[1]);
+        return false;
+    }
+
+    pid_t pid = -1;
+    const int resultado = posix_spawn(&pid, impl_->executavel.c_str(), &acoes, nullptr, argv.data(), environ);
+    posix_spawn_file_actions_destroy(&acoes);
+    close(descritores[1]);
+    if (resultado != 0) {
+        close(descritores[0]);
+        return false;
+    }
+
+    try {
+        auto entrada = std::make_unique<Impl::Entrada>();
+        entrada->processo = {id, static_cast<int>(pid), geracao, false, false};
+        entrada->canal = std::make_unique<CanalIpc>(descritores[0]);
+        impl_->frota.registrarRobo(id, geracao, {x, y});
+        impl_->entradas.emplace(id, std::move(entrada));
+    } catch (...) {
+        kill(pid, SIGKILL);
+        while (waitpid(pid, nullptr, 0) < 0 && errno == EINTR) {}
+        throw;
+    }
+    return true;
 }
 
 bool GestorRobos::encerrarProcessoRobo(int id) {
-    Mensagem mensagem; mensagem.tipo = TipoMensagem::Encerrar;
-    const bool sent = enviar(id, mensagem);
-    std::lock_guard<std::mutex> lock(impl_->mutex);
-    const auto it = impl_->entries.find(id);
-    if (it == impl_->entries.end()) return false;
-    if (!it->second->process.encerrando) { it->second->process.encerrando = true; it->second->stopping_at = std::chrono::steady_clock::now(); }
-    impl_->cv.notify_all(); return sent;
+    const auto it = impl_->entradas.find(id);
+    if (it == impl_->entradas.end()) return false;
+    auto& entrada = *it->second;
+    if (!entrada.processo.encerrando) {
+        Mensagem mensagem;
+        mensagem.tipo = TipoMensagem::Encerrar;
+        enviar(id, std::move(mensagem));
+        entrada.processo.encerrando = true;
+        entrada.encerramento_solicitado = std::chrono::steady_clock::now();
+    }
+    return true;
 }
-std::vector<ProcessoRobo> GestorRobos::processos() const {
-    std::lock_guard<std::mutex> lock(impl_->mutex); std::vector<ProcessoRobo> result;
-    for (const auto& pair : impl_->entries) result.push_back(pair.second->process);
-    return result;
+
+bool GestorRobos::enviar(int id, Mensagem mensagem) {
+    const auto it = impl_->entradas.find(id);
+    if (it == impl_->entradas.end() || !it->second->conectado) return false;
+    auto& entrada = *it->second;
+    if (entrada.processo.encerrando && mensagem.tipo != TipoMensagem::Encerrar) return false;
+    if (!entrada.processo.pronto && mensagem.tipo != TipoMensagem::Encerrar) return false;
+    if (entrada.saida.size() >= 1024) throw std::runtime_error("Fila de envio IPC esgotada");
+
+    mensagem.id_robo = id;
+    mensagem.geracao = entrada.processo.geracao;
+    mensagem.sequencia = ++entrada.sequencia_enviada;
+    mensagem.ocorrido_em_ms = instanteUnixMs();
+    switch (mensagem.tipo) {
+    case TipoMensagem::AtribuirMissao:
+    case TipoMensagem::CancelarMissao:
+    case TipoMensagem::Acoplar:
+    case TipoMensagem::Desacoplar:
+    case TipoMensagem::PausarMissao:
+    case TipoMensagem::RetomarMissao:
+    case TipoMensagem::Encerrar:
+        if (!mensagem.id_comando) mensagem.id_comando = mensagem.sequencia;
+        entrada.comandos_pendentes[mensagem.id_comando] = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+        break;
+    default:
+        break;
+    }
+    entrada.saida.push_back(std::move(mensagem));
+    return true;
 }
-std::size_t GestorRobos::quantidadeRobosAtivos() const { return processos().size(); }
-bool GestorRobos::existeProcessoRobo(int id) const { for (const auto& p : processos()) if (p.id == id) return true; return false; }
-void GestorRobos::imprimirEstadosRobos() const { for (const auto& p : processos()) std::cout << "Robô " << p.id << " | PID " << p.pid << " | " << (p.pronto ? "Pronto" : "Inicializando") << '\n'; }
-const EstadoFrota& GestorRobos::frota() const { return impl_->frota; }
-void GestorRobos::verificarFalha() const { std::lock_guard<std::mutex> lock(impl_->mutex); if (impl_->error) std::rethrow_exception(impl_->error); }
-void GestorRobos::parar() {
-    std::lock_guard<std::mutex> lifecycle(impl_->lifecycle);
-    { std::lock_guard<std::mutex> lock(impl_->mutex); impl_->encerrando = true; }
-    for (const auto& p : processos()) encerrarProcessoRobo(p.id);
-    impl_->cv.notify_all();
-    if (impl_->gateway.joinable()) impl_->gateway.join();
-    for (const auto& p : processos()) { kill(p.pid, SIGKILL); while (waitpid(p.pid, nullptr, 0) < 0 && errno == EINTR) {} }
-    { std::lock_guard<std::mutex> lock(impl_->mutex); impl_->entries.clear(); }
+
+std::vector<Mensagem> GestorRobos::processarCiclo() {
     verificarFalha();
+    std::vector<Mensagem> recebidas;
+    try {
+        for (auto it = impl_->entradas.begin(); it != impl_->entradas.end();) {
+            auto& entrada = *it->second;
+            impl_->enviarPendentes(entrada, recebidas);
+            impl_->receberDisponiveis(entrada, recebidas);
+            impl_->verificarPrazos(entrada, recebidas);
+            if (impl_->recolher(entrada, recebidas)) it = impl_->entradas.erase(it);
+            else ++it;
+        }
+    } catch (...) {
+        impl_->erro = std::current_exception();
+        throw;
+    }
+    return recebidas;
+}
+
+std::vector<ProcessoRobo> GestorRobos::processos() const {
+    std::vector<ProcessoRobo> resultado;
+    for (const auto& par : impl_->entradas) resultado.push_back(par.second->processo);
+    return resultado;
+}
+
+std::size_t GestorRobos::quantidadeRobosAtivos() const { return impl_->entradas.size(); }
+bool GestorRobos::existeProcessoRobo(int id) const { return impl_->entradas.count(id) != 0; }
+const EstadoFrota& GestorRobos::frota() const { return impl_->frota; }
+void GestorRobos::verificarFalha() const { if (impl_->erro) std::rethrow_exception(impl_->erro); }
+
+std::vector<Mensagem> GestorRobos::parar() {
+    if (impl_->encerrando && impl_->entradas.empty()) return {};
+    impl_->encerrando = true;
+    for (const auto& par : impl_->entradas) encerrarProcessoRobo(par.first);
+    std::vector<Mensagem> recebidas;
+    while (!impl_->entradas.empty()) {
+        auto ciclo = processarCiclo();
+        recebidas.insert(recebidas.end(), std::make_move_iterator(ciclo.begin()), std::make_move_iterator(ciclo.end()));
+        if (!impl_->entradas.empty()) std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    verificarFalha();
+    return recebidas;
 }
