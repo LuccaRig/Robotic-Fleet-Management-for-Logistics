@@ -18,7 +18,7 @@ AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Ce
 AplicacaoCentral::~AplicacaoCentral() { try { parar(); } catch (const std::exception& e) { imprimir("Falha no encerramento: " + std::string(e.what())); } }
 void AplicacaoCentral::iniciar() {
     if (started_) return;
-    collector_.iniciar(); started_ = true; logistics_.iniciar();
+    collector_.iniciar(); started_ = true;
     for (const auto& robo : initial_) if (!adicionarRobo(robo.id, robo.posicao)) throw std::runtime_error("Não foi possível disponibilizar o robô " + std::to_string(robo.id));
     imprimir("Sistema iniciado. Execução " + std::to_string(collector_.idExecucao()));
 }
@@ -26,7 +26,6 @@ void AplicacaoCentral::parar() {
     if (stopped_) return;
     stopped_ = true;
     std::exception_ptr error;
-    logistics_.parar();
     try {
         for (const auto& mensagem : manager_.parar()) aoReceberMensagem(mensagem);
     } catch (...) { error = std::current_exception(); }
@@ -44,7 +43,7 @@ bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem) {
 }
 void AplicacaoCentral::aoReceberLeitura(Mensagem leitura_sensores) {
     passages_.confirmar(leitura_sensores);
-    logistics_.aoReceberMensagem(leitura_sensores);
+    eventos_logistica_.push_back(leitura_sensores);
     manager_.enviar(leitura_sensores.id_robo, std::move(leitura_sensores));
 }
 void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
@@ -76,11 +75,18 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
         std::lock_guard<std::mutex> lock(pending_mutex_);
         for (auto it = pending_.begin(); it != pending_.end();) { if (it->second.id_robo == m.id_robo) it = pending_.erase(it); else ++it; }
     }
-    recorder_.aoReceberEventoRobo(m); logistics_.aoReceberMensagem(m);
+    recorder_.aoReceberEventoRobo(m);
+    if (!stopped_) eventos_logistica_.push_back(m);
 }
 void AplicacaoCentral::avancarCiclo() {
     for (const auto& mensagem : manager_.processarCiclo()) aoReceberMensagem(mensagem);
-    manager_.verificarFalha(); logistics_.verificarFalha(); collector_.verificarFalha(); hardware_.avancarCiclo();
+    manager_.verificarFalha(); collector_.verificarFalha(); hardware_.avancarCiclo();
+    const auto agora = std::chrono::steady_clock::now();
+    if (!eventos_logistica_.empty() || agora - ultimo_ciclo_logistica_ >= std::chrono::milliseconds(200)) {
+        logistics_.processarCiclo(eventos_logistica_);
+        eventos_logistica_.clear();
+        ultimo_ciclo_logistica_ = agora;
+    }
     for (auto it = removals_.begin(); it != removals_.end();) {
         if (manager_.existeProcessoRobo(*it)) { ++it; continue; }
         if (!hardware_.removerRobo(*it)) throw std::runtime_error("Remoção física recusada");
@@ -99,7 +105,12 @@ bool AplicacaoCentral::removerRobo(int id) {
 bool AplicacaoCentral::interromperRobo(int id) { for (const auto& p : manager_.processos()) if (p.id == id) return kill(p.pid, SIGTERM) == 0; return false; }
 bool AplicacaoCentral::definirBateria(int id, int bateria) { return hardware_.injetarLeitura(id, bateria, std::nullopt); }
 bool AplicacaoCentral::definirFalha(int id, bool falha) { return hardware_.injetarLeitura(id, std::nullopt, falha); }
-void AplicacaoCentral::retomar(IdEntidade id_missao) { logistics_.solicitarRetomada(id_missao); }
+void AplicacaoCentral::retomar(IdEntidade id_missao) {
+    Mensagem mensagem;
+    mensagem.tipo = TipoMensagem::RetomarMissao;
+    mensagem.id_missao = id_missao;
+    eventos_logistica_.push_back(std::move(mensagem));
+}
 bool AplicacaoCentral::concluido() const {
     if (!logistics_.todasCargasEntregues()) return false;
     for (const auto& robo : manager_.frota().capturarEstado()) if (robo.conectado && (robo.id_missao || robo.acoplado || robo.estado != EstadoRobo::DISPONIVEL)) return false;

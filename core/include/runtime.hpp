@@ -5,6 +5,7 @@
 #include "hardware.hpp"
 #include "orchestrator.hpp"
 #include <atomic>
+#include <chrono>
 #include <map>
 #include <set>
 
@@ -55,7 +56,9 @@ private:
     std::atomic<std::uint64_t> commands_{0};
     std::mutex pending_mutex_;
     std::map<std::uint64_t, Mensagem> pending_;
+    std::vector<Mensagem> eventos_logistica_;
     std::set<int> removals_;
+    std::chrono::steady_clock::time_point ultimo_ciclo_logistica_ = std::chrono::steady_clock::now();
     bool started_ = false;
     bool stopped_ = false;
     bool exit_requested_ = false;

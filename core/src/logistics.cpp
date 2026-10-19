@@ -10,50 +10,18 @@ OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, const Estad
         c.estado = EstadoCarga::PENDENTE; c.id_missao = 0; baias_.at(c.id_baia).fila_cargas.push_back(c.id); cargas_.emplace(c.id, std::move(c));
     }
 }
-OrganizadorLogistica::~OrganizadorLogistica() { parar(); }
-void OrganizadorLogistica::iniciar() {
-    std::lock_guard<std::mutex> lifecycle(ciclo_vida_);
-    std::lock_guard<std::mutex> lock(mutex_fila_);
-    if (executando_) return; executando_ = true; erro_ = nullptr;
-    try { thread_ = std::thread(&OrganizadorLogistica::executarRotina, this); } catch (...) { executando_ = false; throw; }
-}
-void OrganizadorLogistica::parar() {
-    std::lock_guard<std::mutex> lifecycle(ciclo_vida_);
-    { std::lock_guard<std::mutex> lock(mutex_fila_); executando_ = false; }
-    cv_.notify_all(); if (thread_.joinable()) thread_.join();
-}
-void OrganizadorLogistica::aoReceberMensagem(const Mensagem& m) {
-    { std::lock_guard<std::mutex> lock(mutex_fila_); if (eventos_.size() >= 4096) throw std::runtime_error("Fila da logística esgotada"); eventos_.push_back(m); }
-    cv_.notify_all();
-}
-void OrganizadorLogistica::solicitarRetomada(IdEntidade id) { Mensagem m; m.tipo = TipoMensagem::RetomarMissao; m.id_missao = id; aoReceberMensagem(m); }
-void OrganizadorLogistica::executarRotina() noexcept {
-    try {
-        while (true) {
-            {
-                std::unique_lock<std::mutex> lock(mutex_fila_);
-                cv_.wait_for(lock, std::chrono::milliseconds(200), [&] { return !executando_ || !eventos_.empty(); });
-                if (!executando_) break;
-            }
-            processarUmaVez();
-        }
-    } catch (...) { std::lock_guard<std::mutex> lock(mutex_fila_); erro_ = std::current_exception(); executando_ = false; }
-}
-void OrganizadorLogistica::processarUmaVez() {
-    std::deque<Mensagem> eventos;
-    { std::lock_guard<std::mutex> lock(mutex_fila_); eventos.swap(eventos_); }
+void OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens) {
     std::vector<std::pair<int, Mensagem>> acoes;
     std::vector<AvisoLogistica> avisos;
-    {
-        std::lock_guard<std::mutex> lock(mutex_estado_);
-        for (const auto& m : eventos) registrarMensagem(m);
-        for (auto& pair : missoes_) avancarMissao(pair.second);
-        agendarCargas(); acoes.swap(acoes_); avisos.swap(avisos_);
-    }
+    for (const auto& mensagem : mensagens) registrarMensagem(mensagem);
+    for (auto& par : missoes_) avancarMissao(par.second);
+    agendarCargas();
+    acoes.swap(acoes_);
+    avisos.swap(avisos_);
     for (auto& action : acoes) if (!emissor_(action.first, action.second)) {
         Mensagem disconnected; disconnected.tipo = TipoMensagem::RoboDesconectado; disconnected.id_robo = action.first;
         const auto robo = frota_.obter(action.first); if (robo) disconnected.geracao = robo->geracao;
-        disconnected.texto = "Não foi possível enviar comando"; aoReceberMensagem(disconnected);
+        disconnected.texto = "Não foi possível enviar comando"; registrarMensagem(disconnected);
     }
     for (const auto& item : avisos) if (observador_) observador_(item);
 }
@@ -108,15 +76,6 @@ void OrganizadorLogistica::registrarMensagem(const Mensagem& m) {
     if (m.tipo == TipoMensagem::RetomarMissao && m.id_robo == -1) {
         const auto it = missoes_.find(m.id_missao); if (it != missoes_.end()) retomar(it->second); return;
     }
-    const bool lerLeitura = m.tipo == TipoMensagem::AtualizarSensores || m.tipo == TipoMensagem::EstadoAtualRobo || m.tipo == TipoMensagem::RoboPronto;
-    if (lerLeitura) {
-        const auto anterior = saude_.find(m.id_robo);
-        if (anterior != saude_.end()) {
-            const auto& old = anterior->second;
-            if (m.geracao < old.geracao || (m.geracao == old.geracao && (m.sequencia_sensor < old.sequencia_sensor || m.revisao < old.revisao))) return;
-        }
-        saude_[m.id_robo] = estadoRoboDaMensagem(m);
-    }
     if (m.tipo == TipoMensagem::RoboDesconectado) {
         for (auto& pair : missoes_) {
             auto& missao = pair.second;
@@ -136,7 +95,7 @@ void OrganizadorLogistica::registrarMensagem(const Mensagem& m) {
     if (m.tipo != TipoMensagem::EstadoAtualRobo && m.tipo != TipoMensagem::RoboPronto && m.tipo != TipoMensagem::AtualizarSensores) return;
     if (m.acoplado) { missao.ja_acoplou = true; missao.integrantes_acoplados.insert(m.id_robo); }
     if (m.falha || m.bateria <= 15) { interromper(missao, m.falha ? "Falha em integrante da equipe" : "Bateria insuficiente em integrante da equipe"); return; }
-    if (m.tipo != TipoMensagem::AtualizarSensores) missao.relatos[m.id_robo] = estadoRoboDaMensagem(m);
+    missao.relatos[m.id_robo] = estadoRoboDaMensagem(m);
 }
 void OrganizadorLogistica::avancarMissao(MissaoEquipe& missao) {
     if (missao.fase == FaseMissao::NENHUMA || missao.fase == FaseMissao::SUSPENSO) return;
@@ -185,11 +144,7 @@ void OrganizadorLogistica::retomar(MissaoEquipe& missao) {
     bool all_coupled = true;
     for (const auto id : missao.integrantes) {
         const auto robo = frota_.obter(id);
-        const auto saude = saude_.find(id);
-        const bool confirmed = robo && saude != saude_.end() && saude->second.geracao == robo->geracao &&
-            robo->sequencia_sensor >= saude->second.sequencia_sensor && robo->revisao >= saude->second.revisao &&
-            !saude->second.falha && saude->second.bateria > 15;
-        if (!robo || !confirmed || !robo->conectado || robo->geracao != missao.geracoes.at(id) || robo->falha || robo->bateria <= 15 || robo->estado != EstadoRobo::SUSPENSO) {
+        if (!robo || !robo->conectado || robo->geracao != missao.geracoes.at(id) || robo->falha || robo->bateria <= 15 || robo->estado != EstadoRobo::SUSPENSO) {
             carga.motivo = "Recupere todos os integrantes e aguarde confirmação de suspensão"; return;
         }
         if (posicao && robo->posicao != *posicao) { carga.motivo = "Equipe fora da mesma posição lógica"; return; }
@@ -222,7 +177,6 @@ void OrganizadorLogistica::executarComando(MissaoEquipe& missao, TipoMensagem ti
     missao.relatos.clear();
 }
 void OrganizadorLogistica::registrarAviso(AvisoLogistica::TipoAviso tipo, const MissaoEquipe& missao) { avisos_.push_back({tipo, cargas_.at(missao.id_carga), missao, instanteUnixMs()}); }
-std::vector<Carga> OrganizadorLogistica::cargos() const { std::lock_guard<std::mutex> lock(mutex_estado_); std::vector<Carga> result; for (const auto& c : cargas_) result.push_back(c.second); return result; }
-std::vector<MissaoEquipe> OrganizadorLogistica::missoes() const { std::lock_guard<std::mutex> lock(mutex_estado_); std::vector<MissaoEquipe> result; for (const auto& m : missoes_) result.push_back(m.second); return result; }
+std::vector<Carga> OrganizadorLogistica::cargos() const { std::vector<Carga> result; for (const auto& c : cargas_) result.push_back(c.second); return result; }
+std::vector<MissaoEquipe> OrganizadorLogistica::missoes() const { std::vector<MissaoEquipe> result; for (const auto& m : missoes_) result.push_back(m.second); return result; }
 bool OrganizadorLogistica::todasCargasEntregues() const { for (const auto& c : cargos()) if (c.estado != EstadoCarga::ENTREGUE) return false; return true; }
-void OrganizadorLogistica::verificarFalha() const { std::lock_guard<std::mutex> lock(mutex_fila_); if (erro_) std::rethrow_exception(erro_); }

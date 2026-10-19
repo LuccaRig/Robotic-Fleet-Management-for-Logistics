@@ -50,7 +50,7 @@ struct GestorRobos::Impl {
         if (mensagem.tipo == TipoMensagem::RoboPronto) entrada.processo.pronto = true;
         if (mensagem.tipo == TipoMensagem::ConfirmacaoComando) entrada.comandos_pendentes.erase(mensagem.id_comando);
 
-        if (mensagem.tipo == TipoMensagem::RoboPronto || mensagem.tipo == TipoMensagem::EstadoAtualRobo) {
+        if (mensagem.tipo == TipoMensagem::RoboPronto || mensagem.tipo == TipoMensagem::EstadoAtualRobo || mensagem.tipo == TipoMensagem::AtualizarSensores) {
             if (!frota.atualizar(estadoRoboDaMensagem(mensagem))) return;
         }
         recebidas.push_back(mensagem);
