@@ -1,0 +1,274 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{fancyvrb}
+\usepackage{mathtools}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{booktabs,tabularx,array}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric,calc}
+\usepackage{listings}
+\usepackage{setspace}
+\usepackage{lastpage}
+
+\geometry{left=2.6cm,right=2.5cm,top=2.65cm,bottom=2.5cm,headheight=18pt}
+\definecolor{azul}{HTML}{17355B}
+\definecolor{azulclaro}{HTML}{E9F1F8}
+\definecolor{cinzaclaro}{HTML}{F3F5F6}
+\definecolor{verde}{HTML}{33715F}
+\hypersetup{colorlinks=true, linkcolor=azul, urlcolor=azul, pdfauthor={Equipe do projeto de Automacao em Tempo Real},
+ pdftitle={Relatorio tecnico da Etapa 1 - Gerenciamento de Frota Robotica}}
+\captionsetup{font=small,labelfont=bf}
+\setlength{\parindent}{1.2cm}
+\setlength{\parskip}{0.1em}
+\setlength{\emergencystretch}{2em}
+\setstretch{1.28}
+\setlist[itemize]{leftmargin=*,itemsep=0.12em,topsep=0.2em}
+\setlist[enumerate]{leftmargin=*,itemsep=0.2em,topsep=0.2em}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{ELT127 - Automação em Tempo Real}
+\rhead{Relatório técnico -- TP}
+\cfoot{\thepage\ de \pageref{LastPage}}
+\renewcommand{\headrulewidth}{0.35pt}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,breakatwhitespace=true,
+ frame=single,backgroundcolor=\color{cinzaclaro},rulecolor=\color{black!15},
+ xleftmargin=0.3cm,xrightmargin=0.3cm,showstringspaces=false,columns=fullflexible,
+ aboveskip=0.5em,belowskip=0.6em}
+
+\begin{document}
+\begin{titlepage}
+\centering
+{\scshape\Large Universidade Federal de Minas Gerais\par}
+\vspace{0.7cm}
+{\large ELT127 -Automação em Tempo Real\par}
+\vspace{2.2cm}
+{\huge\bfseries Relatório Técnico -- TP\par}
+\vspace{0.45cm}
+{\Large\bfseries Etapa 1 -- Arquitetura, Processos e Sincronização\par}
+\vspace{1.3cm}
+{\Large Gerenciamento de Frota Robótica para Logística\par}
+\vspace{2.0cm}
+\begin{center}
+\begin{minipage}{0.80\textwidth}
+\centering
+\vspace{0.5cm}
+{\large Lucca Rigueira Sant'ana Nogueira\par}
+{\large Matheus Muniz Soares\par}
+{\large Pedro Henrique Chalfun de Aquino\par}
+\vspace{0.55cm}
+{\large Prof. Leandro Freitas\par}
+\end{minipage}
+\end{center}
+\vfill
+{Belo Horizonte, \today\par}
+\end{titlepage}
+
+\begin{multicols}{2}
+\setlength{\columnsep}{1.1cm}
+\tableofcontents
+\end{multicols}
+\clearpage
+
+\section{Introdução e objetivos da etapa}
+Nesta primeira etapa, desenvolvemos a arquitetura do sistema de gerenciamento de frota robótica e implementamos seus principais componentes. A solução contempla processos independentes para os robôs, comunicação entre processos, threads de operação e mecanismos de sincronização. Também implementamos recursos de persistência e realizamos testes de integração para verificar o funcionamento da arquitetura. As funcionalidades previstas para etapas posteriores permanecem fora do escopo desta entrega.
+\section{Arquitetura do sistema}
+Organizamos a arquitetura em três partes: coordenação logística, execução dos robôs e persistência de dados em SQLite. O processo central gerencia missões e recursos simulados, enquanto cada robô executa em um processo independente.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Latex, font=\scriptsize,
+ comp/.style={draw=azul,semithick,rounded corners=2pt,align=center,fill=azulclaro,inner sep=6pt},
+ proc/.style={draw=verde,semithick,rounded corners=2pt,align=center,fill=green!6,inner sep=6pt},
+ small/.style={draw=black!50,rounded corners=2pt,align=center,fill=white,inner sep=6pt}]
+\node[comp,text width=3.8cm] (central) at (0,2.9) {\textbf{PROCESSO CENTRAL}\\ Gestor e organizador\\ Passagens e hardware};
+\node[proc,text width=3.8cm] (robo) at (8.8,2.9) {\textbf{PROCESSO POR ROBÔ}\\ Receptor IPC\\ Threads: navegação e status};
+\node[small,text width=3.8cm] (rec) at (0,0.1) {\textbf{Gravador de eventos}\\ Atua no ciclo central};
+\node[comp,text width=3.8cm] (collector) at (8.8,0.1) {\textbf{Thread coletora}\\ Fila sincronizada\\ Persistência SQLite};
+\draw[<->,semithick,azul] (central) -- node[above,fill=white,align=center,inner sep=2pt]{\textbf{Socket Unix (IPC)}\\ comandos e estados} (robo);
+\draw[->,semithick] (central) -- (rec);
+\draw[->,semithick] (rec) -- node[above,fill=white,inner sep=2pt]{fila de eventos} (collector);
+\end{tikzpicture}
+\caption{Arquitetura da primeira etapa}
+\label{fig:arquitetura}
+\end{figure}
+
+\noindent A Tabela~\ref{tab:responsabilidades} resume as responsabilidades dos componentes.
+
+\begin{table}[H]
+\centering\scriptsize
+\caption{Responsabilidades dos componentes implementados.}
+\label{tab:responsabilidades}
+\begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.2cm}Y@{}}
+\toprule
+\textbf{Módulo} & \textbf{Contexto} & \textbf{Responsabilidade}\\
+\midrule
+\code{AplicacaoCentral} & Processo central; laço principal & Processa mensagens, aciona logística, hardware e passagens.\\
+\code{GestorRobos} & Mesmo processo central & Cria/encerra processos, acompanha PIDs, gerações, mensagens e prontidão.\\
+\code{AgenteRobo} & Processo individual & Compartilha estado local entre threads de navegação e status.\\
+\code{OrganizadorLogistica} & Ciclo central & Reserva equipes, define missões, acompanha fases e retomadas.\\
+\code{ControlePassagens} & Ciclo central & Mantém fila, capacidade, ocupação e permissões de tráfego.\\
+{\ttfamily\tiny AdaptadorHardwareLocal} & Ciclo central & Converte setpoints válidos em novas leituras de sensores.\\
+\code{ColetorDados} & Thread própria & Consome eventos da fila e persiste registros no SQLite.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Implementação dos processos}
+\subsection{Processo principal e coordenação sequencial}
+O executável \code{simulador\_exec} permite selecionar cenários, banco de dados e modo interativo. A função principal inicia a aplicação, executa seus ciclos e coordena o encerramento. No modo automático, cada cenário possui limite de execução de 120 segundos.
+
+O ciclo principal recebe mensagens IPC, atualiza sensores e permissões e processa as missões após eventos ou, em períodos de inatividade, a cada 200 ms aproximadamente. Os componentes de logística, passagens e hardware são executados sequencialmente. Com isso, concentramos o acesso ao estado central em um único fluxo de execução, reduzindo a necessidade de bloqueios.
+\subsection{Criação dinâmica dos processos dos robôs}
+Ao adicionar um robô, o gestor valida seu identificador, cria um par de sockets Unix e inicia um novo processo com \code{posix\_spawn()}. O processo central mantém o PID, a identificação lógica, a geração e o canal de comunicação de cada agente.
+
+A inicialização compreende a abertura do canal, a criação do processo e a confirmação de prontidão. O gestor só envia tarefas após receber \code{RoboPronto}. O número de geração permite distinguir reinicializações de um mesmo robô e descartar mensagens de instâncias anteriores.
+
+No encerramento, o gestor solicita a parada e monitora o processo com \code{waitpid()}. Caso necessário, envia \code{SIGTERM} após dois segundos e \code{SIGKILL} após três. Desconexões inesperadas tornam o robô indisponível, sem reinicialização automática.
+\subsection{O que permanece isolado entre processos}
+Não há memória compartilhada entre o robô e o gestor. As informações são transmitidas por mensagens serializadas, cuja consistência depende da validação de geração, sequência, confirmações e leituras de sensores.
+
+\section{Implementação das threads}
+\subsection{Thread de comando de navegação}
+Cada robô possui uma thread de navegação com período nominal de \textbf{100 ms}. Ela verifica a missão, o nível de bateria, possíveis falhas e confirmações pendentes. Havendo um próximo destino, solicita acesso à passagem antes de enviar o comando de movimento. A rota só avança quando o sensor confirma a posição esperada.
+
+Ao concluir o percurso, o agente passa à fase correspondente da missão, como acoplamento, descarga ou recarga. Esse procedimento evita divergências entre posição estimada e posição confirmada.
+\subsection{Thread de status e tratamento de sensores}
+A thread de status possui período nominal de \textbf{500 ms}, com ativação antecipada diante de alterações de estado ou novos sensores. Ela processa leituras, acumula a distância percorrida, atualiza a disponibilidade e publica o estado do robô.
+
+Os registros incluem identidade, missão, fase, posição, bateria, falhas e distância. Leituras antigas ou incompatíveis com a missão são descartadas; leituras intermediárias são consideradas no cálculo do deslocamento.
+\subsection{Thread do coletor de dados}
+O coletor utiliza uma thread independente para retirar eventos de uma fila sincronizada e gravá-los no SQLite. Dessa forma, as operações logísticas não precisam aguardar cada escrita em disco.
+
+No encerramento, o coletor processa os eventos pendentes antes de fechar o banco. Erros de persistência são registrados e podem ser encaminhados ao processo central.
+\section{Comunicação entre processos e troca de dados}
+\subsection{Canal IPC e enquadramento das mensagens}
+Os processos se comunicam por sockets Unix do tipo \code{SOCK\_STREAM}. Como o fluxo não delimita mensagens, cada quadro contém um prefixo de quatro bytes que informa seu tamanho. O receptor recompõe mensagens fragmentadas, respeitando o limite de 64 KiB.
+
+O protocolo transmite identificação, geração, sequência, comandos, missões e dados operacionais. A decodificação valida formato, versão e limites dos campos. O envio utiliza \code{poll()}, com prazo de até 1 s; o gestor aplica limites de 2 s para prontidão e 3 s para comunicação ou confirmação.
+\subsection{Sequência de uma operação de transporte}
+A Figura~\ref{fig:sequencia} apresenta a sequência de autorização, movimento e confirmação por sensor.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[font=\footnotesize,>=Latex]
+\node[font=\bfseries] at (0,0) {Robô};
+\node[font=\bfseries] at (5.1,0) {Gestor / Controle};
+\node[font=\bfseries] at (10.0,0) {Hardware local};
+\foreach \x in {0,5.1,10} \draw[dashed,black!40] (\x,-.33)--(\x,-5.75);
+\draw[->,thick] (0,-0.9)--node[above,fill=white,inner sep=2pt]{Solicitar acesso} (5.1,-0.9);
+\draw[<-,thick] (0,-1.75)--node[above,fill=white,inner sep=2pt]{Permissão concedida} (5.1,-1.75);
+\draw[->,thick] (0,-2.6)--node[above,fill=white,inner sep=2pt]{Setpoint de posição} (5.1,-2.6);
+\draw[->,thick] (5.1,-3.45)--node[above,fill=white,inner sep=2pt]{Validar e aplicar} (10,-3.45);
+\draw[<-,thick] (5.1,-4.3)--node[above,fill=white,inner sep=2pt]{Leitura confirmada} (10,-4.3);
+\draw[<-,thick] (0,-5.15)--node[above,fill=white,inner sep=2pt]{Atualizar sensores} (5.1,-5.15);
+\end{tikzpicture}
+\caption{Fluxo de confirmação de um passo de navegação.}
+\label{fig:sequencia}
+\end{figure}
+
+Na atribuição de missões, cada comando recebe uma confirmação associada ao seu identificador. Também são verificados geração, sequência e revisão da missão, evitando a aceitação de informações desatualizadas.
+
+\section{Mecanismos de sincronização}
+\subsection{Mutexes: exclusão mútua dentro do robô}
+Utilizamos \code{std::mutex} para proteger o estado, a rota e as leituras de sensores compartilhadas entre as threads e o receptor de mensagens. Isso impede alterações simultâneas que poderiam comprometer a consistência da navegação.
+
+O controle dos bloqueios utiliza \code{std::lock\_guard} e \code{std::unique\_lock}. Mutexes específicos protegem o início e a parada das threads e a sequência de envio das mensagens IPC.
+
+\subsection{Variáveis de condição: espera sem sondagem ocupada}
+As threads utilizam \code{std::condition\_variable} para aguardar comandos, leituras ou encerramento sem consultar o estado continuamente. Predicados verificam a condição de retomada e evitam efeitos de despertares espúrios.
+
+No coletor, a variável de condição sinaliza novos eventos ou encerramento. O mutex é liberado antes das operações SQLite, permitindo que outras threads continuem adicionando eventos à fila.
+
+\subsection{Exclusão mútua no canal de envio}
+O canal IPC utiliza \code{std::timed\_mutex} para impedir que bytes de mensagens diferentes sejam intercalados no mesmo socket. A proteção do envio é independente do mutex utilizado para o estado interno do robô.
+
+\subsection{Sincronização lógica de equipes e de passagens}
+O transporte em equipe emprega uma barreira lógica: a missão só prossegue quando todos os integrantes confirmam o acoplamento. O movimento coletivo exige propostas compatíveis de posição e destino, e a descarga depende do desacoplamento completo.
+
+As passagens possuem controle de capacidade, sentido e ocupação. Equipes acopladas reservam vagas em conjunto; deslocamentos opostos aguardam a liberação do corredor. A saída é confirmada por sensores antes da liberação das vagas.
+
+Como essas estruturas são manipuladas pelo ciclo central, o controle ocorre por filas e permissões, sem uso de semáforos POSIX.
+\begin{table}[H]
+\centering\small
+\caption{Mapa de sincronização: recurso, concorrência e proteção.}
+\label{tab:sync}
+\begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.0cm}Y@{}}
+\toprule
+\textbf{Recurso} & \textbf{Quem acessa} & \textbf{Proteção existente}\\
+\midrule
+Estado, rota e sensores do robô & Laço receptor + 2 threads & \code{mutex\_}, \code{cv\_}, validações de versão e comando.\\
+Ciclo de vida das threads & Inicialização e parada do agente & \code{ciclo\_vida\_}, \code{notify\_all()}, \code{join()}.\\
+Envio no socket do robô & Threads emissoras & \code{send\_mutex} e \code{timed\_mutex} do canal.\\
+Fila de persistência & Produtoras + thread coletora & \code{mutex\_fila}, \code{condicao\_fila}, limite de fila.\\
+Estado da frota, missão e corredor & Apenas ciclo central & Propriedade exclusiva do estado e validação por mensagens.\\
+Posição da equipe acoplada & Propostas dos robôs & Barreira de confirmação por integrantes, missão, passo e destino.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Persistência e rastreabilidade}
+Os eventos operacionais são encaminhados ao coletor e armazenados em quatro tabelas SQLite: \code{runs}, \code{robot\_events}, \code{cargo\_transports} e \code{cargo\_members}. Os registros permitem relacionar execuções, robôs, missões, cargas e integrantes das equipes.
+
+Cada evento é gravado em transação, com reversão em caso de falha. Restrições de identidade evitam duplicações e os registros utilizam horários Unix em milissegundos. Os prazos operacionais são medidos separadamente por relógio monotônico.
+
+Também implementamos um buffer circular de eventos, avaliado em teste específico. No fluxo principal, porém, os eventos são enviados diretamente ao coletor.
+\section{Testes e evidências de troca de dados}
+
+Implementamos para o projeto uma suíte de testes automatizados utilizando GoogleTests, que podem ser compilados e executados pelo terminal, garantindo o correto funcionamento do código. Esses teste, cobrem a comunicação e a gravação persistente dos dados, utilizando o SQLite, utilizando os mecanismos de exclusão mútua para garantir o bom funcionamente em situações com concorrência.
+
+Além disso, para alguns casos específicos, implementamos testes manuais de forma pontual, como por exemplo, alguns testes relacionados ao DataLogger e ao banco de dados.
+
+\section{Resultados da etapa e limitações}
+Concluímos a primeira etapa com os principais componentes implementados e testes funcionais de processos, threads, comunicação IPC, sincronização e persistência. A separação de responsabilidades reduziu o compartilhamento de memória e concentrou os bloqueios nas operações realmente concorrentes.
+
+Para as próximas etapas, permanecem a interface gráfica, a integração MQTT e as avaliações de latência, variação dos períodos das threads e escalabilidade. Os períodos de 100 e 500 ms são nominais, pois ainda não realizamos medições de pior caso nem configuramos escalonamento de tempo real estrito.
+
+\section{Compilação e reprodução}
+A compilação e a execução dos cenários podem ser reproduzidas, a partir da raiz do projeto, pelos comandos:
+\begin{lstlisting}
+cmake -S . -B build -DBUILD_TESTING=OFF
+cmake --build build --parallel 2
+./build/app/simulador_exec --cenario base
+./build/app/simulador_exec --cenario disponibilidade
+./build/app/simulador_exec --cenario processos
+\end{lstlisting}
+Para definir outro arquivo SQLite, utiliza-se \code{--banco logs/nome-da-execucao.db}. Com GoogleTest disponível, a suíte pode ser executada por:
+\begin{lstlisting}
+cmake -S . -B build -DBUILD_TESTING=ON
+cmake --build build --parallel 2
+ctest --test-dir build --output-on-failure
+\end{lstlisting}
+
+Consulta SQL para verificar transportes e integrantes:
+\begin{lstlisting}[language=SQL]
+SELECT t.mission_id, t.cargo_id, t.status,
+       m.robot_id
+FROM cargo_transports AS t
+JOIN cargo_members AS m
+  ON m.run_id = t.run_id
+ AND m.mission_id = t.mission_id
+ORDER BY t.mission_id, m.robot_id;
+\end{lstlisting}
+
+\section{Conclusão}
+Nesta primeira etapa, definimos e implementamos a arquitetura básica do sistema de gerenciamento de frota robótica. A organização em processos independentes, o uso de sockets Unix e a aplicação de mutexes e variáveis de condição permitiram coordenar os agentes e proteger os dados compartilhados. O controle sequencial do gestor e a fila de persistência contribuíram para separar as responsabilidades do sistema.
+
+Os testes realizados confirmaram a transmissão e validação de mensagens IPC, a persistência de 200 eventos produzidos concorrentemente e o funcionamento dos três cenários de integração avaliados. Assim, consideramos concluídos os objetivos previstos para a Etapa 1, com uma base funcional para a continuidade do projeto. A integração de novas interfaces e as avaliações temporais permanecem previstas para as etapas seguintes.
+
+\end{document}
