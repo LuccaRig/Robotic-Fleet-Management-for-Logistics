@@ -68,9 +68,9 @@
 \begin{minipage}{0.80\textwidth}
 \centering
 \vspace{0.5cm}
-{\large Lucca Rigueira Sant'ana Nogueira\par}
-{\large Matheus Muniz Soares\par}
-{\large Pedro Henrique Chalfun de Aquino\par}
+{\large Lucca Rigueira Sant'ana Nogueira -- 2023038957 \par}
+{\large Matheus Muniz Soares -- 2023038892\par}
+{\large Pedro Henrique Chalfun de Aquino -- 2023039066\par}
 \vspace{0.55cm}
 {\large Prof. Leandro Freitas\par}
 \end{minipage}
@@ -79,10 +79,11 @@
 {Belo Horizonte, \today\par}
 \end{titlepage}
 
-\begin{multicols}{2}
+
 \setlength{\columnsep}{1.1cm}
+\footnotesize
 \tableofcontents
-\end{multicols}
+
 \clearpage
 
 \section{Introdução e objetivos da etapa}
@@ -111,9 +112,14 @@ Organizamos a arquitetura em três partes: coordenação logística, execução 
 \noindent A Tabela~\ref{tab:responsabilidades} resume as responsabilidades dos componentes.
 
 \begin{table}[H]
-\centering\scriptsize
+\centering
+\scriptsize
 \caption{Responsabilidades dos componentes implementados.}
 \label{tab:responsabilidades}
+
+\begingroup
+\renewcommand{\arraystretch}{2}
+
 \begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.2cm}Y@{}}
 \toprule
 \textbf{Módulo} & \textbf{Contexto} & \textbf{Responsabilidade}\\
@@ -127,6 +133,8 @@ Organizamos a arquitetura em três partes: coordenação logística, execução 
 \code{ColetorDados} & Thread própria & Consome eventos da fila e persiste registros no SQLite.\\
 \bottomrule
 \end{tabularx}
+
+\endgroup
 \end{table}
 
 \section{Implementação dos processos}
@@ -184,43 +192,97 @@ A Figura~\ref{fig:sequencia} apresenta a sequência de autorização, movimento 
 
 Na atribuição de missões, cada comando recebe uma confirmação associada ao seu identificador. Também são verificados geração, sequência e revisão da missão, evitando a aceitação de informações desatualizadas.
 
+
 \section{Mecanismos de sincronização}
+
 \subsection{Mutexes: exclusão mútua dentro do robô}
-Utilizamos \code{std::mutex} para proteger o estado, a rota e as leituras de sensores compartilhadas entre as threads e o receptor de mensagens. Isso impede alterações simultâneas que poderiam comprometer a consistência da navegação.
 
-O controle dos bloqueios utiliza \code{std::lock\_guard} e \code{std::unique\_lock}. Mutexes específicos protegem o início e a parada das threads e a sequência de envio das mensagens IPC.
+Utilizamos \code{std::mutex} para proteger o estado, a rota e as leituras de sensores compartilhadas entre as threads de navegação, status e o receptor de mensagens. Essa proteção evita alterações simultâneas que poderiam comprometer a consistência das informações utilizadas na movimentação.
 
-\subsection{Variáveis de condição: espera sem sondagem ocupada}
-As threads utilizam \code{std::condition\_variable} para aguardar comandos, leituras ou encerramento sem consultar o estado continuamente. Predicados verificam a condição de retomada e evitam efeitos de despertares espúrios.
+Os bloqueios são gerenciados por \code{std::lock\_guard} e \code{std::unique\_lock}, garantindo a liberação dos mutexes ao final de cada operação. Também adotamos mutexes específicos para controlar a inicialização e o encerramento das threads, além de proteger a sequência das mensagens enviadas pelo IPC.
 
-No coletor, a variável de condição sinaliza novos eventos ou encerramento. O mutex é liberado antes das operações SQLite, permitindo que outras threads continuem adicionando eventos à fila.
+Essa separação permite proteger recursos distintos sem utilizar um único bloqueio para todas as operações do robô, reduzindo a interferência entre tarefas concorrentes.
 
-\subsection{Exclusão mútua no canal de envio}
-O canal IPC utiliza \code{std::timed\_mutex} para impedir que bytes de mensagens diferentes sejam intercalados no mesmo socket. A proteção do envio é independente do mutex utilizado para o estado interno do robô.
+\subsection{Variáveis de condição e execução periódica}
 
-\subsection{Sincronização lógica de equipes e de passagens}
-O transporte em equipe emprega uma barreira lógica: a missão só prossegue quando todos os integrantes confirmam o acoplamento. O movimento coletivo exige propostas compatíveis de posição e destino, e a descarga depende do desacoplamento completo.
+Utilizamos \code{std::condition\_variable} para suspender as threads enquanto aguardam comandos, leituras ou encerramento, evitando consultas contínuas ao estado compartilhado.
 
-As passagens possuem controle de capacidade, sentido e ocupação. Equipes acopladas reservam vagas em conjunto; deslocamentos opostos aguardam a liberação do corredor. A saída é confirmada por sensores antes da liberação das vagas.
+As rotinas de navegação e status possuem períodos nominais de 100 ms e 500 ms, respectivamente, utilizando \code{steady\_clock} e \code{wait\_until()}. A thread de status também pode despertar antecipadamente diante de novas leituras ou alterações de estado.
 
-Como essas estruturas são manipuladas pelo ciclo central, o controle ocorre por filas e permissões, sem uso de semáforos POSIX.
+Combinamos, assim, execução periódica e resposta a eventos, reduzindo processamento desnecessário sem depender exclusivamente da próxima atualização periódica.
+
+No coletor de dados, outra variável de condição sinaliza a chegada de eventos à fila. O mutex é liberado antes das operações SQLite, permitindo que novas informações sejam recebidas enquanto ocorre a gravação em disco.
+
+\subsection{Exclusão mútua e espera limitada no IPC}
+
+No canal IPC, implementamos \code{std::timed\_mutex} para impedir que diferentes threads intercalem bytes durante a transmissão de mensagens pelo mesmo socket.
+
+Diferentemente de um bloqueio sem limite de espera, utilizamos \code{try\_lock\_until()} para estabelecer um prazo de aquisição do mutex. O envio também considera esse prazo e utiliza \code{poll()} para verificar a disponibilidade do canal.
+
+Essa solução permite detectar quando uma transmissão não pode ser concluída dentro do tempo previsto, em vez de manter a thread bloqueada indefinidamente. Trata-se de uma escolha importante para a responsividade do sistema, pois facilita a identificação de atrasos e falhas de comunicação.
+
+Também utilizamos identificadores de geração, sequência e comando para validar as mensagens recebidas. Dessa forma, evitamos que informações antigas sejam utilizadas após alterações de missão ou reinicializações dos processos.
+
+\subsection{Sincronização lógica de equipes e passagens}
+
+No transporte colaborativo, implementamos uma barreira lógica: a missão só avança quando todos os integrantes confirmam o acoplamento. O movimento coletivo exige propostas compatíveis de posição e destino, enquanto a descarga depende da confirmação de desacoplamento da equipe.
+
+Para controlar passagens restritas, desenvolvemos um sistema de filas e reservas que considera a capacidade disponível, o sentido do deslocamento e a ocupação atual.
+
+\begin{itemize}
+    \item \textbf{Controle por filas:} as solicitações são organizadas por passagem e avaliadas conforme a disponibilidade de vagas. Quando não há capacidade suficiente ou existe tráfego em sentido contrário, a solicitação permanece aguardando.
+
+    \item \textbf{Reservas coletivas:} equipes acopladas reservam conjuntamente a quantidade de vagas necessária aos seus integrantes. Isso evita autorizar um deslocamento coletivo sem capacidade suficiente para a equipe.
+
+    \item \textbf{Liberação por sensores:} as vagas somente são liberadas após a confirmação de saída dos robôs. Caso a posição seja desconhecida, não presumimos que o corredor esteja livre, evitando novas permissões baseadas em informações incompletas.
+\end{itemize}
+
+Como o gerenciamento das passagens ocorre exclusivamente no ciclo central, implementamos esse controle por filas e permissões, sem necessidade de semáforos POSIX. Essa organização evita acessos concorrentes às estruturas de ocupação e concentra as decisões sobre os recursos compartilhados.
+
+\subsection{Persistência assíncrona e tratamento de falhas}
+
+Para registrar os eventos operacionais, utilizamos uma fila protegida por mutex e uma thread independente responsável pela persistência no SQLite.
+
+Essa abordagem desacopla a produção dos eventos das operações de escrita em disco, evitando que cada registro interrompa diretamente o processamento logístico. Também estabelecemos um limite de 10.000 eventos na fila, permitindo identificar situações em que a produção supera a capacidade de armazenamento.
+
+Durante o encerramento, a thread coletora processa os eventos pendentes antes de fechar o banco. Além disso, falhas de gravação são armazenadas e podem ser propagadas à aplicação central.
+
+Esses mecanismos contribuem para a consistência dos registros e para o tratamento de falhas sem depender de gravações síncronas a cada evento.
+
 \begin{table}[H]
-\centering\small
-\caption{Mapa de sincronização: recurso, concorrência e proteção.}
+\centering
+\scriptsize
+\caption{Mecanismos de sincronização utilizados no sistema.}
 \label{tab:sync}
-\begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.0cm}Y@{}}
+
+\begingroup
+\renewcommand{\arraystretch}{1.8}
+
+\begin{tabularx}{\textwidth}{@{}p{2.8cm}p{3.0cm}Y@{}}
 \toprule
-\textbf{Recurso} & \textbf{Quem acessa} & \textbf{Proteção existente}\\
+\textbf{Recurso} & \textbf{Mecanismo} & \textbf{Finalidade} \\
 \midrule
-Estado, rota e sensores do robô & Laço receptor + 2 threads & \code{mutex\_}, \code{cv\_}, validações de versão e comando.\\
-Ciclo de vida das threads & Inicialização e parada do agente & \code{ciclo\_vida\_}, \code{notify\_all()}, \code{join()}.\\
-Envio no socket do robô & Threads emissoras & \code{send\_mutex} e \code{timed\_mutex} do canal.\\
-Fila de persistência & Produtoras + thread coletora & \code{mutex\_fila}, \code{condicao\_fila}, limite de fila.\\
-Estado da frota, missão e corredor & Apenas ciclo central & Propriedade exclusiva do estado e validação por mensagens.\\
-Posição da equipe acoplada & Propostas dos robôs & Barreira de confirmação por integrantes, missão, passo e destino.\\
+Estado, rota e sensores & \code{std::mutex} & Garantir consistência entre navegação, status e recepção de mensagens. \\
+
+Execução das threads & \code{condition\_variable} e \code{wait\_until()} & Coordenar ativações periódicas e notificações por eventos. \\
+
+Envio de mensagens IPC & \code{std::timed\_mutex} e \code{poll()} & Serializar mensagens e limitar a espera pelo canal. \\
+
+Ciclo de vida dos agentes & Mutex, \code{notify\_all()} e \code{join()} & Coordenar inicialização e encerramento das threads. \\
+
+Passagens restritas & Filas e reservas & Controlar capacidade, sentido e ocupação dos corredores. \\
+
+Transporte colaborativo & Barreira lógica e confirmações & Sincronizar acoplamento, deslocamento e descarga. \\
+
+Persistência SQLite & Fila, mutex e thread coletora & Registrar eventos sem bloquear diretamente o ciclo logístico durante a escrita. \\
 \bottomrule
 \end{tabularx}
+
+\endgroup
 \end{table}
+
+As soluções adotadas combinam exclusão mútua, sincronização por eventos, comunicação com espera limitada e controle lógico de recursos. Com isso, buscamos reduzir bloqueios desnecessários e manter a consistência das operações concorrentes, aspectos importantes para a Automação em Tempo Real.
+
 
 \section{Persistência e rastreabilidade}
 Os eventos operacionais são encaminhados ao coletor e armazenados em quatro tabelas SQLite: \code{runs}, \code{robot\_events}, \code{cargo\_transports} e \code{cargo\_members}. Os registros permitem relacionar execuções, robôs, missões, cargas e integrantes das equipes.
@@ -228,16 +290,67 @@ Os eventos operacionais são encaminhados ao coletor e armazenados em quatro tab
 Cada evento é gravado em transação, com reversão em caso de falha. Restrições de identidade evitam duplicações e os registros utilizam horários Unix em milissegundos. Os prazos operacionais são medidos separadamente por relógio monotônico.
 
 Também implementamos um buffer circular de eventos, avaliado em teste específico. No fluxo principal, porém, os eventos são enviados diretamente ao coletor.
+
 \section{Testes e evidências de troca de dados}
 
-Implementamos para o projeto uma suíte de testes automatizados utilizando GoogleTests, que podem ser compilados e executados pelo terminal, garantindo o correto funcionamento do código. Esses teste, cobrem a comunicação e a gravação persistente dos dados, utilizando o SQLite, utilizando os mecanismos de exclusão mútua para garantir o bom funcionamente em situações com concorrência.
+Implementamos uma suíte de testes automatizados utilizando GoogleTest, com o objetivo de verificar o funcionamento dos módulos e a comunicação entre eles. Os testes foram organizados para avaliar tanto o comportamento individual dos componentes quanto sua integração, com atenção especial aos mecanismos de sincronização e à consistência dos dados.
 
-Além disso, para alguns casos específicos, implementamos testes manuais de forma pontual, como por exemplo, alguns testes relacionados ao DataLogger e ao banco de dados.
+Esses testes se encontram no repositório, sendo possível executá-los localmente com o CTest, que apresenta os resultados diretamente no terminal. A seguir explicaremos a organização dos testes e os principais aspectos verificados em cada grupo.
+\subsection{Comunicação IPC e processos}
+
+Implementamos 8 testes para o protocolo IPC e o estado compartilhado da frota. Eles verificam a serialização e recuperação das mensagens, a recepção de dados fragmentados, a rejeição de mensagens inválidas e o tratamento de informações antigas ou duplicadas.
+
+Esses testes permitem verificar a integridade das informações transmitidas entre processos, incluindo o controle por geração e sequência das mensagens.
+
+\subsection{Navegação, logística e sincronização}
+
+Desenvolvemos 18 testes distribuídos entre os seguintes módulos:
+
+\begin{itemize}
+    \item \textbf{Agente do robô (7 testes):} verificam permissões de movimentação, confirmação por sensores, tratamento de falhas, recarga e inicialização e encerramento das threads.
+
+    \item \textbf{Organizador logístico (4 testes):} avaliam a formação de equipes, a espera pelos integrantes, o cancelamento de missões e a retomada após interrupções.
+
+    \item \textbf{Passagens e hardware (4 testes):} verificam limites de ocupação, filas de espera, reservas coletivas e sincronização do movimento entre integrantes da equipe.
+
+    \item \textbf{Mapa e rotas (3 testes):} avaliam a validade do mapa, o planejamento de trajetos com obstáculos e as restrições de capacidade dos caminhos.
+\end{itemize}
+
+Com esses testes, buscamos verificar se as decisões de movimentação respeitam as condições de segurança e sincronização estabelecidas para os robôs.
+
+\subsection{Coleta e persistência de dados}
+
+Implementamos 13 testes relacionados ao armazenamento das informações:
+
+\begin{itemize}
+    \item \textbf{Coletor de dados (7 testes):} verificam a gravação de eventos e transportes no SQLite, o processamento de eventos pendentes, a concorrência entre threads produtoras e o comportamento durante inicialização e encerramento.
+
+    \item \textbf{Buffer de eventos (4 testes):} avaliam a retenção do histórico circular, a escrita concorrente, a persistência dos eventos e o tratamento de registros rejeitados.
+
+    \item \textbf{Persistência e migração (2 testes):} verificam a preservação de registros existentes, o armazenamento dos integrantes de uma equipe e o tratamento de falhas de gravação.
+\end{itemize}
+
+Essas verificações são importantes para avaliar o funcionamento da fila sincronizada e da thread coletora, principalmente quando múltiplas threads produzem eventos simultaneamente.
+
+Também desenvolvemos um programa auxiliar para gerar um banco SQLite persistente, permitindo consultar manualmente os registros após a execução e verificar as informações armazenadas.
+
+\subsection{Testes de integração}
+
+Além dos 39 testes unitários, implementamos 9 casos de integração: 8 execuções parametrizadas de cenários e um teste específico de encerramento.
+
+Os cenários abrangem transporte básico e cooperativo, disponibilidade de equipes, passagens restritas, rotas coletivas, falhas, recarga e gerenciamento de processos. Verificamos a conclusão dos cenários, o encerramento dos processos dos robôs e a existência dos registros esperados no banco de dados.
+
+O teste de encerramento verifica também a finalização dos processos ativos e o processamento dos eventos aceitos pelo coletor.
+
+Ao todo, a suíte possui 48 casos de teste, considerando as instâncias parametrizadas de integração. Sua execução pode ser realizada pelo CTest, com os resultados apresentados diretamente no terminal.
 
 \section{Resultados da etapa e limitações}
-Concluímos a primeira etapa com os principais componentes implementados e testes funcionais de processos, threads, comunicação IPC, sincronização e persistência. A separação de responsabilidades reduziu o compartilhamento de memória e concentrou os bloqueios nas operações realmente concorrentes.
 
-Para as próximas etapas, permanecem a interface gráfica, a integração MQTT e as avaliações de latência, variação dos períodos das threads e escalabilidade. Os períodos de 100 e 500 ms são nominais, pois ainda não realizamos medições de pior caso nem configuramos escalonamento de tempo real estrito.
+Concluímos a primeira etapa com os principais componentes implementados, incluindo processos independentes para os robôs, threads de navegação e status, comunicação IPC, sincronização de equipes e persistência SQLite.
+
+Também desenvolvemos uma suíte de 48 casos de teste para verificar os módulos e suas interações. A arquitetura adotada concentra o gerenciamento logístico no ciclo central e utiliza mutexes, variáveis de condição e filas nos pontos de concorrência, buscando reduzir bloqueios desnecessários e preservar a consistência das operações.
+
+Para as próximas etapas, permanecem o desenvolvimento das interfaces gráficas, a integração MQTT e as avaliações de latência e escalabilidade. Os períodos de 100 ms e 500 ms definidos para as threads ainda são nominais, pois não realizamos medições de pior caso nem configuramos políticas de escalonamento de tempo real estrito.
 
 \section{Compilação e reprodução}
 A compilação e a execução dos cenários podem ser reproduzidas, a partir da raiz do projeto, pelos comandos:

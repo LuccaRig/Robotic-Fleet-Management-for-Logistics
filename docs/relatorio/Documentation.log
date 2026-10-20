@@ -1,10 +1,10 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.19)  19 OCT 2026 21:05
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.19)  19 OCT 2026 23:16
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
  %&-line parsing enabled.
-**/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/relatorio/Documentation.tex
-(/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/relatorio/Documentation.tex
+**/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex
+(/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
 (/usr/share/texlive/texmf-dist/tex/latex/base/article.cls
@@ -897,7 +897,14 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 ) [1
 
-{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}] (./Documentation.toc)
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texmf/fonts/enc/dvips/lm/lm-ec.enc}] (./Documentation.toc
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 5.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 5.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 5.
+)
 \tf@toc=\write6
 \openout6 = `Documentation.toc'.
 
@@ -905,30 +912,34 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.86 \clearpage
+l.87 \clearpage
                 [1] (/usr/share/texmf/tex/latex/lm/t1lmtt.fd)
-Underfull \hbox (badness 1946) in paragraph at lines 129--129
+Underfull \hbox (badness 1946) in paragraph at lines 135--135
 []|\T1/lmr/m/n/8 (+20) Processo cen-tral; laço
  []
 
 [2
 
 ] [3] [4] [5]
-Underfull \hbox (badness 1320) in paragraph at lines 222--222
-[]|\T1/lmr/m/n/10.95 (+20) Envio no soc-ket
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 233.
+ (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
+File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+Underfull \hbox (badness 10000) in paragraph at lines 279--279
+[]|\T1/lmtt/m/n/8 std::timed_mutex \T1/lmr/m/n/8 (+20) e
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 222--222
-[]|\T1/lmr/m/n/10.95 (+20) Propostas dos
+Underfull \hbox (badness 3977) in paragraph at lines 279--279
+[]|\T1/lmr/m/n/8 (+20) Ciclo de vida dos
  []
 
-[6] [7] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+[6{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}] [7] [8] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 260.
- [8] 
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 373.
+ [9] 
 enddocument/afterlastpage: lastpage setting LastPage.
 (./Documentation.aux)
  ***********
@@ -936,21 +947,21 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `Documentation.out' has not changed.
-(rerunfilecheck)             Checksum: 99A09E15F3AB23F9C8E88A5DC1DDCAF4;5422.
+(rerunfilecheck)             Checksum: C3F454512B69E4B24EECB0B06E99D57B;6580.
  ) 
 Here is how much of TeX's memory you used:
- 30276 strings out of 476162
- 549755 string characters out of 5794813
- 1958975 words of memory out of 5000000
- 51598 multiletter control sequences out of 15000+600000
- 632221 words of font info for 155 fonts, out of 8000000 for 9000
+ 30359 strings out of 476162
+ 551224 string characters out of 5794813
+ 1974975 words of memory out of 5000000
+ 51646 multiletter control sequences out of 15000+600000
+ 639681 words of font info for 171 fonts, out of 8000000 for 9000
  16 hyphenation exceptions out of 8191
- 84i,12n,87p,1079b,2005s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt12.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb>
-Output written on Documentation.pdf (9 pages, 359645 bytes).
+ 84i,12n,87p,1084b,1450s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb>
+Output written on Documentation.pdf (10 pages, 352460 bytes).
 PDF statistics:
- 287 PDF objects out of 1000 (max. 8388607)
- 249 compressed objects within 3 object streams
- 55 named destinations out of 1000 (max. 500000)
- 44229 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 303 PDF objects out of 1000 (max. 8388607)
+ 265 compressed objects within 3 object streams
+ 61 named destinations out of 1000 (max. 500000)
+ 49389 words of extra memory for PDF output out of 51595 (max. 10000000)
 
