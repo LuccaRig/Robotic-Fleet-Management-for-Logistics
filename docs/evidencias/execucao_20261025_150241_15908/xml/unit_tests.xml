@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="39" failures="0" disabled="0" errors="0" time="2.4" timestamp="2026-10-25T15:02:56.483" name="AllTests">
+  <testsuite name="WarehouseGridTest" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.483">
+    <testcase name="RejectsInvalidLayoutAndKeepsRobotOccupationSeparate" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_warehouse.cpp" line="4" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="WarehouseGridTest" />
+  </testsuite>
+  <testsuite name="RoutePlannerTest" tests="2" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.483">
+    <testcase name="AvoidsWallsAndInsufficientCapacity" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_warehouse.cpp" line="11" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RoutePlannerTest" />
+    <testcase name="DistinguishesUnreachableCharger" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_warehouse.cpp" line="22" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RoutePlannerTest" />
+  </testsuite>
+  <testsuite name="RobotAgentTest" tests="7" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.483">
+    <testcase name="MovementRequiresPermissionAndConfirmedSensor" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="14" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="RejectsObsoleteRevisionAndStopsOnFailure" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="23" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="CountsAllPendingSensorSegments" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="30" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="RejectsPrematureCouplingAndDuplicateCommandDoesNotResetRoute" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="36" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="RepeatedStartStopIsSafe" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="42" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="ChargeEndsOnlyAtFullBattery" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="43" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+    <testcase name="PublishesTransientFaultBeforeFollowingRecovery" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_robot.cpp" line="49" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.483" classname="RobotAgentTest" />
+  </testsuite>
+  <testsuite name="ProtocolTest" tests="2" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.484">
+    <testcase name="RoundTripsAllMissionMetadata" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="7" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="ProtocolTest" />
+    <testcase name="RejectsTruncationVersionAndOversize" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="13" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="ProtocolTest" />
+  </testsuite>
+  <testsuite name="IpcTest" tests="3" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.484">
+    <testcase name="ReassemblesFragmentedFramesAndDetectsEof" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="18" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="IpcTest" />
+    <testcase name="RejectsOversizedHeader" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="28" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="IpcTest" />
+    <testcase name="ZeroTimeoutConsumesQueuedFrameBeforePeerExit" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="58" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="IpcTest" />
+  </testsuite>
+  <testsuite name="FleetStateTest" tests="3" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.484">
+    <testcase name="RequiresRegisteredGenerationAndIncreasingSequence" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="33" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="FleetStateTest" />
+    <testcase name="RejectsStateRegressionEvenWithHigherTransportSequence" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="39" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="FleetStateTest" />
+    <testcase name="LocalSensorUpdatesPreserveTransportSequenceAndRejectOldReadings" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_ipc.cpp" line="46" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="FleetStateTest" />
+  </testsuite>
+  <testsuite name="LogisticsTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.484">
+    <testcase name="WaitsForCompleteTeamAndAllArrivalReports" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_logistics.cpp" line="29" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="LogisticsTest" />
+    <testcase name="CancelsBeforeCouplingAndPreservesQueue" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_logistics.cpp" line="54" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="LogisticsTest" />
+    <testcase name="SuspendsPartiallyCoupledTeamInsteadOfReassigning" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_logistics.cpp" line="66" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="LogisticsTest" />
+    <testcase name="ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_logistics.cpp" line="80" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="LogisticsTest" />
+  </testsuite>
+  <testsuite name="PassageTest" tests="3" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.484">
+    <testcase name="PreservesCapacityAndQueuesOppositeFlowUntilExit" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_passages_hardware.cpp" line="16" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.484" classname="PassageTest" />
+    <testcase name="TeamReservationIsIndivisible" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_passages_hardware.cpp" line="46" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.485" classname="PassageTest" />
+    <testcase name="ReturnsPermissionAndEntryExitEventsToCentralCycle" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_passages_hardware.cpp" line="63" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.485" classname="PassageTest" />
+  </testsuite>
+  <testsuite name="HardwareTest" tests="1" failures="0" disabled="0" skipped="0" errors="0" time="0." timestamp="2026-10-25T15:02:56.485">
+    <testcase name="GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_passages_hardware.cpp" line="84" status="run" result="completed" time="0." timestamp="2026-10-25T15:02:56.485" classname="HardwareTest" />
+  </testsuite>
+  <testsuite name="DataCollectorTest" tests="7" failures="0" disabled="0" skipped="0" errors="0" time="1.559" timestamp="2026-10-25T15:02:56.485">
+    <testcase name="PersistsRobotEventFieldsAndTimestamp" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="74" status="run" result="completed" time="0.02" timestamp="2026-10-25T15:02:56.485" classname="DataCollectorTest" />
+    <testcase name="PersistsDeliveryDetails" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="92" status="run" result="completed" time="0.015" timestamp="2026-10-25T15:02:56.505" classname="DataCollectorTest" />
+    <testcase name="DrainsPendingEventsWhenStopped" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="105" status="run" result="completed" time="0.725" timestamp="2026-10-25T15:02:56.521" classname="DataCollectorTest" />
+    <testcase name="HandlesConcurrentProducersWithoutLosingEvents" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="116" status="run" result="completed" time="0.72" timestamp="2026-10-25T15:02:57.246" classname="DataCollectorTest" />
+    <testcase name="RejectsEventsBeforeStartAndAfterStop" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="132" status="run" result="completed" time="0.013" timestamp="2026-10-25T15:02:57.967" classname="DataCollectorTest" />
+    <testcase name="SupportsRepeatedStartStopAndRestart" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="142" status="run" result="completed" time="0.032" timestamp="2026-10-25T15:02:57.981" classname="DataCollectorTest" />
+    <testcase name="PersistsAcrossDistinctInstances" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_data_collector.cpp" line="155" status="run" result="completed" time="0.031" timestamp="2026-10-25T15:02:58.013" classname="DataCollectorTest" />
+  </testsuite>
+  <testsuite name="BufferCollectorTest" tests="4" failures="0" disabled="0" skipped="0" errors="0" time="0.791" timestamp="2026-10-25T15:02:58.044">
+    <testcase name="CircularRetentionStillPersistsAllEvents" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_buffer_data_collector.cpp" line="52" status="run" result="completed" time="0.031" timestamp="2026-10-25T15:02:58.044" classname="BufferCollectorTest" />
+    <testcase name="ClearDoesNotErasePersistedEvents" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_buffer_data_collector.cpp" line="72" status="run" result="completed" time="0.018" timestamp="2026-10-25T15:02:58.076" classname="BufferCollectorTest" />
+    <testcase name="ConcurrentBufferWritersReachSQLite" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_buffer_data_collector.cpp" line="85" status="run" result="completed" time="0.727" timestamp="2026-10-25T15:02:58.094" classname="BufferCollectorTest" />
+    <testcase name="RejectedEventDoesNotStayInBuffer" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_buffer_data_collector.cpp" line="105" status="run" result="completed" time="0.013" timestamp="2026-10-25T15:02:58.822" classname="BufferCollectorTest" />
+  </testsuite>
+  <testsuite name="StorageMigrationTest" tests="2" failures="0" disabled="0" skipped="0" errors="0" time="0.047" timestamp="2026-10-25T15:02:58.836">
+    <testcase name="PreservesLegacyRowsAndPersistsWholeTeam" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_storage_migration.cpp" line="6" status="run" result="completed" time="0.031" timestamp="2026-10-25T15:02:58.836" classname="StorageMigrationTest" />
+    <testcase name="SurfacesWorkerWriteFailureAndMarksSessionFailed" file="/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/tests/test_storage_migration.cpp" line="23" status="run" result="completed" time="0.016" timestamp="2026-10-25T15:02:58.867" classname="StorageMigrationTest" />
+  </testsuite>
+</testsuites>

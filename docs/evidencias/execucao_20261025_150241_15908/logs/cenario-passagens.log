@@ -1,0 +1,303 @@
+COMANDO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec --cenario passagens --banco /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/passagens/passagens.db
+DIRETORIO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics
+INICIO: 2026-10-25T15:05:48.040135-03:00
+==============================================================================
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Processo do robô criado | robô 3 | missão 0
+Robô 3 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 3 | missão 0
+Evento: Processo do robô criado | robô 4 | missão 0
+Robô 4 pronto, geração 4
+Evento: Robô pronto para receber tarefas | robô 4 | missão 0
+Evento: Processo do robô criado | robô 5 | missão 0
+Robô 5 pronto, geração 5
+Evento: Robô pronto para receber tarefas | robô 5 | missão 0
+Evento: Processo do robô criado | robô 6 | missão 0
+Robô 6 pronto, geração 6
+Evento: Robô pronto para receber tarefas | robô 6 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evento: Equipe completa reservada | robô -1 | missão 3
+Evento: Equipe completa reservada | robô -1 | missão 4
+Evento: Equipe completa reservada | robô -1 | missão 5
+Evento: Equipe completa reservada | robô -1 | missão 6
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 5
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 6
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 5
+Evento: Transporte colaborativo liberado | robô -1 | missão 5
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 6
+Evento: Transporte colaborativo liberado | robô -1 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 3
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 3
+Evento: Transporte colaborativo liberado | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 5 | missão 5
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 3 | missão 3
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 5 | missão 5
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 4
+Evento: Transporte colaborativo liberado | robô -1 | missão 4
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 3 | missão 3
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 5
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 6
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+Cenário concluído: passagens
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô finalizado | robô 3 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 3 | missão 0
+Evento: Processo do robô finalizado | robô 4 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 4 | missão 0
+Evento: Processo do robô finalizado | robô 5 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 5 | missão 0
+Evento: Processo do robô finalizado | robô 6 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 6 | missão 0
+Sistema encerrado.
+
+==============================================================================
+RETORNO: 0 | TIMEOUT: False | DURACAO_S: 8.93

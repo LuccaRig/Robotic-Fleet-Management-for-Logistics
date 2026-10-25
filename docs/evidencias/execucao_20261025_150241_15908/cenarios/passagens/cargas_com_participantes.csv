@@ -1,0 +1,7 @@
+run_id,mission_id,cargo_id,bay_id,destination,status,robos
+1,1,1,1,Zona 1,entregue,1
+1,2,4,3,Zona 3,entregue,2
+1,3,2,4,Zona 1,entregue,3
+1,4,3,5,Zona 1,entregue,4
+1,5,5,6,Zona 3,entregue,5
+1,6,6,7,Zona 3,entregue,6

@@ -1,0 +1,9 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] StorageMigrationTest.PreservesLegacyRowsAndPersistsWholeTeam
+[       OK ] StorageMigrationTest.PreservesLegacyRowsAndPersistsWholeTeam (31 ms)
+
+[ RUN      ] StorageMigrationTest.SurfacesWorkerWriteFailureAndMarksSessionFailed
+Coletor de dados: bloqueado
+[       OK ] StorageMigrationTest.SurfacesWorkerWriteFailureAndMarksSessionFailed (16 ms)

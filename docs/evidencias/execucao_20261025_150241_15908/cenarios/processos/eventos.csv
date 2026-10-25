@@ -1,0 +1,12 @@
+id,run_id,occurred_at_ms,robot_id,team_id,bay_id,mission_id,cargo_id,event_type,description,destination
+1,1,1792951591310,1,0,,0,0,0,Processo do robô criado,
+2,1,1792951591310,1,0,,0,0,8,Robô pronto para receber tarefas,
+3,1,1792951591331,2,0,,0,0,0,Processo do robô criado,
+4,1,1792951591331,2,0,,0,0,8,Robô pronto para receber tarefas,
+5,1,1792951591371,2,0,,0,0,9,Robô desconectado: Canal IPC encerrado,
+6,1,1792951591393,2,0,,0,0,0,Processo do robô criado,
+7,1,1792951591393,2,0,,0,0,8,Robô pronto para receber tarefas,
+8,1,1792951591412,1,0,,0,0,10,Processo do robô finalizado,
+9,1,1792951591422,1,0,,0,0,9,Robô desconectado: Canal IPC encerrado,
+10,1,1792951591412,2,0,,0,0,10,Processo do robô finalizado,
+11,1,1792951591422,2,0,,0,0,9,Robô desconectado: Canal IPC encerrado,

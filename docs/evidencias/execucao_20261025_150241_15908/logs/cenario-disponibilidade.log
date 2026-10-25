@@ -1,0 +1,107 @@
+COMANDO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec --cenario disponibilidade --banco /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/disponibilidade/disponibilidade.db
+DIRETORIO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics
+INICIO: 2026-10-25T15:05:40.713561-03:00
+==============================================================================
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evidência: carga aguardou equipe completa antes do despacho
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 13 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 13 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Cenário concluído: disponibilidade
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Sistema encerrado.
+
+==============================================================================
+RETORNO: 0 | TIMEOUT: False | DURACAO_S: 7.32

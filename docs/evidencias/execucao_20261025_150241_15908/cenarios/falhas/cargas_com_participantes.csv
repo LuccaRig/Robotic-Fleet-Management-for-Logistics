@@ -1,0 +1,2 @@
+run_id,mission_id,cargo_id,bay_id,destination,status,robos
+1,2,1,1,Zona 1,entregue,"1,2"

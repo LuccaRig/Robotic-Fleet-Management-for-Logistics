@@ -1,0 +1,422 @@
+{
+  "inicio": "2026-10-25T15:02:41.719298-03:00",
+  "repositorio": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics",
+  "build": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias",
+  "pasta_evidencias": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908",
+  "ambiente": {
+    "sistema": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "cmake": "cmake version 3.28.3",
+    "ctest": "ctest version 3.28.3",
+    "git_commit": "b1147e30575527e514917c2331bb117769b7b80d"
+  },
+  "etapas": {
+    "configuracao": {
+      "comando": [
+        "cmake",
+        "-S",
+        "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics",
+        "-B",
+        "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias",
+        "-DBUILD_TESTING=ON",
+        "-DFETCHCONTENT_SOURCE_DIR_GOOGLETEST=/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build/_deps/googletest-src"
+      ],
+      "retorno": 0,
+      "timeout": false,
+      "duracao_s": 1.62,
+      "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/configuracao.log"
+    },
+    "compilacao": {
+      "comando": [
+        "cmake",
+        "--build",
+        "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias",
+        "--parallel",
+        "2"
+      ],
+      "retorno": 0,
+      "timeout": false,
+      "duracao_s": 13.09,
+      "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/compilacao.log"
+    }
+  },
+  "cenarios": {
+    "base": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "base",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/base/base.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 5.07,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-base.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/base/base.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 42,
+          "cargas": 1,
+          "participantes": 1,
+          "cargas_com_participantes": 1
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 1
+        }
+      }
+    },
+    "cooperativo": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "cooperativo",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/cooperativo/cooperativo.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 45.43,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-cooperativo.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/cooperativo/cooperativo.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 593,
+          "cargas": 3,
+          "participantes": 9,
+          "cargas_com_participantes": 3
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 3
+        }
+      }
+    },
+    "disponibilidade": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "disponibilidade",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/disponibilidade/disponibilidade.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 7.32,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-disponibilidade.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/disponibilidade/disponibilidade.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 94,
+          "cargas": 1,
+          "participantes": 2,
+          "cargas_com_participantes": 1
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 1
+        }
+      }
+    },
+    "passagens": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "passagens",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/passagens/passagens.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 8.93,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-passagens.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/passagens/passagens.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 287,
+          "cargas": 6,
+          "participantes": 6,
+          "cargas_com_participantes": 6
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 6
+        }
+      }
+    },
+    "rota-equipe": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "rota-equipe",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/rota-equipe/rota-equipe.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 7.73,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-rota-equipe.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/rota-equipe/rota-equipe.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 181,
+          "cargas": 1,
+          "participantes": 4,
+          "cargas_com_participantes": 1
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 1
+        }
+      }
+    },
+    "falhas": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "falhas",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/falhas/falhas.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 8.88,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-falhas.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/falhas/falhas.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 114,
+          "cargas": 1,
+          "participantes": 2,
+          "cargas_com_participantes": 1
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 1
+        }
+      }
+    },
+    "recarga": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "recarga",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/recarga/recarga.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 14.79,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-recarga.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/recarga/recarga.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 48,
+          "cargas": 1,
+          "participantes": 1,
+          "cargas_com_participantes": 1
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {
+          "entregue": 1
+        }
+      }
+    },
+    "processos": {
+      "execucao": {
+        "comando": [
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec",
+          "--cenario",
+          "processos",
+          "--banco",
+          "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/processos/processos.db"
+        ],
+        "retorno": 0,
+        "timeout": false,
+        "duracao_s": 0.16,
+        "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/cenario-processos.log"
+      },
+      "sucesso_execucao": true,
+      "sqlite": {
+        "banco": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/processos/processos.db",
+        "existe": true,
+        "valido": true,
+        "integrity_check": [
+          "ok"
+        ],
+        "violacoes_fk": 0,
+        "tabelas_esperadas": [
+          "cargo_members",
+          "cargo_transports",
+          "robot_events",
+          "runs"
+        ],
+        "contagens": {
+          "execucoes": 1,
+          "eventos": 11,
+          "cargas": 0,
+          "participantes": 0,
+          "cargas_com_participantes": 0
+        },
+        "status_execucoes": [
+          "encerrada"
+        ],
+        "cargas_por_status": {}
+      }
+    }
+  },
+  "testes": {
+    "arquivos_xml": [
+      "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/xml/etapa1_integration.xml",
+      "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/xml/unit_tests.xml"
+    ],
+    "total": 48,
+    "aprovados": 48,
+    "falharam": 0,
+    "ignorados": 0
+  },
+  "ctest": {
+    "comando": [
+      "ctest",
+      "--test-dir",
+      "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias",
+      "--verbose",
+      "--output-on-failure"
+    ],
+    "retorno": 0,
+    "timeout": false,
+    "duracao_s": 99.06,
+    "log": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/logs/ctest-completo.log"
+  },
+  "blocos_identificados_no_log": 48,
+  "fim": "2026-10-25T15:06:31.463679-03:00",
+  "resultado_geral": "CONCLUIDO_SEM_FALHAS_NAS_ETAPAS_EXECUTADAS",
+  "arquivo_zip": "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908.zip"
+}

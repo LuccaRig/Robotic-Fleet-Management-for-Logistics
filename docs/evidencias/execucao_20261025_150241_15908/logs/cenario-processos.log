@@ -1,0 +1,25 @@
+COMANDO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec --cenario processos --banco /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/processos/processos.db
+DIRETORIO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics
+INICIO: 2026-10-25T15:06:31.297994-03:00
+==============================================================================
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evidência: processo recriado com nova geração após remoção explícita
+Cenário concluído: processos
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Sistema encerrado.
+
+==============================================================================
+RETORNO: 0 | TIMEOUT: False | DURACAO_S: 0.16

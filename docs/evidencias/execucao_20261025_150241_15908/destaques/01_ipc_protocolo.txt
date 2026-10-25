@@ -1,0 +1,26 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] ProtocolTest.RoundTripsAllMissionMetadata
+[       OK ] ProtocolTest.RoundTripsAllMissionMetadata (0 ms)
+
+[ RUN      ] ProtocolTest.RejectsTruncationVersionAndOversize
+[       OK ] ProtocolTest.RejectsTruncationVersionAndOversize (0 ms)
+
+[ RUN      ] IpcTest.ReassemblesFragmentedFramesAndDetectsEof
+[       OK ] IpcTest.ReassemblesFragmentedFramesAndDetectsEof (0 ms)
+
+[ RUN      ] IpcTest.RejectsOversizedHeader
+[       OK ] IpcTest.RejectsOversizedHeader (0 ms)
+
+[ RUN      ] IpcTest.ZeroTimeoutConsumesQueuedFrameBeforePeerExit
+[       OK ] IpcTest.ZeroTimeoutConsumesQueuedFrameBeforePeerExit (0 ms)
+
+[ RUN      ] FleetStateTest.RequiresRegisteredGenerationAndIncreasingSequence
+[       OK ] FleetStateTest.RequiresRegisteredGenerationAndIncreasingSequence (0 ms)
+
+[ RUN      ] FleetStateTest.RejectsStateRegressionEvenWithHigherTransportSequence
+[       OK ] FleetStateTest.RejectsStateRegressionEvenWithHigherTransportSequence (0 ms)
+
+[ RUN      ] FleetStateTest.LocalSensorUpdatesPreserveTransportSequenceAndRejectOldReadings
+[       OK ] FleetStateTest.LocalSensorUpdatesPreserveTransportSequenceAndRejectOldReadings (0 ms)

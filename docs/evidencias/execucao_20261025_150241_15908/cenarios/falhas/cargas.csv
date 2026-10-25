@@ -1,0 +1,2 @@
+run_id,mission_id,cargo_id,bay_id,destination,status,pickup_at_ms,delivered_at_ms
+1,2,1,1,Zona 1,entregue,1792951569939,1792951576435

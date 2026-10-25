@@ -1,0 +1,16 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents
+
+[TESTE] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents iniciado...
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+ -> Parando runtime e drenando eventos aceitos.
+Evento: Processo do robô finalizado | robô 1 | missão 1
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+[SUCESSO] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents passou!
+[       OK ] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents (53 ms)

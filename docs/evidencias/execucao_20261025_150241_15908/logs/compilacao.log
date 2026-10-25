@@ -1,0 +1,55 @@
+COMANDO: cmake --build /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias --parallel 2
+DIRETORIO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics
+INICIO: 2026-10-25T15:02:43.384917-03:00
+==============================================================================
+[  5%] Building CXX object _deps/googletest-build/googletest/CMakeFiles/gtest.dir/src/gtest-all.cc.o
+[  5%] Building CXX object communication/CMakeFiles/communication_lib.dir/src/mqtt_client.cpp.o
+[  7%] Building CXX object communication/CMakeFiles/communication_lib.dir/src/topics.cpp.o
+[ 10%] Building CXX object communication/CMakeFiles/communication_lib.dir/src/protocol.cpp.o
+[ 12%] Building CXX object communication/CMakeFiles/communication_lib.dir/src/ipc_channel.cpp.o
+[ 15%] Linking CXX static library libcommunication_lib.a
+[ 15%] Built target communication_lib
+[ 17%] Building CXX object core/CMakeFiles/core_lib.dir/src/data_collector.cpp.o
+[ 20%] Building CXX object core/CMakeFiles/core_lib.dir/src/orchestrator.cpp.o
+[ 23%] Building CXX object core/CMakeFiles/core_lib.dir/src/robot_agent.cpp.o
+[ 25%] Building CXX object core/CMakeFiles/core_lib.dir/src/robot_worker.cpp.o
+[ 28%] Linking CXX static library ../../../lib/libgtest.a
+[ 28%] Built target gtest
+[ 30%] Building CXX object _deps/googletest-build/googletest/CMakeFiles/gtest_main.dir/src/gtest_main.cc.o
+[ 33%] Building CXX object core/CMakeFiles/core_lib.dir/src/warehouse.cpp.o
+[ 35%] Linking CXX static library ../../../lib/libgtest_main.a
+[ 35%] Built target gtest_main
+[ 38%] Building CXX object _deps/googletest-build/googlemock/CMakeFiles/gmock.dir/src/gmock-all.cc.o
+[ 41%] Building CXX object core/CMakeFiles/core_lib.dir/src/route_planner.cpp.o
+[ 43%] Building CXX object core/CMakeFiles/core_lib.dir/src/logistics.cpp.o
+[ 46%] Building CXX object core/CMakeFiles/core_lib.dir/src/hardware.cpp.o
+[ 48%] Linking CXX static library ../../../lib/libgmock.a
+[ 48%] Built target gmock
+[ 51%] Building CXX object _deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir/src/gmock_main.cc.o
+[ 53%] Building CXX object core/CMakeFiles/core_lib.dir/src/passages.cpp.o
+[ 56%] Linking CXX static library ../../../lib/libgmock_main.a
+[ 56%] Built target gmock_main
+[ 58%] Building CXX object core/CMakeFiles/core_lib.dir/src/event_recorder.cpp.o
+[ 61%] Building CXX object core/CMakeFiles/core_lib.dir/src/runtime.cpp.o
+[ 64%] Building CXX object core/CMakeFiles/core_lib.dir/src/scenarios.cpp.o
+[ 66%] Linking CXX static library libcore_lib.a
+[ 66%] Built target core_lib
+[ 69%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_warehouse.cpp.o
+[ 71%] Building CXX object app/CMakeFiles/simulador_exec.dir/main.cpp.o
+[ 74%] Linking CXX executable simulador_exec
+[ 74%] Built target simulador_exec
+[ 79%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_robot.cpp.o
+[ 79%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_ipc.cpp.o
+[ 82%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_logistics.cpp.o
+[ 84%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_passages_hardware.cpp.o
+[ 87%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_data_collector.cpp.o
+[ 89%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_buffer_data_collector.cpp.o
+[ 92%] Building CXX object CMakeFiles/unit_tests.dir/tests/test_storage_migration.cpp.o
+[ 94%] Building CXX object CMakeFiles/etapa1_integration.dir/tests/test_integration.cpp.o
+[ 97%] Linking CXX executable unit_tests
+[ 97%] Built target unit_tests
+[100%] Linking CXX executable etapa1_integration
+[100%] Built target etapa1_integration
+
+==============================================================================
+RETORNO: 0 | TIMEOUT: False | DURACAO_S: 13.09

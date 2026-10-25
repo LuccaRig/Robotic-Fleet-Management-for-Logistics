@@ -1,0 +1,60 @@
+COMANDO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/build-evidencias/app/simulador_exec --cenario recarga --banco /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/evidencias/execucao_20261025_150241_15908/cenarios/recarga/recarga.db
+DIRETORIO: /home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics
+INICIO: 2026-10-25T15:06:16.509481-03:00
+==============================================================================
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Reserva cancelada: Bateria insuficiente em integrante da equipe | robô -1 | missão 1
+Evento: Bateria baixa | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Recarga iniciada | robô 1 | missão 0
+Evento: Recarga concluída | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evidência: recarga completa confirmada antes do retorno
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+Cenário concluído: recarga
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Sistema encerrado.
+
+==============================================================================
+RETORNO: 0 | TIMEOUT: False | DURACAO_S: 14.79

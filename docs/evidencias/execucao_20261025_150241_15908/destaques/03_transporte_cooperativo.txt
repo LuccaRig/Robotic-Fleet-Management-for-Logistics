@@ -1,0 +1,36 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] LogisticsTest.WaitsForCompleteTeamAndAllArrivalReports
+
+[TESTE] LogisticsTest.WaitsForCompleteTeamAndAllArrivalReports iniciado... -> Ciclo 1: Apenas robô 1 presente. Verificando pendência de carga.
+ -> Ciclo 2: Adicionando robô 2 para completar equipe e atribuir missão.
+ -> Relatando chegada dos robôs e acoplamento da carga.
+ -> Realizando entrega e desacoplamento final.
+[SUCESSO] LogisticsTest.WaitsForCompleteTeamAndAllArrivalReports passou!
+[       OK ] LogisticsTest.WaitsForCompleteTeamAndAllArrivalReports (0 ms)
+
+[ RUN      ] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue
+
+[TESTE] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue iniciado... -> Simulando falha antes do acoplamento e verificando cancelamento.
+[SUCESSO] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue passou!
+[       OK ] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue (0 ms)
+
+[ RUN      ] LogisticsTest.SuspendsPartiallyCoupledTeamInsteadOfReassigning
+
+[TESTE] LogisticsTest.SuspendsPartiallyCoupledTeamInsteadOfReassigning iniciado... -> Simulando falha parcial e verificando suspensão da missão.
+[SUCESSO] LogisticsTest.SuspendsPartiallyCoupledTeamInsteadOfReassigning passou!
+[       OK ] LogisticsTest.SuspendsPartiallyCoupledTeamInsteadOfReassigning (0 ms)
+
+[ RUN      ] LogisticsTest.ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults
+
+[TESTE] LogisticsTest.ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults iniciado... -> Testando recuperação de falhas obsoletas e validação de sensores correntes.
+[SUCESSO] LogisticsTest.ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults passou!
+[       OK ] LogisticsTest.ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults (0 ms)
+
+[ RUN      ] HardwareTest.GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision
+
+[TESTE] HardwareTest.GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision iniciado... -> Configurando robôs e missões acopladas no hardware local.
+ -> Movimentando o grupo passo a passo e testando pausas e revisões.
+[SUCESSO] HardwareTest.GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision passou!
+[       OK ] HardwareTest.GroupMovesOnlyAfterEveryProposalAndRejectsStaleRevision (0 ms)

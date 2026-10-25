@@ -1,0 +1,35 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] DataCollectorTest.PersistsRobotEventFieldsAndTimestamp
+[       OK ] DataCollectorTest.PersistsRobotEventFieldsAndTimestamp (20 ms)
+
+[ RUN      ] DataCollectorTest.PersistsDeliveryDetails
+[       OK ] DataCollectorTest.PersistsDeliveryDetails (15 ms)
+
+[ RUN      ] DataCollectorTest.DrainsPendingEventsWhenStopped
+[       OK ] DataCollectorTest.DrainsPendingEventsWhenStopped (725 ms)
+
+[ RUN      ] DataCollectorTest.HandlesConcurrentProducersWithoutLosingEvents
+[       OK ] DataCollectorTest.HandlesConcurrentProducersWithoutLosingEvents (720 ms)
+
+[ RUN      ] DataCollectorTest.RejectsEventsBeforeStartAndAfterStop
+[       OK ] DataCollectorTest.RejectsEventsBeforeStartAndAfterStop (13 ms)
+
+[ RUN      ] DataCollectorTest.SupportsRepeatedStartStopAndRestart
+[       OK ] DataCollectorTest.SupportsRepeatedStartStopAndRestart (32 ms)
+
+[ RUN      ] DataCollectorTest.PersistsAcrossDistinctInstances
+[       OK ] DataCollectorTest.PersistsAcrossDistinctInstances (31 ms)
+
+[ RUN      ] BufferCollectorTest.CircularRetentionStillPersistsAllEvents
+[       OK ] BufferCollectorTest.CircularRetentionStillPersistsAllEvents (31 ms)
+
+[ RUN      ] BufferCollectorTest.ClearDoesNotErasePersistedEvents
+[       OK ] BufferCollectorTest.ClearDoesNotErasePersistedEvents (18 ms)
+
+[ RUN      ] BufferCollectorTest.ConcurrentBufferWritersReachSQLite
+[       OK ] BufferCollectorTest.ConcurrentBufferWritersReachSQLite (727 ms)
+
+[ RUN      ] BufferCollectorTest.RejectedEventDoesNotStayInBuffer
+[       OK ] BufferCollectorTest.RejectedEventDoesNotStayInBuffer (13 ms)

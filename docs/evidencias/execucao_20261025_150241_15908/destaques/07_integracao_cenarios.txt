@@ -1,0 +1,1645 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/0
+
+[INTEGRAÇÃO] Executando cenário: [base] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 50)
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 100)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 200)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 250)
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 300)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 400)
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+ -> Cenário [base] em andamento... (Ciclos: 450)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+ -> Cenário [base] concluído com sucesso após 477 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [base] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/0 (4917 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/1
+
+[INTEGRAÇÃO] Executando cenário: [cooperativo] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Processo do robô criado | robô 3 | missão 0
+Robô 3 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 3 | missão 0
+Evento: Processo do robô criado | robô 4 | missão 0
+Robô 4 pronto, geração 4
+Evento: Robô pronto para receber tarefas | robô 4 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 50)
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 100)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 200)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 250)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 300)
+Evento: Saída da passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 400)
+Evento: Entrada na passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 450)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 13 com 2 vaga(s) | robô 1 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 500)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 13 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 550)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 600)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 650)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+ -> Cenário [cooperativo] em andamento... (Ciclos: 700)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 750)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 800)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 850)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Recarga iniciada | robô 1 | missão 0
+Evento: Recarga iniciada | robô 2 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 900)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 950)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1000)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1050)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1100)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1150)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1200)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1250)
+Evento: Recarga concluída | robô 1 | missão 0
+Evento: Recarga concluída | robô 2 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1300)
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 13 com 1 vaga(s) | robô 1 | missão 2
+Evento: Entrada na passagem 13 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Chegada confirmada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1350)
+Evento: Saída da passagem 13 com 1 vaga(s) | robô 1 | missão 2
+Evento: Saída da passagem 13 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1400)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 12 com 1 vaga(s) | robô 2 | missão 2
+Evento: Entrada na passagem 12 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1450)
+Evento: Saída da passagem 12 com 1 vaga(s) | robô 1 | missão 2
+Evento: Saída da passagem 12 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1500)
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 11 com 1 vaga(s) | robô 1 | missão 2
+Evento: Entrada na passagem 11 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1550)
+Evento: Saída da passagem 11 com 1 vaga(s) | robô 1 | missão 2
+Evento: Saída da passagem 11 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1600)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1650)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1700)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1750)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 3 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1800)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1850)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1900)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 1950)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Entrada na passagem 11 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2000)
+Evento: Saída da passagem 11 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2050)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2100)
+Evento: Entrada na passagem 12 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Saída da passagem 12 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2150)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2200)
+Evento: Entrada na passagem 13 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Saída da passagem 13 com 3 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2250)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2300)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2350)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 3 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 3 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2400)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2450)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2500)
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2550)
+Evento: Posição confirmada atualizada | robô 2 | missão 0
+Evento: Posição confirmada atualizada | robô 3 | missão 0
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Recarga iniciada | robô 1 | missão 0
+Evento: Recarga iniciada | robô 2 | missão 0
+Evento: Recarga iniciada | robô 3 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2600)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2650)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2700)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2750)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2800)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2850)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2900)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 2950)
+Evento: Recarga concluída | robô 3 | missão 0
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3000)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3050)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3100)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3150)
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3200)
+Evento: Recarga concluída | robô 1 | missão 0
+Evento: Recarga concluída | robô 2 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3250)
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Entrada na passagem 13 com 1 vaga(s) | robô 1 | missão 3
+Evento: Entrada na passagem 13 com 1 vaga(s) | robô 2 | missão 3
+Evento: Entrada na passagem 13 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3300)
+Evento: Saída da passagem 13 com 1 vaga(s) | robô 2 | missão 3
+Evento: Saída da passagem 13 com 1 vaga(s) | robô 3 | missão 3
+Evento: Saída da passagem 13 com 1 vaga(s) | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3350)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Entrada na passagem 12 com 1 vaga(s) | robô 1 | missão 3
+Evento: Entrada na passagem 12 com 1 vaga(s) | robô 2 | missão 3
+Evento: Entrada na passagem 12 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3400)
+Evento: Saída da passagem 12 com 1 vaga(s) | robô 1 | missão 3
+Evento: Saída da passagem 12 com 1 vaga(s) | robô 2 | missão 3
+Evento: Saída da passagem 12 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3450)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Entrada na passagem 11 com 1 vaga(s) | robô 1 | missão 3
+Evento: Entrada na passagem 11 com 1 vaga(s) | robô 2 | missão 3
+Evento: Entrada na passagem 11 com 1 vaga(s) | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3500)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Saída da passagem 11 com 1 vaga(s) | robô 3 | missão 3
+Evento: Saída da passagem 11 com 1 vaga(s) | robô 1 | missão 3
+Evento: Saída da passagem 11 com 1 vaga(s) | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3550)
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3600)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3650)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3700)
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 2 | missão 3
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 3
+Evento: Chegada confirmada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 2 | missão 3
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Chegada confirmada | robô 4 | missão 3
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 3
+Evento: Transporte colaborativo liberado | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3750)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3800)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3850)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3900)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Entrada na passagem 11 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 3950)
+Evento: Saída da passagem 11 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4000)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4050)
+Evento: Entrada na passagem 12 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Saída da passagem 12 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4100)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4150)
+Evento: Entrada na passagem 13 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Saída da passagem 13 com 4 vaga(s) | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4200)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4250)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+ -> Cenário [cooperativo] em andamento... (Ciclos: 4300)
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 3
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 3
+Evento: Chegada confirmada | robô 4 | missão 3
+Evento: Chegada confirmada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 2 | missão 3
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Chegada confirmada | robô 1 | missão 3
+Evento: Chegada confirmada | robô 2 | missão 3
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Chegada confirmada | robô 4 | missão 3
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 3
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô finalizado | robô 3 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 3 | missão 0
+Evento: Processo do robô finalizado | robô 4 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 4 | missão 0
+ -> Cenário [cooperativo] concluído com sucesso após 4343 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [cooperativo] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/1 (44761 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/2
+
+[INTEGRAÇÃO] Executando cenário: [disponibilidade] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evidência: carga aguardou equipe completa antes do despacho
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 50)
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 100)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 200)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 250)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 300)
+Evento: Saída da passagem 11 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 400)
+Evento: Entrada na passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 12 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 450)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Entrada na passagem 13 com 2 vaga(s) | robô 1 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 500)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Saída da passagem 13 com 2 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 550)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 600)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+ -> Cenário [disponibilidade] em andamento... (Ciclos: 650)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+ -> Cenário [disponibilidade] concluído com sucesso após 690 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [disponibilidade] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/2 (7134 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/3
+
+[INTEGRAÇÃO] Executando cenário: [passagens] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Processo do robô criado | robô 3 | missão 0
+Robô 3 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 3 | missão 0
+Evento: Processo do robô criado | robô 4 | missão 0
+Robô 4 pronto, geração 4
+Evento: Robô pronto para receber tarefas | robô 4 | missão 0
+Evento: Processo do robô criado | robô 5 | missão 0
+Robô 5 pronto, geração 5
+Evento: Robô pronto para receber tarefas | robô 5 | missão 0
+Evento: Processo do robô criado | robô 6 | missão 0
+Robô 6 pronto, geração 6
+Evento: Robô pronto para receber tarefas | robô 6 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evento: Equipe completa reservada | robô -1 | missão 3
+Evento: Equipe completa reservada | robô -1 | missão 4
+Evento: Equipe completa reservada | robô -1 | missão 5
+Evento: Equipe completa reservada | robô -1 | missão 6
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 5
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 6
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 5
+Evento: Transporte colaborativo liberado | robô -1 | missão 5
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 6
+Evento: Transporte colaborativo liberado | robô -1 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 3
+Evento: Transporte colaborativo liberado | robô -1 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 50)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 5 | missão 5
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 100)
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+ -> Cenário [passagens] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 5 | missão 5
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [passagens] em andamento... (Ciclos: 200)
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 5 | missão 5
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+ -> Cenário [passagens] em andamento... (Ciclos: 250)
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+ -> Cenário [passagens] em andamento... (Ciclos: 300)
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 6 | missão 6
+ -> Cenário [passagens] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 400)
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 5 | missão 5
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 1 | missão 1
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 3 | missão 3
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Chegada confirmada | robô 5 | missão 5
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 5
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 6 | missão 6
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 4
+Evento: Transporte colaborativo liberado | robô -1 | missão 4
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 6 | missão 6
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 6
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 450)
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 3
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 3
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [passagens] em andamento... (Ciclos: 500)
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 550)
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [passagens] em andamento... (Ciclos: 600)
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 650)
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [passagens] em andamento... (Ciclos: 700)
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [passagens] em andamento... (Ciclos: 750)
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 4 | missão 4
+ -> Cenário [passagens] em andamento... (Ciclos: 800)
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 4 | missão 4
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 4
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [passagens] em andamento... (Ciclos: 850)
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô finalizado | robô 3 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 3 | missão 0
+Evento: Processo do robô finalizado | robô 4 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 4 | missão 0
+Evento: Processo do robô finalizado | robô 5 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 5 | missão 0
+Evento: Processo do robô finalizado | robô 6 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 6 | missão 0
+ -> Cenário [passagens] concluído com sucesso após 861 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [passagens] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/3 (8951 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/4
+
+[INTEGRAÇÃO] Executando cenário: [rota-equipe] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Processo do robô criado | robô 3 | missão 0
+Robô 3 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 3 | missão 0
+Evento: Processo do robô criado | robô 4 | missão 0
+Robô 4 pronto, geração 4
+Evento: Robô pronto para receber tarefas | robô 4 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 50)
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 100)
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 4 | missão 1
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 1
+Evento: Chegada confirmada | robô 4 | missão 1
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 1
+Evento: Transporte colaborativo liberado | robô -1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 200)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 250)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 300)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Entrada na passagem 11 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Saída da passagem 11 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 400)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Entrada na passagem 12 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 450)
+Evento: Saída da passagem 12 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 500)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Entrada na passagem 13 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 550)
+Evento: Saída da passagem 13 com 4 vaga(s) | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 600)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 650)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+ -> Cenário [rota-equipe] em andamento... (Ciclos: 700)
+Evento: Posição confirmada atualizada | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 2 | missão 1
+Evento: Posição confirmada atualizada | robô 3 | missão 1
+Evento: Posição confirmada atualizada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 1
+Evento: Chegada confirmada | robô 4 | missão 1
+Evento: Chegada confirmada | robô 1 | missão 1
+Evento: Chegada confirmada | robô 2 | missão 1
+Evento: Chegada confirmada | robô 3 | missão 1
+Evento: Chegada confirmada | robô 4 | missão 1
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 1
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô finalizado | robô 3 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 3 | missão 0
+Evento: Processo do robô finalizado | robô 4 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 4 | missão 0
+ -> Cenário [rota-equipe] concluído com sucesso após 727 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [rota-equipe] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/4 (7534 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/5
+
+[INTEGRAÇÃO] Executando cenário: [falhas] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Reserva cancelada: Falha em integrante da equipe | robô -1 | missão 1
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 50)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 100)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 150)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 200)
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+Evento: Missão suspensa: Falha em integrante da equipe | robô -1 | missão 2
+Evento: Falha identificada | robô 2 | missão 2
+Evento: Falha removida; missão exige retomada explícita | robô 2 | missão 2
+Evento: Retomada autorizada após recuperação | robô -1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 250)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 300)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 350)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 400)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 11 com 2 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Saída da passagem 11 com 2 vaga(s) | robô 1 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 450)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 500)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 12 com 2 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 550)
+Evento: Saída da passagem 12 com 2 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 600)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Entrada na passagem 13 com 2 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 650)
+Evento: Saída da passagem 13 com 2 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 700)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 750)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+ -> Cenário [falhas] em andamento... (Ciclos: 800)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 2 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+ -> Cenário [falhas] concluído com sucesso após 835 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [falhas] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/5 (8628 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/6
+
+[INTEGRAÇÃO] Executando cenário: [recarga] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 1
+Evento: Reserva cancelada: Bateria insuficiente em integrante da equipe | robô -1 | missão 1
+Evento: Bateria baixa | robô 1 | missão 1
+Evento: Posição confirmada atualizada | robô 1 | missão 0
+Evento: Recarga iniciada | robô 1 | missão 0
+ -> Cenário [recarga] em andamento... (Ciclos: 50)
+ -> Cenário [recarga] em andamento... (Ciclos: 100)
+ -> Cenário [recarga] em andamento... (Ciclos: 150)
+ -> Cenário [recarga] em andamento... (Ciclos: 200)
+ -> Cenário [recarga] em andamento... (Ciclos: 250)
+ -> Cenário [recarga] em andamento... (Ciclos: 300)
+ -> Cenário [recarga] em andamento... (Ciclos: 350)
+ -> Cenário [recarga] em andamento... (Ciclos: 400)
+ -> Cenário [recarga] em andamento... (Ciclos: 450)
+ -> Cenário [recarga] em andamento... (Ciclos: 500)
+ -> Cenário [recarga] em andamento... (Ciclos: 550)
+ -> Cenário [recarga] em andamento... (Ciclos: 600)
+ -> Cenário [recarga] em andamento... (Ciclos: 650)
+ -> Cenário [recarga] em andamento... (Ciclos: 700)
+ -> Cenário [recarga] em andamento... (Ciclos: 750)
+ -> Cenário [recarga] em andamento... (Ciclos: 800)
+ -> Cenário [recarga] em andamento... (Ciclos: 850)
+ -> Cenário [recarga] em andamento... (Ciclos: 900)
+Evento: Recarga concluída | robô 1 | missão 0
+Evento: Equipe completa reservada | robô -1 | missão 2
+Evidência: recarga completa confirmada antes do retorno
+ -> Cenário [recarga] em andamento... (Ciclos: 950)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Todos os integrantes chegaram à baía | robô -1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Acoplamento de todos os integrantes confirmado | robô -1 | missão 2
+Evento: Transporte colaborativo liberado | robô -1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1000)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1050)
+Evento: Entrada na passagem 1 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 1 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1100)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1150)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Entrada na passagem 2 com 1 vaga(s) | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1200)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 2 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1250)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1300)
+Evento: Entrada na passagem 3 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Saída da passagem 3 com 1 vaga(s) | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1350)
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+Evento: Posição confirmada atualizada | robô 1 | missão 2
+ -> Cenário [recarga] em andamento... (Ciclos: 1400)
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Chegada confirmada | robô 1 | missão 2
+Evento: Entrega e desacoplamento de todos os integrantes confirmados | robô -1 | missão 2
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+ -> Cenário [recarga] concluído com sucesso após 1410 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [recarga] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/6 (14520 ms)
+
+[ RUN      ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/7
+
+[INTEGRAÇÃO] Executando cenário: [processos] (PID: 16614)
+Sistema iniciado. Execução 1
+Evento: Processo do robô criado | robô 1 | missão 0
+Robô 1 pronto, geração 1
+Evento: Robô pronto para receber tarefas | robô 1 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 2
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+Evento: Processo do robô criado | robô 2 | missão 0
+Robô 2 pronto, geração 3
+Evento: Robô pronto para receber tarefas | robô 2 | missão 0
+Evidência: processo recriado com nova geração após remoção explícita
+Evento: Processo do robô finalizado | robô 1 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 1 | missão 0
+Evento: Processo do robô finalizado | robô 2 | missão 0
+Evento: Robô desconectado: Canal IPC encerrado | robô 2 | missão 0
+ -> Cenário [processos] concluído com sucesso após 6 ciclos. Validando base de dados...
+[SUCESSO] Cenário de integração [processos] validado por completo!
+[       OK ] Cenarios/Etapa1Integration.CompletesScenarioAndReapsEveryWorker/7 (99 ms)

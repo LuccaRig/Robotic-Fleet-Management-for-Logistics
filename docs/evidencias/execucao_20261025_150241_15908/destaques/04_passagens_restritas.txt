@@ -1,0 +1,26 @@
+EVIDÊNCIAS EXTRAÍDAS DA SAÍDA REAL DO CTEST
+========================================================================
+
+[ RUN      ] PassageTest.PreservesCapacityAndQueuesOppositeFlowUntilExit
+
+[TESTE] PassageTest.PreservesCapacityAndQueuesOppositeFlowUntilExit iniciado... -> Confirmando posições iniciais para robôs 1, 2 e 3.
+ -> Solicitando acesso para o robô 1.
+ -> Solicitando acesso para o robô 2 (preenchendo a capacidade).
+ -> Solicitando acesso para o robô 3 (fluxo oposto - deve aguardar na fila).
+ -> Confirmando saída e avanço do robô 1.
+ -> Confirmando trânsito do robô 2 e esvaziamento do trecho.
+[SUCESSO] PassageTest.PreservesCapacityAndQueuesOppositeFlowUntilExit passou!
+[       OK ] PassageTest.PreservesCapacityAndQueuesOppositeFlowUntilExit (0 ms)
+
+[ RUN      ] PassageTest.TeamReservationIsIndivisible
+
+[TESTE] PassageTest.TeamReservationIsIndivisible iniciado... -> Solicitando acesso em equipe para o robô 1 e depois robô 2.
+ -> Validando exceção para quantidade de integrantes inválida.
+[SUCESSO] PassageTest.TeamReservationIsIndivisible passou!
+[       OK ] PassageTest.TeamReservationIsIndivisible (0 ms)
+
+[ RUN      ] PassageTest.ReturnsPermissionAndEntryExitEventsToCentralCycle
+
+[TESTE] PassageTest.ReturnsPermissionAndEntryExitEventsToCentralCycle iniciado... -> Solicitando acesso e verificando emissão de permissão e eventos de entrada/saída.
+[SUCESSO] PassageTest.ReturnsPermissionAndEntryExitEventsToCentralCycle passou!
+[       OK ] PassageTest.ReturnsPermissionAndEntryExitEventsToCentralCycle (0 ms)
