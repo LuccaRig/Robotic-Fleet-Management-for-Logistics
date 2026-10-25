@@ -1,7 +1,7 @@
 # Fdb version 4
-["pdflatex"] 1792961936.14075 "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex" "Documentation.pdf" "Documentation" 1792961938.86562 0
+["pdflatex"] 1792962227.14241 "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex" "Documentation.pdf" "Documentation" 1792962229.8306 0
   "/etc/texmf/web2c/texmf.cnf" 1792448923.57178 475 c0e671620eb5563b2130f56340a5fde8 ""
-  "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex" 1792961933.24674 33992 40d7989fa0107607be08ad5be757aa66 ""
+  "/home/ubuntu/ATR/TP/Robotic-Fleet-Management-for-Logistics/docs/relatorio/Documentation.tex" 1792962229.66962 33954 d275c34602cea5f4053bce1fdcd74a0d ""
   "/usr/share/texlive/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/jknappen/ec/ecrm1200.tfm" 1136768653 3584 f80ddd985bd00e29e9a6047ebd9d4781 ""
   "/usr/share/texlive/texmf-dist/fonts/tfm/public/amsfonts/symbols/msam10.tfm" 1246382020 916 f87d7c45f9c908e672703b83b72241a3 ""
@@ -226,10 +226,10 @@
   "/usr/share/texmf/web2c/texmf.cnf" 1707919699 40399 f2c302f7d2af602abb742093540a5834 ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1792448929.34677 128028 f533b797fba58d231669ea19e894e23e ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1792448961 6801883 91efe1e54ee0db306d67687f3fb5a3fd ""
-  "Documentation.aux" 1792961938.76502 8804 ca197eef2d880844d3d95ec30dc6c1f4 "pdflatex"
-  "Documentation.out" 1792961938.76868 6580 c3f454512b69e4b24eecb0b06e99d57b "pdflatex"
-  "Documentation.tex" 1792961933.24674 33992 40d7989fa0107607be08ad5be757aa66 ""
-  "Documentation.toc" 1792961938.76868 2757 c17f1c5ec245a2574ca208a82168f7ef "pdflatex"
+  "Documentation.aux" 1792962229.73562 8766 7d7a9feddfc5920cf3a6b75831b162c8 "pdflatex"
+  "Documentation.out" 1792962229.73562 6580 c3f454512b69e4b24eecb0b06e99d57b "pdflatex"
+  "Documentation.tex" 1792962229.66962 33954 d275c34602cea5f4053bce1fdcd74a0d ""
+  "Documentation.toc" 1792962229.73562 2757 c17f1c5ec245a2574ca208a82168f7ef "pdflatex"
   "figuras/arquitetura_etapa1/arquitetura_etapa1.pdf" 1792956542.46941 187614 4fbf4f1577d57e121c351772893984ca ""
   "figuras/galpao/galpao_etapa1.png" 1792956901.46242 78165 1e32ad6c067251f3b7815ffb1c3bf579 ""
   "figuras/testes/200_eventos.png" 1792960479.56542 696608 2b6e8edd7b3b84a56de990522b264347 ""
