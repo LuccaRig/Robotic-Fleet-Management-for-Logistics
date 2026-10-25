@@ -3,9 +3,9 @@
 |  5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5    5  |
 |  5    .    2    .    .    .    5    .    .    .    .    .    5    .    .    .    .    5    .    .    5  |
 |  5    .    .    .    .    .    5    .    .    .    .    .    5    .    .    .    .    5    .    .    5  |
-|  5    .    4    .    .    .    3    .    .    .    .    .    5    .    .    .    .    5    .    6    5  |
+|  5    .    4    .    .    .    3    .    .    .    .    .    5    .    .    .    .    5    .  !COL!  5  |
 |  5    .    .    .    .    .    5    .    .    .    .    .    3    .    .    .    .    5    .    .    5  |
-|  5    .   R1   R2    .    .    5    .    .    .    .    .    5    .    .    .    .    3    .    .    5  |
+|  5    .    .    .    .    .    5    .    .    .    .    .    5    .    .    .    .    3    .    .    5  |
 |  5    .    .    .    .    .    5    .    .    .    .    .    5    .    .    .    .    5    .    .    5  |
 |  5    .    .    .    .    .    5    .    .    .    .    .    5    .    .    .    .    5    .    .    5  |
 |  5    .    .    .    .    .    5    .    .    .    .    .    5    .    .    .    .    5    .    .    5  |
@@ -22,5 +22,7 @@ Legenda:
   '[0,1]' = Múltiplos robôs na mesma célula!
 
 Posições ativas da Frota:
-  - Robô 1 -> X: 2, Y: 5 | Estado: Disponível
-  - Robô 2 -> X: 3, Y: 5 | Estado: Disponível
+  - Robô 1 -> X: 19, Y: 3 | Estado: Disponível
+  - Robô 2 -> X: 19, Y: 3 | Estado: Disponível
+  - Robô 3 -> X: 19, Y: 3 | Estado: Disponível
+  - Robô 4 -> X: 19, Y: 3 | Estado: Disponível

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.19)  19 OCT 2026 23:16
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.19)  25 OCT 2026 17:58
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -913,33 +913,81 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has b
 <to be read again> 
                    \relax 
 l.87 \clearpage
-                [1] (/usr/share/texmf/tex/latex/lm/t1lmtt.fd)
-Underfull \hbox (badness 1946) in paragraph at lines 135--135
+                [1]
+<figuras/galpao/galpao_etapa1.png, id=165, 712.261pt x 603.053pt>
+File: figuras/galpao/galpao_etapa1.png Graphic file (type png)
+<use figuras/galpao/galpao_etapa1.png>
+Package pdftex.def Info: figuras/galpao/galpao_etapa1.png  used on input line 96.
+(pdftex.def)             Requested size: 452.39867pt x 383.03561pt.
+ [2
+
+ <./figuras/galpao/galpao_etapa1.png>]
+<figuras/arquitetura_etapa1/arquitetura_etapa1.pdf, id=175, 779.33357pt x 535.71443pt>
+File: figuras/arquitetura_etapa1/arquitetura_etapa1.pdf Graphic file (type pdf)
+<use figuras/arquitetura_etapa1/arquitetura_etapa1.pdf>
+Package pdftex.def Info: figuras/arquitetura_etapa1/arquitetura_etapa1.pdf  used on input line 112.
+(pdftex.def)             Requested size: 452.39867pt x 310.98433pt.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 117.
+ (/usr/share/texmf/tex/latex/lm/t1lmtt.fd
+File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+)
+Package microtype Info: Loading generic protrusion settings for font family
+(microtype)             `lmtt' (encoding: T1).
+(microtype)             For optimal results, create family-specific settings.
+(microtype)             See the microtype manual for details.
+ [3 <./figuras/arquitetura_etapa1/arquitetura_etapa1.pdf>]
+Underfull \hbox (badness 1946) in paragraph at lines 146--146
 []|\T1/lmr/m/n/8 (+20) Processo cen-tral; laço
  []
 
-[2
-
-] [3] [4] [5]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 233.
+[4] [5] [6]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 244.
  (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-Underfull \hbox (badness 10000) in paragraph at lines 279--279
+) [7{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}]
+Underfull \hbox (badness 10000) in paragraph at lines 290--290
 []|\T1/lmtt/m/n/8 std::timed_mutex \T1/lmr/m/n/8 (+20) e
  []
 
 
-Underfull \hbox (badness 3977) in paragraph at lines 279--279
+Underfull \hbox (badness 3977) in paragraph at lines 290--290
 []|\T1/lmr/m/n/8 (+20) Ciclo de vida dos
  []
 
-[6{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}] [7] [8] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+[8] [9]
+<figuras/testes/48_tests_passed.png, id=268, 962.84718pt x 542.025pt>
+File: figuras/testes/48_tests_passed.png Graphic file (type png)
+<use figuras/testes/48_tests_passed.png>
+Package pdftex.def Info: figuras/testes/48_tests_passed.png  used on input line 380.
+(pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
+ [10]
+<figuras/testes/200_eventos.png, id=275, 962.84718pt x 542.025pt>
+File: figuras/testes/200_eventos.png Graphic file (type png)
+<use figuras/testes/200_eventos.png>
+Package pdftex.def Info: figuras/testes/200_eventos.png  used on input line 387.
+(pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
+<figuras/testes/init_conf.png, id=276, 962.84718pt x 542.025pt>
+File: figuras/testes/init_conf.png Graphic file (type png)
+<use figuras/testes/init_conf.png>
+Package pdftex.def Info: figuras/testes/init_conf.png  used on input line 394.
+(pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
+ [11 <./figuras/testes/48_tests_passed.png> <./figuras/testes/200_eventos.png>]
+<figuras/testes/passage_test.png, id=286, 962.84718pt x 542.025pt>
+File: figuras/testes/passage_test.png Graphic file (type png)
+<use figuras/testes/passage_test.png>
+Package pdftex.def Info: figuras/testes/passage_test.png  used on input line 401.
+(pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
+<figuras/testes/SQLite.png, id=287, 3851.38875pt x 2168.1pt>
+File: figuras/testes/SQLite.png Graphic file (type png)
+<use figuras/testes/SQLite.png>
+Package pdftex.def Info: figuras/testes/SQLite.png  used on input line 408.
+(pdftex.def)             Requested size: 452.39867pt x 254.66908pt.
+ [12 <./figuras/testes/init_conf.png> <./figuras/testes/passage_test.png>] [13 <./figuras/testes/SQLIte.png (PNG copy)>] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
 )
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 373.
- [9] 
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 440.
+ [14] 
 enddocument/afterlastpage: lastpage setting LastPage.
 (./Documentation.aux)
  ***********
@@ -950,18 +998,18 @@ Package rerunfilecheck Info: File `Documentation.out' has not changed.
 (rerunfilecheck)             Checksum: C3F454512B69E4B24EECB0B06E99D57B;6580.
  ) 
 Here is how much of TeX's memory you used:
- 30359 strings out of 476162
- 551224 string characters out of 5794813
- 1974975 words of memory out of 5000000
- 51646 multiletter control sequences out of 15000+600000
- 639681 words of font info for 171 fonts, out of 8000000 for 9000
+ 30392 strings out of 476162
+ 552804 string characters out of 5794813
+ 1975975 words of memory out of 5000000
+ 51655 multiletter control sequences out of 15000+600000
+ 640190 words of font info for 177 fonts, out of 8000000 for 9000
  16 hyphenation exceptions out of 8191
  84i,12n,87p,1084b,1450s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb>
-Output written on Documentation.pdf (10 pages, 352460 bytes).
+</usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx7.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx9.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr7.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmr9.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt9.pfb>
+Output written on Documentation.pdf (15 pages, 3118792 bytes).
 PDF statistics:
- 303 PDF objects out of 1000 (max. 8388607)
- 265 compressed objects within 3 object streams
- 61 named destinations out of 1000 (max. 500000)
- 49389 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 402 PDF objects out of 1000 (max. 8388607)
+ 334 compressed objects within 4 object streams
+ 73 named destinations out of 1000 (max. 500000)
+ 49424 words of extra memory for PDF output out of 51595 (max. 10000000)
 

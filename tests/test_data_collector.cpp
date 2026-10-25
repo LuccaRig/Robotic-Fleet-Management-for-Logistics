@@ -2,6 +2,7 @@
 #include "data_collector.hpp"
 
 #include <sqlite3.h>
+#include <iostream>
 #include <filesystem>
 #include <stdexcept>
 #include <string>
@@ -126,7 +127,13 @@ TEST_F(DataCollectorTest, HandlesConcurrentProducersWithoutLosingEvents) {
     }
     for (auto& thread : threads) thread.join();
     collector.parar();
-    EXPECT_EQ(countEvents(path), 200);
+    const int total = countEvents(path);
+
+    std::cout << "\nEventos enviados: 200\n";
+    std::cout << "Eventos persistidos no SQLite: "
+            << total << "/200\n";
+
+    EXPECT_EQ(total, 200);
 }
 
 TEST_F(DataCollectorTest, RejectsEventsBeforeStartAndAfterStop) {

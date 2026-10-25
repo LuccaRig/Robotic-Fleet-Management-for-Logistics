@@ -7,43 +7,57 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \babel@aux{brazil}{}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introdução e objetivos da etapa}{2}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Arquitetura do sistema}{2}{section.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Arquitetura da primeira etapa}}{2}{figure.caption.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Representação gráfica do ambiente logístico}}{2}{figure.caption.2}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:arquitetura}{{1}{2}{Arquitetura da primeira etapa}{figure.caption.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Responsabilidades dos componentes implementados.}}{2}{table.caption.3}\protected@file@percent }
-\newlabel{tab:responsabilidades}{{1}{2}{Responsabilidades dos componentes implementados}{table.caption.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3}Implementação dos processos}{3}{section.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Processo principal e coordenação sequencial}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Criação dinâmica dos processos dos robôs}{3}{subsection.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}O que permanece isolado entre processos}{3}{subsection.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Implementação das threads}{3}{section.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Thread de comando de navegação}{3}{subsection.4.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Thread de status e tratamento de sensores}{3}{subsection.4.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Thread do coletor de dados}{4}{subsection.4.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5}Comunicação entre processos e troca de dados}{4}{section.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Canal IPC e enquadramento das mensagens}{4}{subsection.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Sequência de uma operação de transporte}{4}{subsection.5.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Fluxo de confirmação de um passo de navegação.}}{4}{figure.caption.4}\protected@file@percent }
-\newlabel{fig:sequencia}{{2}{4}{Fluxo de confirmação de um passo de navegação}{figure.caption.4}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Mecanismos de sincronização}{5}{section.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Mutexes: exclusão mútua dentro do robô}{5}{subsection.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Variáveis de condição e execução periódica}{5}{subsection.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Exclusão mútua e espera limitada no IPC}{5}{subsection.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Sincronização lógica de equipes e passagens}{5}{subsection.6.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Persistência assíncrona e tratamento de falhas}{6}{subsection.6.5}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Mecanismos de sincronização utilizados no sistema.}}{6}{table.caption.5}\protected@file@percent }
-\newlabel{tab:sync}{{2}{6}{Mecanismos de sincronização utilizados no sistema}{table.caption.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7}Persistência e rastreabilidade}{7}{section.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {8}Testes e evidências de troca de dados}{7}{section.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Comunicação IPC e processos}{7}{subsection.8.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Navegação, logística e sincronização}{7}{subsection.8.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Coleta e persistência de dados}{8}{subsection.8.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Testes de integração}{8}{subsection.8.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {9}Resultados da etapa e limitações}{8}{section.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {10}Compilação e reprodução}{9}{section.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {11}Conclusão}{9}{section.11}\protected@file@percent }
-\newlabel{LastPage}{{11}{9}{Conclusão}{page.9}{}}
-\gdef\lastpage@lastpage{9}
-\gdef\lastpage@lastpageHy{9}
-\gdef \@abspage@last{10}
+\newlabel{fig:galpao}{{1}{2}{Representação gráfica do ambiente logístico}{figure.caption.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}Arquitetura do sistema}{3}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Arquitetura detalhada da Etapa 1: processos, threads, canais IPC e sincronização. Os módulos de coordenação atuam sequencialmente no ciclo central; as threads dos agentes e do coletor executam concorrentemente.}}{3}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:arquitetura}{{2}{3}{Arquitetura detalhada da Etapa 1: processos, threads, canais IPC e sincronização. Os módulos de coordenação atuam sequencialmente no ciclo central; as threads dos agentes e do coletor executam concorrentemente}{figure.caption.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Responsabilidades dos componentes implementados.}}{4}{table.caption.4}\protected@file@percent }
+\newlabel{tab:responsabilidades}{{1}{4}{Responsabilidades dos componentes implementados}{table.caption.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}Implementação dos processos}{4}{section.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Processo principal e coordenação sequencial}{4}{subsection.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Criação dinâmica dos processos dos robôs}{5}{subsection.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}O que permanece isolado entre processos}{5}{subsection.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Implementação das threads}{5}{section.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Thread de comando de navegação}{5}{subsection.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Thread de status e tratamento de sensores}{5}{subsection.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Thread do coletor de dados}{5}{subsection.4.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Comunicação entre processos e troca de dados}{6}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}Canal IPC e enquadramento das mensagens}{6}{subsection.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}Sequência de uma operação de transporte}{6}{subsection.5.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Fluxo de confirmação de um passo de navegação.}}{6}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:sequencia}{{3}{6}{Fluxo de confirmação de um passo de navegação}{figure.caption.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Mecanismos de sincronização}{6}{section.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}Mutexes: exclusão mútua dentro do robô}{6}{subsection.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Variáveis de condição e execução periódica}{7}{subsection.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Exclusão mútua e espera limitada no IPC}{7}{subsection.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}Sincronização lógica de equipes e passagens}{7}{subsection.6.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.5}Persistência assíncrona e tratamento de falhas}{8}{subsection.6.5}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Mecanismos de sincronização utilizados no sistema.}}{8}{table.caption.6}\protected@file@percent }
+\newlabel{tab:sync}{{2}{8}{Mecanismos de sincronização utilizados no sistema}{table.caption.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}Persistência e rastreabilidade}{8}{section.7}\protected@file@percent }
+\newlabel{sec:buffer-detalhe}{{7}{8}{Persistência e rastreabilidade}{section.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}Testes e evidências de troca de dados}{9}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}Comunicação IPC e processos}{9}{subsection.8.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}Navegação, logística e sincronização}{9}{subsection.8.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}Coleta e persistência de dados}{10}{subsection.8.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}Testes de integração}{10}{subsection.8.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Resultados de integração registrados na pasta de evidências (25/10/2026).}}{10}{table.caption.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Script para verificação da execução dos 48 casos de teste, aprovação em todos.}}{11}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:48_tests_passed}{{4}{11}{Script para verificação da execução dos 48 casos de teste, aprovação em todos}{figure.caption.8}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite.}}{11}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:200_eventos}{{5}{11}{Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite}{figure.caption.9}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento.}}{12}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:init_conf}{{6}{12}{Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento}{figure.caption.10}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados.}}{12}{figure.caption.11}\protected@file@percent }
+\newlabel{fig:passage_test}{{7}{12}{Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados}{figure.caption.11}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Inspeção do banco SQLite gerado pelo cenário cooperativo, apresentando os registros de três transportes de cargas, nove associações de integrantes às missões e 593 eventos operacionais persistidos, demonstrando a rastreabilidade das operações.}}{13}{figure.caption.12}\protected@file@percent }
+\newlabel{fig:SQLite}{{8}{13}{Inspeção do banco SQLite gerado pelo cenário cooperativo, apresentando os registros de três transportes de cargas, nove associações de integrantes às missões e 593 eventos operacionais persistidos, demonstrando a rastreabilidade das operações}{figure.caption.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}Resultados da etapa e limitações}{13}{section.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}Compilação e reprodução}{14}{section.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {11}Conclusão}{14}{section.11}\protected@file@percent }
+\newlabel{LastPage}{{11}{14}{Conclusão}{page.14}{}}
+\gdef\lastpage@lastpage{14}
+\gdef\lastpage@lastpageHy{14}
+\gdef \@abspage@last{15}
