@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include <cstdlib>
 #include <csignal>
 #include <iostream>
 #include <sstream>
@@ -15,11 +16,14 @@ AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Ce
       hardware_(galpao_),
       logistics_(galpao_, std::move(cenario.cargos)) {
     galpao_.validar();
+    if (const char* env = std::getenv("MQTT_HOST")) mqttHost_ = env;
+    if (const char* env = std::getenv("MQTT_PORT")) mqttPort_ = std::stoi(env);
 }
 AplicacaoCentral::~AplicacaoCentral() { try { parar(); } catch (const std::exception& e) { imprimir("Falha no encerramento: " + std::string(e.what())); } }
 void AplicacaoCentral::iniciar() {
     if (started_) return;
     collector_.iniciar(); started_ = true;
+    mqttPublisher_.connect(mqttHost_, mqttPort_);
     for (const auto& robo : initial_) if (!adicionarRobo(robo.id, robo.posicao)) throw std::runtime_error("Não foi possível disponibilizar o robô " + std::to_string(robo.id));
     imprimir("Sistema iniciado. Execução " + std::to_string(collector_.idExecucao()));
 }
@@ -134,6 +138,7 @@ void AplicacaoCentral::avancarCiclo() {
 
 
     exportarMapaTxt("mapa_execucao.txt");
+    publicarTelemetria();
 }
 bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) {
     if (hardware_.contemRobo(id) || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;
@@ -288,4 +293,73 @@ void AplicacaoCentral::exportarMapaTxt(const std::string& caminho_arquivo) const
     }
 
     arquivo.close();
+}
+
+namespace {
+std::string jsonEscape(const std::string& s) {
+    std::ostringstream out;
+    for (char c : s) {
+        switch (c) {
+        case '"': out << "\\\""; break;
+        case '\\': out << "\\\\"; break;
+        case '\n': out << "\\n"; break;
+        case '\r': out << "\\r"; break;
+        case '\t': out << "\\t"; break;
+        default: out << c; break;
+        }
+    }
+    return out.str();
+}
+
+std::string roboParaJson(const EstadoAtualRobo& r) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"id\":" << r.id << ",";
+    out << "\"geracao\":" << r.geracao << ",";
+    out << "\"sequencia\":" << r.sequencia << ",";
+    out << "\"posicao\":{" << r.posicao.x << "," << r.posicao.y << "},";
+    out << "\"destino\":{" << r.destino.x << "," << r.destino.y << "},";
+    out << "\"estado\":\"" << jsonEscape(nomeEstadoRobo(r.estado)) << "\",";
+    out << "\"fase\":" << static_cast<int>(r.fase) << ",";
+    out << "\"bateria\":" << r.bateria << ",";
+    out << "\"falha\":" << (r.falha ? "true" : "false") << ",";
+    out << "\"acoplado\":" << (r.acoplado ? "true" : "false") << ",";
+    out << "\"conectado\":" << (r.conectado ? "true" : "false") << ",";
+    out << "\"disponivel\":" << (r.disponivel ? "true" : "false") << ",";
+    out << "\"id_missao\":" << r.id_missao << ",";
+    out << "\"id_carga\":" << r.id_carga << ",";
+    out << "\"id_equipe\":" << r.id_equipe << ",";
+    out << "\"id_baia\":" << r.id_baia << ",";
+    out << "\"passo\":" << r.passo << ",";
+    out << "\"sequencia_sensor\":" << r.sequencia_sensor << ",";
+    out << "\"distancia\":" << r.distancia << ",";
+    out << "\"atualizado_em_ms\":" << r.atualizado_em_ms;
+    out << "}";
+    return out.str();
+}
+} // namespace
+
+void AplicacaoCentral::publicarTelemetria() {
+    try {
+        const auto frota = manager_.frota().capturarEstado();
+        std::ostringstream fleet;
+        fleet << "{\"robos\":[";
+        bool primeiro = true;
+        for (const auto& robo : frota) {
+            if (!robo.conectado) continue;
+            if (!primeiro) fleet << ",";
+            primeiro = false;
+            fleet << roboParaJson(robo);
+        }
+        fleet << "]}";
+        mqttPublisher_.publish(Topics::fleetSnapshot(), fleet.str(), true);
+        for (const auto& robo : frota) {
+            if (!robo.conectado) continue;
+            mqttPublisher_.publish(Topics::robotTelemetry(robo.id), roboParaJson(robo), true);
+        }
+    } catch (const std::exception& e) {
+        imprimir("MQTT telemetria: " + std::string(e.what()));
+    } catch (...) {
+        imprimir("MQTT telemetria: falha desconhecida");
+    }
 }

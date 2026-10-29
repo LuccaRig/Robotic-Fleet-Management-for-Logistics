@@ -78,8 +78,12 @@ int main(int argc, char** argv) {
                 } else {
                     caminho_banco = valor;
                 }
+            } else if (argumento == "--mqtt-host" && indice + 1 < argc) {
+                setenv("MQTT_HOST", argv[++indice], 1);
+            } else if (argumento == "--mqtt-port" && indice + 1 < argc) {
+                setenv("MQTT_PORT", argv[++indice], 1);
             } else if (argumento == "--ajuda") {
-                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--interativo]\n"
+                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--interativo] [--mqtt-host HOST] [--mqtt-port PORTA]\n"
                           << "Cenários: " << nomesCenarios() << "\n";
                 return 0;
             } else {

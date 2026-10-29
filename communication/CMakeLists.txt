@@ -1,6 +1,17 @@
 cmake_minimum_required(VERSION 3.15)
 
-add_library(communication_lib src/mqtt_client.cpp src/topics.cpp src/protocol.cpp src/ipc_channel.cpp)
+add_library(communication_lib src/mqtt_client.cpp src/protocol.cpp src/ipc_channel.cpp)
 target_include_directories(communication_lib PUBLIC include ${PROJECT_SOURCE_DIR}/core/include)
 find_package(Threads REQUIRED)
 target_link_libraries(communication_lib PUBLIC Threads::Threads)
+
+if(ENABLE_MQTT)
+    find_library(MOSQUITTO_LIB mosquitto)
+    if(MOSQUITTO_LIB)
+        target_link_libraries(communication_lib PUBLIC ${MOSQUITTO_LIB})
+        target_compile_definitions(communication_lib PUBLIC ENABLE_MQTT=1)
+        message(STATUS "MQTT enabled: linking libmosquitto")
+    else()
+        message(FATAL_ERROR "ENABLE_MQTT=ON but libmosquitto not found. Install libmosquitto-dev or set ENABLE_MQTT=OFF.")
+    endif()
+endif()
