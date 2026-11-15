@@ -2,16 +2,19 @@
 #define MQTT_CLIENT_HPP
 
 #include <memory>
+#include <functional>
 #include <string>
 
-class MqttPublisher {
+class ClienteMqtt {
 public:
-    MqttPublisher();
-    ~MqttPublisher();
-    MqttPublisher(const MqttPublisher&) = delete;
-    MqttPublisher& operator=(const MqttPublisher&) = delete;
+    using Receptor = std::function<void(std::string, bool)>;
 
-    void connect(const std::string& host, int port);
+    ClienteMqtt();
+    ~ClienteMqtt();
+    ClienteMqtt(const ClienteMqtt&) = delete;
+    ClienteMqtt& operator=(const ClienteMqtt&) = delete;
+
+    void connect(const std::string& host, int port, const std::string& topico = {}, Receptor receptor = {});
 
     void publish(const std::string& topic, const std::string& payload, bool retain = true);
 

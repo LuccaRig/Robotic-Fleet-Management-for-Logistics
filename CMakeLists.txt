@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_TESTING "Preparar os testes automatizados" OFF)
-option(ENABLE_MQTT "Publicar telemetria via MQTT para renderizador/interface" OFF)
+option(ENABLE_MQTT "Publicar telemetria e receber comandos de operação via MQTT" OFF)
 
 add_subdirectory(communication)
 add_subdirectory(core)
@@ -25,9 +25,12 @@ if(BUILD_TESTING)
     endif()
     add_executable(unit_tests
         tests/test_warehouse.cpp tests/test_robot.cpp tests/test_ipc.cpp
-        tests/test_logistics.cpp tests/test_passages_hardware.cpp
+        tests/test_logistics.cpp tests/test_passages_hardware.cpp tests/test_manual.cpp
         tests/test_data_collector.cpp tests/test_buffer_data_collector.cpp tests/test_storage_migration.cpp)
     target_link_libraries(unit_tests PRIVATE core_lib GTest::gtest_main)
+    if(ENABLE_MQTT)
+        target_sources(unit_tests PRIVATE tests/test_mqtt_commands.cpp)
+    endif()
     target_compile_definitions(unit_tests PRIVATE TEST_DB_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/test_databases")
     add_test(NAME unidade COMMAND unit_tests)
     set_tests_properties(unidade PROPERTIES TIMEOUT 30)

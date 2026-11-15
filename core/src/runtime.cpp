@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include <algorithm>
 #include <csignal>
 #include <iostream>
 #include <sstream>
@@ -36,10 +37,10 @@ void AplicacaoCentral::parar() {
     try { collector_.parar(); } catch (...) { if (!error) error = std::current_exception(); }
     if (error) std::rethrow_exception(error);
 }
-bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem) {
+bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem, const std::string& id_operador) {
     const auto robo = manager_.frota().obter(id); if (!robo || !robo->conectado) return false;
     mensagem.id_robo = id; mensagem.geracao = robo->geracao; mensagem.id_comando = ++commands_; mensagem.revisao = mensagem.id_comando;
-    pending_[mensagem.id_comando] = mensagem;
+    pending_[mensagem.id_comando] = {mensagem, id_operador};
     try {
         if (manager_.enviar(id, mensagem)) return true;
     } catch (...) { pending_.erase(mensagem.id_comando); throw; }
@@ -48,6 +49,9 @@ bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem) {
 void AplicacaoCentral::aoReceberLeitura(Mensagem leitura_sensores) {
     manager_.atualizarLeituraSensores(leitura_sensores);
     tratarEfeitosPassagem(passages_.confirmar(leitura_sensores));
+    if (leitura_sensores.id_missao == 0 && leitura_sensores.fase == FaseMissao::INDO_PARA_DESTINO_MANUAL && (leitura_sensores.falha || leitura_sensores.bateria <= 15)) {
+        tratarEfeitosPassagem(passages_.cancelar(leitura_sensores.id_robo, 0));
+    }
     eventos_logistica_.push_back(leitura_sensores);
     manager_.enviar(leitura_sensores.id_robo, std::move(leitura_sensores));
 }
@@ -75,24 +79,37 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
         imprimir("Robô " + std::to_string(m.id_robo) + " pronto, geração " + std::to_string(m.geracao));
     }
     if (m.tipo == TipoMensagem::ConfirmacaoComando) {
-        std::optional<Mensagem> original;
-        auto it = pending_.find(m.id_comando);
-        if (it != pending_.end()) {
-            if (it->second.id_robo == m.id_robo && it->second.geracao == m.geracao) original = it->second;
+        const auto it = pending_.find(m.id_comando);
+        if (it != pending_.end() && it->second.mensagem.id_robo == m.id_robo && it->second.mensagem.geracao == m.geracao) {
+            auto pendente = std::move(it->second);
             pending_.erase(it);
-        }
-        if (original && m.aceito) {
-            tratarLeiturasHardware(hardware_.confirmarComandoAceito(*original));
-            if (original->tipo == TipoMensagem::CancelarMissao || original->tipo == TipoMensagem::PausarMissao) {
-                tratarEfeitosPassagem(passages_.cancelar(m.id_robo, original->id_missao));
+            auto& original = pendente.mensagem;
+            if (m.aceito) {
+                tratarLeiturasHardware(hardware_.confirmarComandoAceito(original));
+                if (original.tipo == TipoMensagem::CancelarMissao || original.tipo == TipoMensagem::PausarMissao) {
+                    tratarEfeitosPassagem(passages_.cancelar(m.id_robo, original.id_missao));
+                }
+                if (!pendente.id_operador.empty()) {
+                    original.ocorrido_em_ms = m.ocorrido_em_ms;
+                    recorder_.aoReceberComandoOperador(original);
+                }
+            }
+            if (!pendente.id_operador.empty()) {
+                mqtt_.responder(pendente.id_operador, m.aceito, m.aceito ? "Comando confirmado pelo robô" : "Comando recusado pelo robô; consulte o estado atual");
             }
         }
     } else if (m.tipo == TipoMensagem::SolicitarAcessoTrecho) {
         const auto lerLeitura = hardware_.lerLeitura(m.id_robo);
-        if (lerLeitura && lerLeitura->geracao == m.geracao && lerLeitura->id_missao == m.id_missao && lerLeitura->revisao == m.revisao && !lerLeitura->falha && lerLeitura->posicao == m.posicao) {
+        if (lerLeitura && lerLeitura->geracao == m.geracao && lerLeitura->id_missao == m.id_missao && lerLeitura->revisao == m.revisao &&
+            lerLeitura->fase == m.fase && !lerLeitura->falha && lerLeitura->bateria > 0 &&
+            (lerLeitura->bateria > 15 || m.fase == FaseMissao::INDO_PARA_RECARGA) && lerLeitura->posicao == m.posicao) {
             tratarEfeitosPassagem(passages_.solicitarAcesso(m));
         }
     } else if (m.tipo == TipoMensagem::DestinoNavegacao) {
+        const auto leitura = hardware_.lerLeitura(m.id_robo);
+        if (!leitura || leitura->geracao != m.geracao || leitura->id_missao != m.id_missao || leitura->revisao != m.revisao ||
+            leitura->fase != m.fase || leitura->falha || leitura->bateria == 0 ||
+            (leitura->bateria <= 15 && m.fase != FaseMissao::INDO_PARA_RECARGA)) return;
         if (!passages_.permiteMovimento(m)) throw std::runtime_error("Movimento sem permissão de passagem");
         tratarLeiturasHardware(hardware_.setpoint(m));
     }
@@ -101,7 +118,12 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
         hardware_.desconectar(m.id_robo);
         const auto lerLeitura = hardware_.lerLeitura(m.id_robo);
         tratarEfeitosPassagem(passages_.cancelar(m.id_robo, lerLeitura ? lerLeitura->id_missao : 0));
-        for (auto it = pending_.begin(); it != pending_.end();) { if (it->second.id_robo == m.id_robo) it = pending_.erase(it); else ++it; }
+        for (auto it = pending_.begin(); it != pending_.end();) {
+            if (it->second.mensagem.id_robo == m.id_robo && it->second.mensagem.geracao == m.geracao) {
+                if (!it->second.id_operador.empty()) mqtt_.responder(it->second.id_operador, false, "Robô desconectado antes da confirmação: " + m.texto);
+                it = pending_.erase(it);
+            } else ++it;
+        }
     }
     recorder_.aoReceberEventoRobo(m);
     if (!stopped_) eventos_logistica_.push_back(m);
@@ -109,9 +131,14 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
 void AplicacaoCentral::avancarCiclo() {
     for (const auto& mensagem : manager_.processarCiclo()) aoReceberMensagem(mensagem);
     collector_.verificarFalha(); tratarLeiturasHardware(hardware_.avancarCiclo());
+    mqtt_.processarComandos([this](const ComandoOperador& comando) { executarComandoOperador(comando); });
     const auto agora = std::chrono::steady_clock::now();
     if (!eventos_logistica_.empty() || agora - ultimo_ciclo_logistica_ >= std::chrono::milliseconds(200)) {
-        auto resultado = logistics_.processarCiclo(eventos_logistica_, manager_.frota().capturarEstado());
+        std::set<int> bloqueados;
+        for (const auto& pedido : pending_) {
+            if (!pedido.second.id_operador.empty()) bloqueados.insert(pedido.second.mensagem.id_robo);
+        }
+        auto resultado = logistics_.processarCiclo(eventos_logistica_, manager_.frota().capturarEstado(), bloqueados);
         eventos_logistica_.clear();
         ultimo_ciclo_logistica_ = agora;
         for (auto& evento : resultado.eventos) recorder_.aoReceberEventoLogistica(evento);
@@ -167,6 +194,62 @@ void AplicacaoCentral::retomar(IdEntidade id_missao) {
     mensagem.id_missao = id_missao;
     eventos_logistica_.push_back(std::move(mensagem));
 }
+
+void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
+    if (!started_ || stopped_) throw std::runtime_error("Aplicação não está em execução");
+    if (comando.id.empty()) throw std::invalid_argument("Informe o ID da requisição de operação");
+    const auto robo = manager_.frota().obter(comando.id_robo);
+    if (!robo || !robo->conectado) throw std::runtime_error("Robô inexistente ou desconectado");
+    if (robo->geracao != comando.geracao) throw std::runtime_error("Geração do robô desatualizada; consulte a telemetria");
+    for (const auto& pendente : pending_) {
+        if (pendente.second.mensagem.id_robo == robo->id) throw std::runtime_error("Aguarde a confirmação do comando anterior deste robô");
+    }
+    if (comando.acao == AcaoOperador::DefinirModo && comando.modo == robo->modo) {
+        mqtt_.responder(comando.id, true, "Robô já está no modo solicitado");
+        return;
+    }
+    if (!roboLivre(*robo)) {
+        throw std::runtime_error("Operação exige robô parado, sem falha, desacoplado e fora de missão");
+    }
+    for (const auto& missao : logistics_.missoes()) {
+        if (missao.fase != FaseMissao::NENHUMA && std::find(missao.integrantes.begin(), missao.integrantes.end(), robo->id) != missao.integrantes.end()) {
+            throw std::runtime_error("Robô reservado por uma missão de carga");
+        }
+    }
+
+    Mensagem mensagem = mensagemDoEstadoRobo(*robo);
+    mensagem.passo = 0;
+    mensagem.integrantes = {robo->id};
+    if (comando.acao == AcaoOperador::DefinirModo) {
+        if (comando.modo != ModoOperacao::MANUAL && comando.modo != ModoOperacao::AUTOMATICO) throw std::invalid_argument("Modo de operação inválido");
+        mensagem.tipo = TipoMensagem::DefinirModo;
+        mensagem.modo = comando.modo;
+        mensagem.destino = robo->posicao;
+    } else if (comando.acao == AcaoOperador::DefinirDestino) {
+        if (robo->modo != ModoOperacao::MANUAL) throw std::runtime_error("Destino manual exige modo manual confirmado");
+        PlanejadorRotas planejador(galpao_);
+        const auto rota = planejador.calcularRota(robo->posicao, comando.destino);
+        if (!rota) throw std::runtime_error("Destino fora do mapa, bloqueado ou sem rota acessível");
+        const bool recarga = galpao_.obterCelula(comando.destino.x, comando.destino.y) == EstadoCelula::ESTACAO_RECARGA;
+        if (rota->size() > static_cast<std::size_t>(robo->bateria)) {
+            throw std::runtime_error("Bateria insuficiente para alcançar o destino");
+        }
+        if (!recarga) {
+            const auto carregador = planejador.carregadorMaisProximo(comando.destino);
+            if (!carregador || robo->bateria <= 15 || rota->size() + carregador->second.size() + 15 >= static_cast<std::size_t>(robo->bateria)) {
+                throw std::runtime_error("Destino exige bateria suficiente para o trajeto e o retorno a um carregador");
+            }
+        }
+        mensagem.tipo = TipoMensagem::DefinirDestinoManual;
+        mensagem.fase = recarga ? FaseMissao::INDO_PARA_RECARGA : FaseMissao::INDO_PARA_DESTINO_MANUAL;
+        mensagem.destino = comando.destino;
+        mensagem.rota = *rota;
+    } else {
+        throw std::invalid_argument("Ação de operação desconhecida");
+    }
+    if (!sendCommand(robo->id, std::move(mensagem), comando.id)) throw std::runtime_error("Não foi possível enviar o comando ao robô");
+}
+
 bool AplicacaoCentral::concluido() const {
     if (!logistics_.todasCargasEntregues()) return false;
     for (const auto& robo : manager_.frota().capturarEstado()) if (robo.conectado && (robo.id_missao || robo.acoplado || robo.estado != EstadoRobo::DISPONIVEL)) return false;
@@ -182,7 +265,7 @@ void AplicacaoCentral::executarComando(const std::string& linha) {
     if (action == "sair") { exhausted(); exit_requested_ = true; }
     else if (action == "status") {
         exhausted();
-        for (const auto& s : frota().capturarEstado()) imprimir("Robô " + std::to_string(s.id) + " | " + nomeEstadoRobo(s.estado) + " | posição " + std::to_string(s.posicao.x) + "," + std::to_string(s.posicao.y) + " | bateria " + std::to_string(s.bateria) + "% | distância " + std::to_string(s.distancia) + " | " + (s.conectado ? "Conectado" : "Desconectado"));
+        for (const auto& s : frota().capturarEstado()) imprimir("Robô " + std::to_string(s.id) + " | " + nomeEstadoRobo(s.estado) + " | modo " + (s.modo == ModoOperacao::MANUAL ? "Manual" : "Automático") + " | posição " + std::to_string(s.posicao.x) + "," + std::to_string(s.posicao.y) + " | bateria " + std::to_string(s.bateria) + "% | distância " + std::to_string(s.distancia) + " | " + (s.conectado ? "Conectado" : "Desconectado"));
         for (const auto& p : processos()) imprimir("Processo do robô " + std::to_string(p.id) + " | PID " + std::to_string(p.pid) + " | geração " + std::to_string(p.geracao));
     } else if (action == "cargas") {
         exhausted(); for (const auto& c : cargos()) imprimir("Carga " + std::to_string(c.id) + " | " + nomeEstadoCarga(c.estado) + " | missão " + std::to_string(c.id_missao) + " | " + c.motivo);

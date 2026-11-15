@@ -45,7 +45,7 @@ std::vector<std::uint8_t> codificarMensagem(const Mensagem& m) {
     w.number(static_cast<std::uint32_t>(m.id_robo)); w.number(m.geracao); w.number(m.sequencia);
     w.number(m.id_comando); w.number(m.revisao); w.number(m.id_missao); w.number(m.id_carga); w.number(m.id_equipe);
     w.number(static_cast<std::uint32_t>(m.id_baia)); w.number(static_cast<unsigned>(m.fase));
-    w.number(static_cast<unsigned>(m.estado)); w.point(m.posicao); w.point(m.destino);
+    w.number(static_cast<unsigned>(m.estado)); w.number(static_cast<unsigned>(m.modo)); w.point(m.posicao); w.point(m.destino);
     w.number(static_cast<std::uint32_t>(m.bateria)); w.number(m.falha); w.number(m.acoplado); w.number(m.aceito);
     w.number(m.distancia); w.number(m.passo); w.number(m.sequencia_sensor); w.number(m.ocorrido_em_ms);
     w.number(static_cast<std::uint32_t>(m.id_trecho)); w.number(static_cast<std::uint32_t>(m.sentido)); w.number(m.quantidade_integrantes);
@@ -61,14 +61,17 @@ Mensagem decodificarMensagem(const std::vector<std::uint8_t>& bytes) {
     Reader r{bytes};
     if (r.number() != VERSAO_PROTOCOLO) throw std::runtime_error("Versão IPC incompatível");
     const auto tipo = r.number();
-    if (tipo < 1 || tipo > static_cast<unsigned>(TipoMensagem::RoboDesconectado)) throw std::runtime_error("Tipo IPC inválido");
+    if (tipo < 1 || tipo > static_cast<unsigned>(TipoMensagem::DefinirDestinoManual)) throw std::runtime_error("Tipo IPC inválido");
     Mensagem m; m.tipo = static_cast<TipoMensagem>(tipo); m.id_robo = r.integer();
     m.geracao = r.number(); m.sequencia = r.number(); m.id_comando = r.number(); m.revisao = r.number();
     m.id_missao = static_cast<IdEntidade>(r.number()); m.id_carga = static_cast<IdEntidade>(r.number()); m.id_equipe = static_cast<IdEntidade>(r.number());
     m.id_baia = r.integer();
     const auto fase = r.number(), estado = r.number();
-    if (fase > static_cast<unsigned>(FaseMissao::SUSPENSO) || estado > static_cast<unsigned>(EstadoRobo::ENCERRADO)) throw std::runtime_error("Estado IPC inválido");
+    if (fase > static_cast<unsigned>(FaseMissao::INDO_PARA_DESTINO_MANUAL) || estado > static_cast<unsigned>(EstadoRobo::INDO_PARA_DESTINO_MANUAL)) throw std::runtime_error("Estado IPC inválido");
     m.fase = static_cast<FaseMissao>(fase); m.estado = static_cast<EstadoRobo>(estado);
+    const auto modo = r.number();
+    if (modo > static_cast<unsigned>(ModoOperacao::MANUAL)) throw std::runtime_error("Modo de operação IPC inválido");
+    m.modo = static_cast<ModoOperacao>(modo);
     m.posicao = r.point(); m.destino = r.point(); m.bateria = r.integer();
     m.falha = r.boolean(); m.acoplado = r.boolean(); m.aceito = r.boolean();
     m.distancia = r.number(); m.passo = r.number(); m.sequencia_sensor = r.number(); m.ocorrido_em_ms = static_cast<std::int64_t>(r.number());
@@ -84,17 +87,18 @@ Mensagem decodificarMensagem(const std::vector<std::uint8_t>& bytes) {
 EstadoAtualRobo estadoRoboDaMensagem(const Mensagem& m) {
     EstadoAtualRobo s;
     s.id = m.id_robo; s.geracao = m.geracao; s.sequencia = m.sequencia;
-    s.posicao = m.posicao; s.destino = m.destino; s.estado = m.estado; s.fase = m.fase;
+    s.posicao = m.posicao; s.destino = m.destino; s.estado = m.estado; s.fase = m.fase; s.modo = m.modo;
     s.bateria = m.bateria; s.falha = m.falha; s.acoplado = m.acoplado;
-    s.conectado = true; s.disponivel = m.estado == EstadoRobo::DISPONIVEL && !m.falha && !m.acoplado && m.bateria > 15 && m.id_missao == 0;
+    s.conectado = true;
     s.id_missao = m.id_missao; s.id_carga = m.id_carga; s.id_equipe = m.id_equipe; s.id_baia = m.id_baia;
     s.revisao = m.revisao; s.passo = m.passo; s.sequencia_sensor = m.sequencia_sensor; s.distancia = m.distancia; s.atualizado_em_ms = m.ocorrido_em_ms;
+    s.disponivel = disponivelParaCarga(s);
     return s;
 }
 
 Mensagem mensagemDoEstadoRobo(const EstadoAtualRobo& s) {
     Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = s.id; m.geracao = s.geracao;
-    m.sequencia = s.sequencia; m.posicao = s.posicao; m.destino = s.destino; m.estado = s.estado; m.fase = s.fase;
+    m.sequencia = s.sequencia; m.posicao = s.posicao; m.destino = s.destino; m.estado = s.estado; m.fase = s.fase; m.modo = s.modo;
     m.bateria = s.bateria; m.falha = s.falha; m.acoplado = s.acoplado; m.distancia = s.distancia;
     m.id_missao = s.id_missao; m.id_carga = s.id_carga; m.id_equipe = s.id_equipe; m.id_baia = s.id_baia;
     m.revisao = s.revisao; m.passo = s.passo; m.sequencia_sensor = s.sequencia_sensor; m.ocorrido_em_ms = s.atualizado_em_ms;

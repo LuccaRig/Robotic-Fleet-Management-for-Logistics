@@ -5,7 +5,7 @@
 AgenteRobo::AgenteRobo(int id, int x, int y, std::uint64_t geracao, Emissor emissor)
     : emissor_(std::move(emissor)), ultima_posicao_distancia_{x, y} {
     estado_.id = id; estado_.geracao = geracao; estado_.posicao = {x, y}; estado_.destino = {x, y};
-    estado_.conectado = true; estado_.disponivel = true;
+    estado_.conectado = true;
 }
 AgenteRobo::~AgenteRobo() { parar(); }
 void AgenteRobo::iniciar() {
@@ -25,10 +25,15 @@ void AgenteRobo::parar() {
     if (thread_navegacao_.joinable()) thread_navegacao_.join();
     if (thread_status_.joinable()) thread_status_.join();
 }
-EstadoAtualRobo AgenteRobo::capturarEstado() const { std::lock_guard<std::mutex> lock(mutex_); auto copia_estado = estado_; copia_estado.atualizado_em_ms = instanteUnixMs(); return copia_estado; }
+EstadoAtualRobo AgenteRobo::capturarEstado() const { std::lock_guard<std::mutex> lock(mutex_); auto copia_estado = estado_; copia_estado.disponivel = disponivelParaCarga(copia_estado); copia_estado.atualizado_em_ms = instanteUnixMs(); return copia_estado; }
 void AgenteRobo::verificarFalha() const { std::lock_guard<std::mutex> lock(mutex_); if (erro_) std::rethrow_exception(erro_); }
 void AgenteRobo::emitirMensagem(Mensagem mensagem) { if (emissor_) emissor_(std::move(mensagem)); }
 void AgenteRobo::publicarEstado() { emitirMensagem(mensagemDoEstadoRobo(capturarEstado())); }
+void AgenteRobo::iniciarRota(const Mensagem& mensagem, EstadoRobo estado) {
+    estado_.fase = mensagem.fase; estado_.destino = mensagem.destino; estado_.estado = estado;
+    rota_ = mensagem.rota; integrantes_ = mensagem.integrantes;
+    indice_rota_ = 0; estado_.passo = 0; aguardando_posicao_ = false;
+}
 void AgenteRobo::executarRotina(bool navegacao) noexcept {
     try {
         const auto periodo = std::chrono::milliseconds(navegacao ? 100 : 500);
@@ -74,6 +79,12 @@ void AgenteRobo::processarMensagem(const Mensagem& m) {
                 else if (estado_.fase == FaseMissao::INDO_PARA_RECARGA || estado_.fase == FaseMissao::RECARREGANDO) estado_.estado = estado_antes_falha_;
                 else estado_.estado = EstadoRobo::DISPONIVEL;
             }
+            if (estado_.fase == FaseMissao::INDO_PARA_DESTINO_MANUAL && (m.falha || m.bateria <= 15)) {
+                estado_.fase = FaseMissao::NENHUMA;
+                estado_.estado = m.falha ? EstadoRobo::COM_FALHA : EstadoRobo::DISPONIVEL;
+                estado_.destino = estado_.posicao;
+                rota_.clear(); aguardando_posicao_ = false; aguardando_passagem_ = false; passagem_liberada_ = false;
+            }
             if (estado_.estado == EstadoRobo::ACOPLANDO && m.acoplado) estado_.estado = EstadoRobo::AGUARDANDO_EQUIPE;
             if (estado_.estado == EstadoRobo::DESACOPLANDO && !m.acoplado) estado_.estado = EstadoRobo::AGUARDANDO_DESCARGA;
             estado_alterado_ = true; leitura_alterada = true;
@@ -84,14 +95,22 @@ void AgenteRobo::processarMensagem(const Mensagem& m) {
             else {
                 ultimo_id_comando_ = m.id_comando; ack.aceito = true;
                 const bool same_mission = m.id_missao == estado_.id_missao;
-                const bool pickup = m.fase == FaseMissao::INDO_PARA_COLETA && !estado_.acoplado && estado_.estado == EstadoRobo::DISPONIVEL;
+                const bool pickup = m.fase == FaseMissao::INDO_PARA_COLETA && disponivelParaCarga(estado_);
                 const bool delivery = m.fase == FaseMissao::INDO_PARA_ENTREGA && estado_.acoplado && same_mission && estado_.estado == EstadoRobo::AGUARDANDO_EQUIPE;
                 const bool charging = m.fase == FaseMissao::INDO_PARA_RECARGA && !estado_.acoplado && estado_.id_missao == 0;
-                if (m.tipo == TipoMensagem::AtribuirMissao && !estado_.falha && (pickup || delivery || charging)) {
+                const bool livre = roboLivre(estado_);
+                if (m.tipo == TipoMensagem::DefinirModo && livre && m.id_missao == 0 && (m.modo == ModoOperacao::AUTOMATICO || m.modo == ModoOperacao::MANUAL)) {
+                    estado_.modo = m.modo;
+                    estado_.fase = FaseMissao::NENHUMA;
+                    estado_.destino = estado_.posicao;
+                    rota_.clear(); indice_rota_ = 0; estado_.passo = 0; aguardando_posicao_ = false;
+                } else if (m.tipo == TipoMensagem::DefinirDestinoManual && livre && estado_.modo == ModoOperacao::MANUAL && m.id_missao == 0 &&
+                    (m.fase == FaseMissao::INDO_PARA_DESTINO_MANUAL || m.fase == FaseMissao::INDO_PARA_RECARGA) &&
+                    (estado_.bateria > 15 || (m.fase == FaseMissao::INDO_PARA_RECARGA && (estado_.bateria > 0 || m.rota.empty())))) {
+                    iniciarRota(m, m.fase == FaseMissao::INDO_PARA_RECARGA ? EstadoRobo::INDO_PARA_RECARGA : EstadoRobo::INDO_PARA_DESTINO_MANUAL);
+                } else if (m.tipo == TipoMensagem::AtribuirMissao && !estado_.falha && (pickup || delivery || charging)) {
                     estado_.id_missao = m.id_missao; estado_.id_carga = m.id_carga; estado_.id_equipe = m.id_equipe; estado_.id_baia = m.id_baia;
-                    estado_.fase = m.fase; estado_.destino = m.destino;
-                    estado_.estado = charging ? EstadoRobo::INDO_PARA_RECARGA : (delivery ? EstadoRobo::INDO_PARA_ENTREGA : EstadoRobo::INDO_PARA_COLETA);
-                    rota_ = m.rota; integrantes_ = m.integrantes; indice_rota_ = 0; estado_.passo = 0; aguardando_posicao_ = false; estado_.disponivel = false;
+                    iniciarRota(m, charging ? EstadoRobo::INDO_PARA_RECARGA : (delivery ? EstadoRobo::INDO_PARA_ENTREGA : EstadoRobo::INDO_PARA_COLETA));
                 } else if (m.tipo == TipoMensagem::CancelarMissao && same_mission && !estado_.acoplado) {
                     estado_.id_missao = 0; estado_.id_carga = 0; estado_.id_equipe = 0; estado_.id_baia = -1; estado_.fase = FaseMissao::NENHUMA;
                     estado_.estado = estado_.falha ? EstadoRobo::COM_FALHA : EstadoRobo::DISPONIVEL; rota_.clear(); aguardando_posicao_ = false;
@@ -107,8 +126,7 @@ void AgenteRobo::processarMensagem(const Mensagem& m) {
                     } else if (m.fase == FaseMissao::DESACOPLANDO) {
                         estado_.fase = m.fase; estado_.estado = estado_.acoplado ? EstadoRobo::DESACOPLANDO : EstadoRobo::AGUARDANDO_DESCARGA;
                     } else if (m.fase == FaseMissao::INDO_PARA_ENTREGA && estado_.acoplado) {
-                        estado_.fase = FaseMissao::INDO_PARA_ENTREGA; estado_.estado = EstadoRobo::INDO_PARA_ENTREGA;
-                        rota_ = m.rota; integrantes_ = m.integrantes; estado_.destino = m.destino; indice_rota_ = 0; estado_.passo = 0; aguardando_posicao_ = false;
+                        iniciarRota(m, EstadoRobo::INDO_PARA_ENTREGA);
                     } else ack.aceito = false;
                 } else if (m.tipo != TipoMensagem::Encerrar) ack.aceito = false;
                 if (ack.aceito && m.tipo != TipoMensagem::Encerrar) {
@@ -127,13 +145,14 @@ void AgenteRobo::avancarNavegacao() {
     Mensagem movimento; bool enviar = false; bool houve_mudanca = false;
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        const bool em_navegacao = estado_.estado == EstadoRobo::INDO_PARA_COLETA || estado_.estado == EstadoRobo::INDO_PARA_ENTREGA || estado_.estado == EstadoRobo::INDO_PARA_RECARGA;
+        const bool em_navegacao = estado_.estado == EstadoRobo::INDO_PARA_COLETA || estado_.estado == EstadoRobo::INDO_PARA_ENTREGA || estado_.estado == EstadoRobo::INDO_PARA_RECARGA || estado_.estado == EstadoRobo::INDO_PARA_DESTINO_MANUAL;
         if (encerrando_ || comando_pendente_ || estado_.falha || !em_navegacao || aguardando_posicao_ || aguardando_passagem_) return;
-        if (estado_.bateria == 0 || (estado_.bateria <= 15 && estado_.estado != EstadoRobo::INDO_PARA_RECARGA)) return;
+        if (indice_rota_ < rota_.size() && (estado_.bateria == 0 || (estado_.bateria <= 15 && estado_.estado != EstadoRobo::INDO_PARA_RECARGA))) return;
         if (indice_rota_ >= rota_.size()) {
             if (estado_.fase == FaseMissao::INDO_PARA_COLETA) { estado_.estado = EstadoRobo::AGUARDANDO_EQUIPE; estado_.fase = FaseMissao::COLETA_PRONTA; }
             else if (estado_.fase == FaseMissao::INDO_PARA_ENTREGA) { estado_.estado = EstadoRobo::AGUARDANDO_DESCARGA; estado_.fase = FaseMissao::ENTREGA_PRONTA; }
             else if (estado_.fase == FaseMissao::INDO_PARA_RECARGA) { estado_.estado = EstadoRobo::RECARREGANDO; estado_.fase = FaseMissao::RECARREGANDO; }
+            else if (estado_.fase == FaseMissao::INDO_PARA_DESTINO_MANUAL) { estado_.estado = EstadoRobo::DISPONIVEL; estado_.fase = FaseMissao::NENHUMA; }
             houve_mudanca = true;
         } else {
             movimento = mensagemDoEstadoRobo(estado_); movimento.tipo = passagem_liberada_ ? TipoMensagem::DestinoNavegacao : TipoMensagem::SolicitarAcessoTrecho;
@@ -159,7 +178,6 @@ void AgenteRobo::atualizarStatus() {
             estado_.estado = EstadoRobo::DISPONIVEL; estado_.fase = FaseMissao::NENHUMA; estado_.id_missao = 0;
             rota_.clear(); aguardando_posicao_ = false; aguardando_passagem_ = false; passagem_liberada_ = false;
         }
-        estado_.disponivel = estado_.estado == EstadoRobo::DISPONIVEL && !estado_.falha && !estado_.acoplado && estado_.bateria > 15;
         estado_alterado_ = false;
     }
     publicarEstado();

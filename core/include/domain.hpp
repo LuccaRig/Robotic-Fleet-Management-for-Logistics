@@ -23,6 +23,12 @@ inline std::int64_t instanteUnixMs() {
         std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+enum class ModoOperacao { AUTOMATICO, MANUAL };
+
+inline const char* nomeModoOperacao(ModoOperacao modo) {
+    return modo == ModoOperacao::MANUAL ? "manual" : "automatico";
+}
+
 enum class EstadoRobo {
     DISPONIVEL, 
     INDO_PARA_COLETA, 
@@ -35,7 +41,8 @@ enum class EstadoRobo {
     RECARREGANDO, 
     SUSPENSO, 
     COM_FALHA, 
-    ENCERRADO
+    ENCERRADO,
+    INDO_PARA_DESTINO_MANUAL
 };
 
 enum class FaseMissao {
@@ -48,7 +55,8 @@ enum class FaseMissao {
     DESACOPLANDO, 
     INDO_PARA_RECARGA, 
     RECARREGANDO, 
-    SUSPENSO
+    SUSPENSO,
+    INDO_PARA_DESTINO_MANUAL
 };
 
 inline std::string nomeEstadoRobo(EstadoRobo estado) {
@@ -65,6 +73,7 @@ inline std::string nomeEstadoRobo(EstadoRobo estado) {
     case EstadoRobo::SUSPENSO: return "Missão suspensa";
     case EstadoRobo::COM_FALHA: return "Falha";
     case EstadoRobo::ENCERRADO: return "Encerrado";
+    case EstadoRobo::INDO_PARA_DESTINO_MANUAL: return "Indo ao destino manual";
     }
     return "Desconhecido";
 }
@@ -76,6 +85,7 @@ struct EstadoAtualRobo {
     Posicao posicao;
     Posicao destino;
     EstadoRobo estado = EstadoRobo::DISPONIVEL;
+    ModoOperacao modo = ModoOperacao::AUTOMATICO;
     FaseMissao fase = FaseMissao::NENHUMA;
     int bateria = 100;
     bool falha = false;
@@ -92,5 +102,14 @@ struct EstadoAtualRobo {
     std::uint64_t distancia = 0;
     std::int64_t atualizado_em_ms = 0;
 };
+
+inline bool roboLivre(const EstadoAtualRobo& robo) {
+    return robo.estado == EstadoRobo::DISPONIVEL && robo.fase == FaseMissao::NENHUMA &&
+        !robo.falha && !robo.acoplado && robo.id_missao == 0;
+}
+
+inline bool disponivelParaCarga(const EstadoAtualRobo& robo) {
+    return robo.conectado && roboLivre(robo) && robo.modo == ModoOperacao::AUTOMATICO && robo.bateria > 15;
+}
 
 #endif

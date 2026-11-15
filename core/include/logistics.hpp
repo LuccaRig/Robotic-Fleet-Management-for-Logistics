@@ -24,7 +24,7 @@ struct ResultadoCicloLogistica {
 class OrganizadorLogistica {
 public:
     OrganizadorLogistica(const MapaGalpao& galpao, std::vector<Carga> carga);
-    ResultadoCicloLogistica processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota);
+    ResultadoCicloLogistica processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados = {});
     std::vector<Carga> cargos() const;
     std::vector<MissaoEquipe> missoes() const;
     bool todasCargasEntregues() const;
@@ -38,7 +38,7 @@ private:
     std::set<int> em_recarga_;
     std::vector<std::pair<int, Mensagem>> acoes_;
     std::vector<AvisoLogistica> avisos_;
-    void agendarCargas(const std::vector<EstadoAtualRobo>& frota);
+    void agendarCargas(const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados);
     void registrarMensagem(const Mensagem& mensagem, const std::vector<EstadoAtualRobo>& frota);
     void avancarMissao(MissaoEquipe& missao);
     void interromper(MissaoEquipe& missao, const std::string& motivo);

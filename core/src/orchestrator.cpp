@@ -223,6 +223,8 @@ bool GestorRobos::enviar(int id, Mensagem mensagem) {
     case TipoMensagem::PausarMissao:
     case TipoMensagem::RetomarMissao:
     case TipoMensagem::Encerrar:
+    case TipoMensagem::DefinirModo:
+    case TipoMensagem::DefinirDestinoManual:
         if (!mensagem.id_comando) mensagem.id_comando = mensagem.sequencia;
         entrada.comandos_pendentes[mensagem.id_comando] = std::chrono::steady_clock::now() + std::chrono::seconds(3);
         break;

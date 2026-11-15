@@ -12,7 +12,7 @@ TEST(ProtocolTest, RoundTripsAllMissionMetadata) {
 }
 TEST(ProtocolTest, RejectsTruncationVersionAndOversize) {
     auto payload = codificarMensagem(Mensagem{}); payload.pop_back(); EXPECT_THROW(decodificarMensagem(payload),std::runtime_error);
-    payload = codificarMensagem(Mensagem{}); payload[7] = 2; EXPECT_THROW(decodificarMensagem(payload),std::runtime_error);
+    payload = codificarMensagem(Mensagem{}); payload[7] = static_cast<std::uint8_t>(VERSAO_PROTOCOLO + 1); EXPECT_THROW(decodificarMensagem(payload),std::runtime_error);
     Mensagem huge; huge.texto.assign(TAMANHO_MAXIMO_MENSAGEM,'x'); EXPECT_THROW(codificarMensagem(huge),std::runtime_error);
 }
 TEST(IpcTest, ReassemblesFragmentedFramesAndDetectsEof) {
@@ -64,4 +64,21 @@ TEST(IpcTest, ZeroTimeoutConsumesQueuedFrameBeforePeerExit) {
     const auto mensagem = receiver.receber(std::chrono::milliseconds(0));
     ASSERT_TRUE(mensagem); EXPECT_EQ(mensagem->tipo,TipoMensagem::RoboEncerrado);
     EXPECT_THROW(receiver.receber(std::chrono::milliseconds(0)),std::runtime_error);
+}
+
+TEST(ProtocolTest, PreservesManualModeAndRejectsInvalidMode) {
+    Mensagem mensagem;
+    mensagem.tipo = TipoMensagem::DefinirDestinoManual;
+    mensagem.modo = ModoOperacao::MANUAL;
+    mensagem.fase = FaseMissao::INDO_PARA_DESTINO_MANUAL;
+    mensagem.estado = EstadoRobo::INDO_PARA_DESTINO_MANUAL;
+    const auto copia = decodificarMensagem(codificarMensagem(mensagem));
+    EXPECT_EQ(copia.modo, ModoOperacao::MANUAL);
+    EXPECT_EQ(copia.tipo, TipoMensagem::DefinirDestinoManual);
+    EXPECT_EQ(copia.fase, FaseMissao::INDO_PARA_DESTINO_MANUAL);
+    EXPECT_EQ(copia.estado, EstadoRobo::INDO_PARA_DESTINO_MANUAL);
+    mensagem.estado = EstadoRobo::DISPONIVEL;
+    EXPECT_FALSE(estadoRoboDaMensagem(mensagem).disponivel);
+    mensagem.modo = static_cast<ModoOperacao>(9);
+    EXPECT_THROW(decodificarMensagem(codificarMensagem(mensagem)), std::runtime_error);
 }

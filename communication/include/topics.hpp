@@ -15,6 +15,10 @@ inline const char* fleetSnapshot() { return "fleet/telemetry/fleet"; }
 
 inline const char* events() { return "fleet/events"; }
 
+inline const char* commands() { return "fleet/commands"; }
+
+inline const char* commandResults() { return "fleet/commands/results"; }
+
 }
 
 #endif

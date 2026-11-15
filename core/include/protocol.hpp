@@ -7,14 +7,14 @@
 #include <string>
 #include <vector>
 
-constexpr std::uint32_t VERSAO_PROTOCOLO = 1;
+constexpr std::uint32_t VERSAO_PROTOCOLO = 2;
 constexpr std::size_t TAMANHO_MAXIMO_MENSAGEM = 64 * 1024;
 
 enum class TipoMensagem : std::uint32_t {
     SaudacaoRobo = 1, RoboPronto, AtribuirMissao, CancelarMissao, ConfirmacaoComando,
     AtualizarSensores, EstadoAtualRobo, DestinoNavegacao, SolicitarAcessoTrecho,
     AcessoTrechoConcedido, AcessoTrechoLiberado, Acoplar, Desacoplar, PausarMissao,
-    RetomarMissao, Encerrar, RoboEncerrado, RoboDesconectado
+    RetomarMissao, Encerrar, RoboEncerrado, RoboDesconectado, DefinirModo, DefinirDestinoManual
 };
 
 struct Mensagem {
@@ -30,6 +30,7 @@ struct Mensagem {
     int id_baia = -1;
     FaseMissao fase = FaseMissao::NENHUMA;
     EstadoRobo estado = EstadoRobo::DISPONIVEL;
+    ModoOperacao modo = ModoOperacao::AUTOMATICO;
     Posicao posicao;
     Posicao destino;
     int bateria = 100;

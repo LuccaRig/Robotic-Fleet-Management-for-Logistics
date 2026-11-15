@@ -43,7 +43,12 @@ std::vector<Mensagem> AdaptadorHardwareLocal::confirmarComandoAceito(const Mensa
     if (mensagem.geracao != unidade.leitura_sensores.geracao) return {};
     unidade.leitura_sensores.revisao = mensagem.id_comando;
 
-    if (mensagem.tipo == TipoMensagem::CancelarMissao) {
+    if (mensagem.tipo == TipoMensagem::DefinirModo) {
+        unidade.leitura_sensores.modo = mensagem.modo;
+        unidade.leitura_sensores.fase = FaseMissao::NENHUMA;
+        unidade.leitura_sensores.destino = unidade.leitura_sensores.posicao;
+        unidade.leitura_sensores.passo = 0;
+    } else if (mensagem.tipo == TipoMensagem::CancelarMissao) {
         proposals_.erase(unidade.leitura_sensores.id_missao);
         unidade.leitura_sensores.id_missao = 0;
         unidade.leitura_sensores.id_carga = 0;
@@ -56,12 +61,13 @@ std::vector<Mensagem> AdaptadorHardwareLocal::confirmarComandoAceito(const Mensa
         proposals_.erase(unidade.leitura_sensores.id_missao);
         unidade.paused = true;
         unidade.leitura_sensores.fase = FaseMissao::SUSPENSO;
-    } else if (mensagem.tipo == TipoMensagem::AtribuirMissao || mensagem.tipo == TipoMensagem::RetomarMissao) {
+    } else if (mensagem.tipo == TipoMensagem::AtribuirMissao || mensagem.tipo == TipoMensagem::RetomarMissao || mensagem.tipo == TipoMensagem::DefinirDestinoManual) {
         unidade.leitura_sensores.id_missao = mensagem.id_missao;
         unidade.leitura_sensores.id_carga = mensagem.id_carga;
         unidade.leitura_sensores.id_equipe = mensagem.id_equipe;
         unidade.leitura_sensores.id_baia = mensagem.id_baia;
         unidade.leitura_sensores.fase = mensagem.fase;
+        unidade.leitura_sensores.destino = mensagem.destino;
         unidade.leitura_sensores.passo = 0;
         unidade.integrantes = mensagem.integrantes;
         unidade.paused = false;
@@ -125,7 +131,14 @@ std::vector<Mensagem> AdaptadorHardwareLocal::setpoint(const Mensagem& mensagem)
 void AdaptadorHardwareLocal::registrarObservacao(const EstadoAtualRobo& estado) {
     const auto robo = units_.find(estado.id);
     if (robo != units_.end() && robo->second.leitura_sensores.geracao == estado.geracao &&
-        robo->second.leitura_sensores.id_missao == estado.id_missao) robo->second.observed = estado.estado;
+        robo->second.leitura_sensores.id_missao == estado.id_missao && robo->second.leitura_sensores.revisao == estado.revisao &&
+        estado.sequencia_sensor >= robo->second.leitura_sensores.sequencia_sensor) {
+        robo->second.observed = estado.estado;
+        robo->second.leitura_sensores.estado = estado.estado;
+        robo->second.leitura_sensores.fase = estado.fase;
+        robo->second.leitura_sensores.modo = estado.modo;
+        robo->second.leitura_sensores.destino = estado.destino;
+    }
 }
 
 std::optional<std::vector<Mensagem>> AdaptadorHardwareLocal::injetarLeitura(int id, std::optional<int> bateria, std::optional<bool> falha) {

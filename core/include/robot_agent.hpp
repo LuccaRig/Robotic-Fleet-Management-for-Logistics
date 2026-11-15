@@ -62,6 +62,7 @@ private:
     std::exception_ptr erro_;
     void emitirMensagem(Mensagem mensagem);
     void publicarEstado();
+    void iniciarRota(const Mensagem& mensagem, EstadoRobo estado);
     void executarRotina(bool navegacao) noexcept;
 };
 

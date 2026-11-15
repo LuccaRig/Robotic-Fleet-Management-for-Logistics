@@ -2,6 +2,18 @@
 
 GravadorEventos::GravadorEventos(ColetorDados& coletor, Observador observador) : coletor_(coletor), observador_(std::move(observador)) {}
 void GravadorEventos::registrar(EventoRobo event) { coletor_.enfileirarEvento(event); if (observador_) observador_(event); }
+void GravadorEventos::aoReceberComandoOperador(const Mensagem& mensagem) {
+    if (mensagem.tipo != TipoMensagem::DefinirModo && mensagem.tipo != TipoMensagem::DefinirDestinoManual) return;
+    const bool modo = mensagem.tipo == TipoMensagem::DefinirModo;
+    const auto destino = std::to_string(mensagem.destino.x) + "," + std::to_string(mensagem.destino.y);
+    const auto descricao = modo
+        ? std::string("Modo de operação alterado para ") + (mensagem.modo == ModoOperacao::MANUAL ? "manual" : "automático")
+        : "Destino manual definido: " + destino;
+    EventoRobo evento(mensagem.id_robo, -1, -1, mensagem.posicao,
+        modo ? TipoEvento::MODO_OPERACAO_ALTERADO : TipoEvento::DESTINO_MANUAL_DEFINIDO, descricao, modo ? "" : destino);
+    evento.rastrear(0, 0, mensagem.geracao, "operacao", ++sequencia_, mensagem.ocorrido_em_ms);
+    registrar(std::move(evento));
+}
 void GravadorEventos::aoReceberEventoRobo(const Mensagem& m) {
     std::vector<EventoRobo> eventos;
     {

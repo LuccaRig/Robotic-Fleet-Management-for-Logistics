@@ -10,17 +10,17 @@ OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, std::vector
         c.estado = EstadoCarga::PENDENTE; c.id_missao = 0; baias_.at(c.id_baia).fila_cargas.push_back(c.id); cargas_.emplace(c.id, std::move(c));
     }
 }
-ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota) {
+ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
     for (const auto& mensagem : mensagens) registrarMensagem(mensagem, frota);
     for (auto& par : missoes_) avancarMissao(par.second);
-    agendarCargas(frota);
+    agendarCargas(frota, bloqueados);
     ResultadoCicloLogistica resultado;
     resultado.comandos.swap(acoes_);
     resultado.eventos.swap(avisos_);
     return resultado;
 }
-void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& frota) {
-    std::set<int> robos_reservados;
+void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
+    std::set<int> robos_reservados = bloqueados;
     for (const auto& pair : missoes_) if (pair.second.fase != FaseMissao::NENHUMA) robos_reservados.insert(pair.second.integrantes.begin(), pair.second.integrantes.end());
     std::set<int> robos_que_precisam_recarga;
     for (auto& par_baia : baias_) {
@@ -34,7 +34,7 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
         if (!rota_entrega || !rota_carregador) { carga.motivo = "Sem rota compatível com a carga ou sem carregador alcançável"; continue; }
         std::vector<EstadoAtualRobo> equipe_escolhida;
         for (const auto& robo : frota) {
-            if (!robo.conectado || !robo.disponivel || robo.falha || robo.acoplado || robos_reservados.count(robo.id) || em_recarga_.count(robo.id)) continue;
+            if (!robo.disponivel || !disponivelParaCarga(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id)) continue;
             const auto rota_coleta = planejador_.calcularRota(robo.posicao, baia.posicao);
             if (!rota_coleta) continue;
             const auto custo_bateria = rota_coleta->size() + rota_entrega->size() + rota_carregador->second.size() + 15;
@@ -56,7 +56,7 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
     }
     for (const auto& robo : frota) {
         if (em_recarga_.count(robo.id) && (!robo.conectado || (robo.estado == EstadoRobo::DISPONIVEL && robo.bateria == 100))) em_recarga_.erase(robo.id);
-        if (!robo.conectado || robo.falha || robo.acoplado || robo.id_missao || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.estado != EstadoRobo::DISPONIVEL || robo.bateria == 100) continue;
+        if (!robo.conectado || !roboLivre(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.bateria == 100) continue;
         if (robo.bateria > 15 && !robos_que_precisam_recarga.count(robo.id)) continue;
         const auto charger = planejador_.carregadorMaisProximo(robo.posicao);
         if (!charger || charger->second.size() > static_cast<std::size_t>(robo.bateria)) continue;

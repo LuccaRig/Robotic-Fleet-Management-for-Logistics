@@ -12,6 +12,7 @@ public:
     using Observador = std::function<void(const EventoRobo&)>;
     explicit GravadorEventos(ColetorDados& coletor, Observador observador = {});
     void aoReceberEventoRobo(const Mensagem& mensagem);
+    void aoReceberComandoOperador(const Mensagem& mensagem);
     void aoReceberEventoLogistica(const AvisoLogistica& aviso);
     void aoReceberEventoPassagem(const AvisoPassagem& aviso);
 private:

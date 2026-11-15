@@ -35,6 +35,7 @@ public:
     void exportarMapaTxt(const std::string& caminho_arquivo) const;
     std::size_t quantidadeEventos(TipoEvento tipo) const;
     void executarComando(const std::string& linha);
+    void executarComandoOperador(const ComandoOperador& comando);
     void imprimir(const std::string& texto) const;
     const EstadoFrota& frota() const { return manager_.frota(); }
     std::vector<Carga> cargos() const { return logistics_.cargos(); }
@@ -54,14 +55,15 @@ private:
     OrganizadorLogistica logistics_;
     IntegracaoMqtt mqtt_;
     std::uint64_t commands_ = 0;
-    std::map<std::uint64_t, Mensagem> pending_;
+    struct ComandoPendente { Mensagem mensagem; std::string id_operador; };
+    std::map<std::uint64_t, ComandoPendente> pending_;
     std::vector<Mensagem> eventos_logistica_;
     std::set<int> removals_;
     std::chrono::steady_clock::time_point ultimo_ciclo_logistica_ = std::chrono::steady_clock::now();
     bool started_ = false;
     bool stopped_ = false;
     bool exit_requested_ = false;
-    bool sendCommand(int id, Mensagem mensagem);
+    bool sendCommand(int id, Mensagem mensagem, const std::string& id_operador = {});
     void aoReceberMensagem(const Mensagem& mensagem);
     void aoReceberLeitura(Mensagem leitura_sensores);
     void tratarLeiturasHardware(std::vector<Mensagem> leituras);
