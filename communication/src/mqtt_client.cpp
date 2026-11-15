@@ -3,79 +3,115 @@
 #if defined(ENABLE_MQTT) && ENABLE_MQTT
 
 #include <mosquitto.h>
+#include <atomic>
 #include <iostream>
-#include <memory>
-#include <mutex>
+#include <limits>
+#include <utility>
+
+namespace {
+struct BibliotecaMqtt {
+    int resultado = mosquitto_lib_init();
+
+    ~BibliotecaMqtt() {
+        if (resultado == MOSQ_ERR_SUCCESS) mosquitto_lib_cleanup();
+    }
+};
+}
 
 struct MqttPublisher::Impl {
-    mosquitto* mosq = nullptr;
-    bool connected = false;
-    std::mutex mutex_;
+    mosquitto* cliente = nullptr;
+    std::atomic<bool> conectado{false};
+    bool loop_iniciado = false;
+
+    static void aoConectar(mosquitto*, void* dados, int resultado) {
+        static_cast<Impl*>(dados)->conectado = resultado == 0;
+        if (resultado != 0) {
+            std::cerr << "MQTT: conexão recusada pelo broker (" << resultado << ")\n";
+        }
+    }
+
+    static void aoDesconectar(mosquitto*, void* dados, int resultado) {
+        static_cast<Impl*>(dados)->conectado = false;
+        if (resultado != 0) {
+            std::cerr << "MQTT: conexão interrompida; aguardando reconexão (" << resultado << ")\n";
+        }
+    }
 
     ~Impl() {
-        if (mosq) {
-            mosquitto_disconnect(mosq);
-            mosquitto_destroy(mosq);
-            mosq = nullptr;
-        }
-        mosquitto_lib_cleanup();
+        if (!cliente) return;
+        mosquitto_disconnect(cliente);
+        if (loop_iniciado) mosquitto_loop_stop(cliente, false);
+        mosquitto_destroy(cliente);
     }
 };
 
-MqttPublisher::MqttPublisher() : impl_(new Impl()) {
-    mosquitto_lib_init();
-}
-
-MqttPublisher::~MqttPublisher() { delete impl_; }
+MqttPublisher::MqttPublisher() = default;
+MqttPublisher::~MqttPublisher() = default;
 
 void MqttPublisher::connect(const std::string& host, int port) {
-    std::lock_guard<std::mutex> lock(impl_->mutex_);
-    if (impl_->mosq) return;
-    impl_->mosq = mosquitto_new("orchestrator", true, nullptr);
-    if (!impl_->mosq) {
-        std::cerr << "MQTT: falha ao criar cliente mosquitto\n";
+    if (impl_) return;
+    if (host.empty() || port < 1 || port > 65535) {
+        std::cerr << "MQTT: endereço ou porta do broker inválidos\n";
         return;
     }
-    int rc = mosquitto_connect(impl_->mosq, host.c_str(), port, 60);
-    if (rc != MOSQ_ERR_SUCCESS) {
-        std::cerr << "MQTT: falha ao conectar a " << host << ":" << port
-                  << " (" << rc << ")\n";
-        mosquitto_destroy(impl_->mosq);
-        impl_->mosq = nullptr;
+
+    static BibliotecaMqtt biblioteca;
+    if (biblioteca.resultado != MOSQ_ERR_SUCCESS) {
+        std::cerr << "MQTT: falha ao inicializar a biblioteca (" << biblioteca.resultado << ")\n";
         return;
     }
-    mosquitto_loop_start(impl_->mosq);
-    impl_->connected = true;
+
+    auto estado = std::make_unique<Impl>();
+    estado->cliente = mosquitto_new(nullptr, true, estado.get());
+    if (!estado->cliente) {
+        std::cerr << "MQTT: falha ao criar o cliente\n";
+        return;
+    }
+    mosquitto_connect_callback_set(estado->cliente, Impl::aoConectar);
+    mosquitto_disconnect_callback_set(estado->cliente, Impl::aoDesconectar);
+    mosquitto_reconnect_delay_set(estado->cliente, 1, 10, true);
+
+    int resultado = mosquitto_connect_async(estado->cliente, host.c_str(), port, 60);
+    if (resultado != MOSQ_ERR_SUCCESS) {
+        std::cerr << "MQTT: falha ao iniciar conexão com " << host << ":" << port
+                  << " (" << resultado << ")\n";
+        if (resultado != MOSQ_ERR_ERRNO && resultado != MOSQ_ERR_EAI) return;
+    }
+
+    resultado = mosquitto_loop_start(estado->cliente);
+    if (resultado != MOSQ_ERR_SUCCESS) {
+        std::cerr << "MQTT: falha ao iniciar o processamento de rede (" << resultado << ")\n";
+        return;
+    }
+    estado->loop_iniciado = true;
+    impl_ = std::move(estado);
 }
 
 void MqttPublisher::publish(const std::string& topic, const std::string& payload, bool retain) {
-    std::lock_guard<std::mutex> lock(impl_->mutex_);
-    if (!impl_->mosq || !impl_->connected) return;
-    int rc = mosquitto_publish(impl_->mosq, nullptr, topic.c_str(),
-                               static_cast<int>(payload.size()),
-                               payload.data(), 1, retain ? 1 : 0, false);
-    if (rc != MOSQ_ERR_SUCCESS) {
-        std::cerr << "MQTT: falha ao publicar em " << topic << " (" << rc << ")\n";
+    if (!isConnected()) return;
+    if (payload.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
+        std::cerr << "MQTT: mensagem excede o tamanho permitido\n";
+        return;
+    }
+
+    const int resultado = mosquitto_publish(impl_->cliente, nullptr, topic.c_str(),
+        static_cast<int>(payload.size()), payload.data(), 1, retain);
+    if (resultado != MOSQ_ERR_SUCCESS) {
+        std::cerr << "MQTT: falha ao publicar em " << topic << " (" << resultado << ")\n";
     }
 }
 
 bool MqttPublisher::isConnected() const {
-    std::lock_guard<std::mutex> lock(impl_->mutex_);
-    return impl_->connected;
+    return impl_ && impl_->conectado.load();
 }
 
 void MqttPublisher::disconnect() {
-    std::lock_guard<std::mutex> lock(impl_->mutex_);
-    if (impl_->mosq) {
-        mosquitto_disconnect(impl_->mosq);
-        mosquitto_loop_stop(impl_->mosq, true);
-        mosquitto_destroy(impl_->mosq);
-        impl_->mosq = nullptr;
-        impl_->connected = false;
-    }
+    impl_.reset();
 }
 
-#else // ENABLE_MQTT OFF -> stub no-op
+#else
+
+struct MqttPublisher::Impl {};
 
 MqttPublisher::MqttPublisher() = default;
 MqttPublisher::~MqttPublisher() = default;
@@ -85,4 +121,4 @@ void MqttPublisher::publish(const std::string&, const std::string&, bool) {}
 bool MqttPublisher::isConnected() const { return false; }
 void MqttPublisher::disconnect() {}
 
-#endif // ENABLE_MQTT
+#endif

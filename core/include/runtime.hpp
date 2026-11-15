@@ -3,9 +3,8 @@
 
 #include "event_recorder.hpp"
 #include "hardware.hpp"
-#include "mqtt_client.hpp"
+#include "mqtt_integration.hpp"
 #include "orchestrator.hpp"
-#include "topics.hpp"
 #include <chrono>
 #include <map>
 #include <set>
@@ -53,9 +52,7 @@ private:
     ControlePassagens passages_;
     AdaptadorHardwareLocal hardware_;
     OrganizadorLogistica logistics_;
-    MqttPublisher mqttPublisher_;
-    std::string mqttHost_ = "localhost";
-    int mqttPort_ = 1883;
+    IntegracaoMqtt mqtt_;
     std::uint64_t commands_ = 0;
     std::map<std::uint64_t, Mensagem> pending_;
     std::vector<Mensagem> eventos_logistica_;
@@ -69,7 +66,6 @@ private:
     void aoReceberLeitura(Mensagem leitura_sensores);
     void tratarLeiturasHardware(std::vector<Mensagem> leituras);
     void tratarEfeitosPassagem(ResultadoPassagens resultado);
-    void publicarTelemetria();
 };
 
 #endif

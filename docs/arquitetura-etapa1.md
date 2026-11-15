@@ -23,7 +23,9 @@ O ciclo central recebe mensagens do Gestor, atualiza passagens e adaptador, entr
 
 O protocolo IPC usa enquadramento de quatro bytes e payload de até 64 KiB, com serialização explícita. Transporta inicialização, comandos e confirmações, sensores, snapshots, permissões e encerramento. Geração, sequência, missão e revisão permitem rejeitar mensagens antigas. O envio tem prazo de um segundo, a prontidão de dois e a comunicação/confirmação de três segundos.
 
-IPC conecta os processos locais da Etapa 1. Na Etapa 2, MQTT conectará o controle ao simulador e às interfaces por tópicos e broker, substituindo a ligação direta ao adaptador local.
+IPC conecta os processos locais da Etapa 1. A integração MQTT atual publica telemetria opcional da frota; a troca de comandos e sensores com interfaces e um simulador externo permanece pendente para a Etapa 2.
+
+O módulo `IntegracaoMqtt`, em `communication/`, concentra a configuração do broker, os tópicos e a serialização JSON. O ciclo central fornece snapshots da frota e controla a inicialização e a parada da integração. O cliente acompanha conexão e desconexão por callbacks e utiliza a thread de rede da libmosquitto para comunicação e reconexão. Esses callbacks não alteram o domínio. Robôs desconectados também são publicados para atualizar os estados retidos. Os tópicos e as configurações estão descritos no [README](../README.md#telemetria-mqtt).
 
 ## Estado e sincronização
 
