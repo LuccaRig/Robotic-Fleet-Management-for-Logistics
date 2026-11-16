@@ -22,6 +22,11 @@ void liberarRobo(EstadoFrota& frota, int id) {
     estado.id_missao = 0; estado.id_carga = 0; estado.id_equipe = 0; estado.disponivel = true;
     frota.atualizar(estado);
 }
+void definirBateria(EstadoFrota& frota, int id, int bateria) {
+    auto estado = *frota.obter(id);
+    ++estado.sequencia; estado.bateria = bateria;
+    frota.atualizar(estado);
+}
 Carga load(int tamanho) { Carga c; c.id = 1; c.tamanho = tamanho; c.id_baia = 1; c.id_destino = 1; return c; }
 Mensagem report(int id, EstadoRobo estado, FaseMissao fase, bool acoplado = false, IdEntidade missao = 1) {
     Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = id; m.geracao = 1; m.sequencia = 2; m.id_missao = missao;
@@ -121,6 +126,25 @@ TEST(LogisticsTest, AssignsConcurrentCargoTeamsInFifoOrder) {
         report(6,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA,false,2)});
     EXPECT_EQ(saidas.comandos.size(), 6u);
     EXPECT_EQ(organizer.cargos()[1].estado, EstadoCarga::REUNINDO_EQUIPE);
+}
+
+TEST(LogisticsTest, SendsEveryIdleRobotBelowFullBatteryToChargingStation) {
+    auto map = layout(); EstadoFrota frota;
+    registrarRobo(frota, 1);
+    definirBateria(frota, 1, 99);
+    OrganizadorLogistica organizer(map, {});
+
+    const auto resultado = organizer.processarCiclo({}, frota.capturarEstado());
+    ASSERT_EQ(resultado.comandos.size(), 1u);
+    EXPECT_EQ(resultado.comandos.front().first, 1);
+    EXPECT_EQ(resultado.comandos.front().second.tipo, TipoMensagem::AtribuirMissao);
+    EXPECT_EQ(resultado.comandos.front().second.fase, FaseMissao::INDO_PARA_RECARGA);
+    EXPECT_EQ(resultado.comandos.front().second.destino, (Posicao{0, 0}));
+
+    EXPECT_TRUE(organizer.processarCiclo({}, frota.capturarEstado()).comandos.empty());
+
+    definirBateria(frota, 1, 100);
+    EXPECT_TRUE(organizer.processarCiclo({}, frota.capturarEstado()).comandos.empty());
 }
 
 TEST(LogisticsTest, CancelsBeforeCouplingAndPreservesQueue) {

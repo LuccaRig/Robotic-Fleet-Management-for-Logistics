@@ -45,7 +45,6 @@ ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<M
 void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
     std::set<int> robos_reservados = bloqueados;
     for (const auto& pair : missoes_) if (pair.second.fase != FaseMissao::NENHUMA) robos_reservados.insert(pair.second.integrantes.begin(), pair.second.integrantes.end());
-    std::set<int> robos_que_precisam_recarga;
     bool houve_alocacao;
     do {
         houve_alocacao = false;
@@ -90,7 +89,7 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
                     const auto rota_coleta = planejador_.calcularRota(robo.posicao, baia.posicao);
                     if (!rota_coleta) continue;
                     const auto custo_bateria = rota_coleta->size() + rota_entrega->size() + rota_carregador->second.size() + 15;
-                    if (static_cast<std::size_t>(robo.bateria) <= custo_bateria) { robos_que_precisam_recarga.insert(robo.id); continue; }
+                    if (static_cast<std::size_t>(robo.bateria) <= custo_bateria) continue;
                     equipe_escolhida.push_back(robo);
                     if (equipe_escolhida.size() == faltantes) break;
                 }
@@ -128,7 +127,6 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
     for (const auto& robo : frota) {
         if (em_recarga_.count(robo.id) && (!robo.conectado || (robo.estado == EstadoRobo::DISPONIVEL && robo.bateria == 100))) em_recarga_.erase(robo.id);
         if (!robo.conectado || !roboLivre(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.bateria == 100) continue;
-        if (robo.bateria > 15 && !robos_que_precisam_recarga.count(robo.id)) continue;
         const auto charger = planejador_.carregadorMaisProximo(robo.posicao);
         if (!charger || charger->second.size() > static_cast<std::size_t>(robo.bateria)) continue;
         Mensagem m; m.tipo = TipoMensagem::AtribuirMissao; m.fase = FaseMissao::INDO_PARA_RECARGA;
