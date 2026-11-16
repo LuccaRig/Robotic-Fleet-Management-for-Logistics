@@ -1,4 +1,10 @@
 #include "mqtt_client.hpp"
+#include <charconv>
+#include <cstdlib>
+#include <cstring>
+#include <stdexcept>
+#include <system_error>
+#include <utility>
 
 #if defined(ENABLE_MQTT) && ENABLE_MQTT
 
@@ -7,7 +13,6 @@
 #include <exception>
 #include <iostream>
 #include <limits>
-#include <utility>
 
 namespace {
 struct BibliotecaMqtt {
@@ -52,7 +57,7 @@ struct ClienteMqtt::Impl {
         auto& estado = *static_cast<Impl*>(dados);
         if (!mensagem || !estado.receptor || !mensagem->topic || estado.topico != mensagem->topic) return;
         if (mensagem->payloadlen < 0 || mensagem->payloadlen > 4096) {
-            std::cerr << "MQTT: comando descartado por exceder 4096 bytes\n";
+            std::cerr << "MQTT: mensagem descartada por exceder 4096 bytes\n";
             return;
         }
         try {
@@ -161,3 +166,19 @@ bool ClienteMqtt::isConnected() const { return false; }
 void ClienteMqtt::disconnect() {}
 
 #endif
+
+void ClienteMqtt::connect(const std::string& topico, Receptor receptor) {
+#if defined(ENABLE_MQTT) && ENABLE_MQTT
+    const char* host = std::getenv("MQTT_HOST");
+    if (host && !*host) throw std::invalid_argument("MQTT_HOST não pode ser vazio");
+    int porta = 1883;
+    if (const char* valor = std::getenv("MQTT_PORT")) {
+        const auto fim = valor + std::strlen(valor);
+        const auto resultado = std::from_chars(valor, fim, porta);
+        if (resultado.ec != std::errc{} || resultado.ptr != fim || porta < 1 || porta > 65535) {
+            throw std::invalid_argument("MQTT_PORT deve ser um número inteiro entre 1 e 65535");
+        }
+    }
+    connect(host ? host : "localhost", porta, topico, std::move(receptor));
+#endif
+}

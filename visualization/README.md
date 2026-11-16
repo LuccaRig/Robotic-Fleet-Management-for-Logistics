@@ -26,9 +26,9 @@ cmake --build build-mqtt --parallel 2
 visualization/.venv/bin/python visualization/server.py
 ```
 
-Abra **http://127.0.0.1:8080**. Um único comando inicia um broker local isolado, a central em modo interativo e o servidor web. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra os processos iniciados pelo comando.
+Abra **http://127.0.0.1:8080**. Um único comando inicia um broker local isolado, o processo de simulação do hardware, a central em modo interativo e o servidor web. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra primeiro a central e depois o simulador e o broker.
 
-O cenário padrão é `cooperativo`, com quatro robôs e três cargas. Para começar sem cargas e explorar o controle manual:
+O cenário padrão é `cooperativo`, com quatro robôs e quatro cargas. A baia 1 começa com tamanhos 2 e 4; a baia 2, com tamanhos 1 e 3. Cada fila mantém essa ordem, sem ordenar por tamanho. As entregas utilizam os dois destinos do mapa. Para começar sem cargas e explorar o controle manual:
 
 ```sh
 visualization/.venv/bin/python visualization/server.py --cenario processos
@@ -45,7 +45,7 @@ Opções:
 | `--porta` | `8080` | Porta HTTP, acessível somente na máquina local. |
 | `--broker` | Mosquitto encontrado no `PATH` | Caminho do executável Mosquitto. |
 
-Os caminhos de executável, mapa e banco são resolvidos a partir da raiz do repositório. O broker usa uma porta TCP disponível, com retenção e sessões restritas àquela demonstração. Os logs da central e do broker ficam em `logs/operacao-central.log` e `logs/operacao-mqtt.log`.
+Os caminhos de executável, mapa e banco são resolvidos a partir da raiz do repositório. O broker usa uma porta TCP disponível, com retenção e sessões restritas àquela demonstração. Os logs ficam em `logs/operacao-central.log`, `logs/operacao-simulador.log` e `logs/operacao-mqtt.log`.
 
 ## Operação
 
@@ -55,7 +55,7 @@ Os caminhos de executável, mapa e banco são resolvidos a partir da raiz do rep
 - **Simulação:** gere/remova falhas, ajuste a bateria, adicione robôs e cargas e solicite retomadas. A central valida cada pedido e preserva suas regras de segurança e sincronização.
 - **Métricas:** uma faixa compacta mostra cargas em operação e na fila, entregas, distância percorrida e alertas. Os valores acompanham o estado da simulação.
 - **Cargas:** botão na tela principal que abre um diálogo com todas as cargas, estados, motivos de espera, origem, destino e integrantes. Os filtros separam fila, operação, suspensão e entrega. “Localizar” fecha o diálogo e destaca a carga no mapa. Não há uma página separada de Logística.
-- **Histórico:** botão na tela principal que abre um diálogo com eventos por robô e rastreabilidade de transportes, incluindo participantes e horários de coleta e entrega. Há filtros e paginação de 50 registros; horários usam Brasília. A consulta usa SQLite somente para leitura.
+- **Histórico:** botão na tela principal que abre um diálogo com eventos por robô e rastreabilidade de transportes, incluindo participantes e horários de coleta e entrega. O filtro de robô também inclui eventos coletivos das equipes das quais ele participou, inclusive antes da coleta. Eventos coletivos aparecem como “Equipe”, sem duplicar os registros da frota. Há filtros e paginação de 50 registros; horários usam Brasília. A consulta usa SQLite somente para leitura.
 
 O estado é recebido por MQTT e consultado pelo navegador a cada 400 ms, sem requisições sobrepostas. A frequência cai quando a aba está oculta. Dados sem atualização por três segundos bloqueiam novos comandos, preservando os últimos estados visíveis. Os comandos usam IDs únicos e aguardam a resposta da central. Em caso de resposta ausente ou falha na requisição, “Reenviar” reutiliza o mesmo ID, aproveitando a deduplicação existente.
 
@@ -76,18 +76,33 @@ visualization/
 
 O navegador não calcula rotas, não aloca equipes e não simula estados. Não há framework, bundler, CDN ou dependência de rede para os recursos visuais. Os ícones e o mapa são SVG, e as fontes usam as disponíveis no sistema. A interface respeita a preferência por movimento reduzido e oferece navegação por teclado, foco visível, rótulos e mensagens de confirmação.
 
-A ponte disponibiliza `GET /api/config`, `GET /api/state`, `POST /api/commands` e `GET /api/history`. Os comandos são encaminhados ao tópico já existente `fleet/commands`; respostas vêm de `fleet/commands/results`. O snapshot `fleet/telemetry/fleet` preserva `robos` e acrescenta `versao`, `cargas`, `missoes` e `passagens`. A geometria permanece no arquivo local, sem publicação por MQTT.
+A ponte disponibiliza `GET /api/config`, `GET /api/state`, `POST /api/commands` e `GET /api/history`. Os comandos são encaminhados ao tópico já existente `fleet/commands`; respostas vêm de `fleet/commands/results`. O snapshot `fleet/telemetry/fleet` preserva `robos` e acrescenta `versao`, `cargas`, `missoes` e `passagens`. A geometria permanece no arquivo local, sem publicação por MQTT. O processo `--simulador` reutiliza `AdaptadorHardwareLocal` e avança autonomamente. A central usa `--simulador-mqtt` para enviar comandos físicos e receber sensores e anúncios, sem chamadas remotas de funções internas. O transporte binário reutiliza o protocolo existente, mantendo as confirmações de sensores e o avanço conjunto das equipes.
 
 ## Validação
 
-A revisão visual atual usa azul, títulos diretos, botões padronizados e métricas compactas. A lista de robôs fica à esquerda, com os dados e controles do selecionado na coluna imediatamente ao lado. O nome anterior, a barra horizontal superior e o rodapé foram removidos. Cargas e histórico abrem em diálogos na tela principal. A revisão foi verificada no navegador: seleção sincronizada entre lista, controles e mapa, abertura e fechamento do histórico, consulta de cargas e localização de uma carga no mapa. Os cenários completos de comandos descritos abaixo foram exercitados na versão anterior do layout.
+Em 16/11/2026, no macOS, os builds e as suítes completas passaram:
 
-Em 15/11/2026, os builds e as suítes completas passaram no macOS com MQTT desativado (50 testes unitários e 11 de integração) e ativado (58 unitários e 11 de integração). A dependência Python utilizada foi paho-mqtt 2.2.0.
+| Configuração | Unitários C++ | Integração C++ | Resultado |
+|---|---:|---:|---|
+| MQTT desativado | 53 | 11 | 64 aprovados |
+| MQTT ativado | 61 | 14 | 75 aprovados |
 
-Após a revisão visual, as mesmas suítes passaram novamente nas duas configurações, sem recompilação. A sintaxe dos módulos JavaScript e do servidor Python também foi verificada.
+Os três testes Python de histórico também passaram com `visualization/.venv/bin/python -m unittest visualization.test_history -v`. A sintaxe JavaScript foi conferida com `node --check visualization/web/app.js`.
 
-A validação no navegador cobriu as entregas do cenário cooperativo, modo manual/automático, destinos por coordenadas e por clique no mapa, recusa de destino bloqueado, ajuste de bateria, geração e remoção de falhas, inclusão de robô e cargas, suspensão de equipe em transporte, recusa de retomada com falha presente, recuperação e entrega da missão retomada. Também foram verificados histórico, rastreabilidade, filtros, paginação, zoom, camadas do mapa e layouts de desktop e celular, sem transbordamento horizontal ou erros no console.
+Os testes com broker real verificaram anúncios de robôs, barreira das equipes, setpoints repetidos, recarga sem consultas da central e duas missões consecutivas com processos reais e sensores remotos. O teste de persistência cobre os participantes antes da coleta e a recuperação dos vínculos de bancos anteriores.
 
-Uma pausa temporária do broker confirmou o bloqueio de comandos após dados desatualizados e a recuperação automática após a retomada. Verificações HTTP confirmaram o snapshot completo e a recusa de JSON inválido, ação desconhecida, origem externa e corpo acima do limite.
+A validação integrada pela ponte HTTP, com o lançador e o simulador separado, confirmou:
 
-A validação identificou e corrigiu uma regressão temporária na distância exibida: leituras físicas de sensores agora preservam o total calculado pelo processo do robô. O teste existente de atualização da frota cobre a preservação do total e seu avanço pelos relatos do robô.
+- Quatro robôs iniciais anunciados por MQTT e quatro entregas, respeitando as filas das duas baias.
+- Inclusão de um quinto robô, modo manual/automático, destino arbitrário e recusa de destino bloqueado.
+- Geração e remoção de falha, redução de bateria, encaminhamento ao carregador e recarga autônoma até 100%.
+- Inclusão de nova carga de dois robôs, suspensão por falha durante o transporte, recusa de retomada com falha, recuperação, retomada e entrega.
+- Eventos coletivos no histórico de cada participante, timestamps e rastreabilidade da baia, destino e equipe.
+
+No navegador, foram conferidos o mapa e os estados ao vivo, o novo robô e a consulta do histórico com os eventos coletivos identificados como equipe. A disposição visual existente foi preservada.
+
+A interrupção do processo do simulador confirmou o encerramento controlado da central e o bloqueio de novos comandos. O encerramento do lançador recolheu central, simulador, broker e robôs sem processos restantes.
+
+A validação encontrou e corrigiu uma corrida entre sensores da revisão anterior e status de uma nova missão. A frota agora aceita a nova revisão lógica preservando os dados físicos mais recentes. O teste de regressão reproduz a ordem das mensagens, e a demo confirmou a conclusão de missões consecutivas após a correção.
+
+Os testes funcionais não substituem a análise de tempo de resposta e escalabilidade exigida na entrega final. A [conferência com o enunciado](../docs/conformidade-enunciado.md) registra as funcionalidades atendidas, diferenças de arquitetura e entregas pendentes.

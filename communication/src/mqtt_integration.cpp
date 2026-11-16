@@ -1,19 +1,15 @@
 #include "mqtt_integration.hpp"
 #include "topics.hpp"
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <limits>
 #include <memory>
 #include <set>
 #include <utility>
-#include <cstdlib>
-#include <cstring>
 #include <iostream>
 #include <locale>
 #include <sstream>
 #include <stdexcept>
-#include <system_error>
 
 #if defined(ENABLE_MQTT) && ENABLE_MQTT
 #include <cJSON.h>
@@ -89,21 +85,8 @@ IntegracaoMqtt::~IntegracaoMqtt() {
 }
 
 void IntegracaoMqtt::iniciar() {
-#if defined(ENABLE_MQTT) && ENABLE_MQTT
-    const char* host = std::getenv("MQTT_HOST");
-    if (host && !*host) throw std::invalid_argument("MQTT_HOST não pode ser vazio");
-
-    int porta = 1883;
-    if (const char* valor = std::getenv("MQTT_PORT")) {
-        const auto fim = valor + std::strlen(valor);
-        const auto resultado = std::from_chars(valor, fim, porta);
-        if (resultado.ec != std::errc{} || resultado.ptr != fim || porta < 1 || porta > 65535) {
-            throw std::invalid_argument("MQTT_PORT deve ser um número inteiro entre 1 e 65535");
-        }
-    }
-    cliente_.connect(host ? host : "localhost", porta, Topics::commands(),
+    cliente_.connect(Topics::commands(),
         [this](std::string payload, bool retido) { enfileirarComando(std::move(payload), retido); });
-#endif
 }
 
 void IntegracaoMqtt::publicar(const std::vector<EstadoAtualRobo>& frota, const std::vector<Carga>& cargas,

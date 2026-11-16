@@ -3,10 +3,12 @@
 
 #include "event_recorder.hpp"
 #include "hardware.hpp"
+#include "hardware_mqtt.hpp"
 #include "mqtt_integration.hpp"
 #include "orchestrator.hpp"
 #include <chrono>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -20,7 +22,7 @@ struct Cenario {
 
 class AplicacaoCentral {
 public:
-    AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario);
+    AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario, bool simulador_mqtt = false);
     ~AplicacaoCentral();
     void iniciar();
     void parar();
@@ -53,6 +55,7 @@ private:
     GestorRobos manager_;
     ControlePassagens passages_;
     AdaptadorHardwareLocal hardware_;
+    std::unique_ptr<CanalSimulacaoMqtt> simulador_;
     OrganizadorLogistica logistics_;
     IntegracaoMqtt mqtt_;
     std::uint64_t commands_ = 0;
@@ -60,6 +63,12 @@ private:
     std::map<std::uint64_t, ComandoPendente> pending_;
     std::vector<Mensagem> eventos_logistica_;
     std::set<int> removals_;
+    std::map<int, Posicao> robos_solicitados_;
+    std::map<int, std::uint64_t> robos_simulados_;
+    struct ComandoFisico { Mensagem mensagem; std::chrono::steady_clock::time_point enviado; };
+    std::map<int, ComandoFisico> comandos_fisicos_;
+    std::chrono::steady_clock::time_point ultima_leitura_simulador_ = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point ultima_publicacao_simulador_ = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point ultimo_ciclo_logistica_ = std::chrono::steady_clock::now();
     bool started_ = false;
     bool stopped_ = false;
@@ -69,6 +78,9 @@ private:
     void aoReceberLeitura(Mensagem leitura_sensores);
     void tratarLeiturasHardware(std::vector<Mensagem> leituras);
     void tratarEfeitosPassagem(ResultadoPassagens resultado);
+    void processarSimulador();
+    void enviarComandoFisico(Mensagem mensagem);
+    std::optional<Mensagem> lerLeituraHardware(int id) const;
 };
 
 #endif

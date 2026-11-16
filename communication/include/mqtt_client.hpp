@@ -15,6 +15,7 @@ public:
     ClienteMqtt& operator=(const ClienteMqtt&) = delete;
 
     void connect(const std::string& host, int port, const std::string& topico = {}, Receptor receptor = {});
+    void connect(const std::string& topico, Receptor receptor);
 
     void publish(const std::string& topic, const std::string& payload, bool retain = true);
 

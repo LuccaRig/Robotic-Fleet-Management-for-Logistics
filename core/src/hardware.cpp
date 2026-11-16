@@ -41,6 +41,7 @@ std::vector<Mensagem> AdaptadorHardwareLocal::confirmarComandoAceito(const Mensa
     if (encontrado == units_.end()) return {};
     auto& unidade = encontrado->second;
     if (mensagem.geracao != unidade.leitura_sensores.geracao) return {};
+    if (mensagem.id_comando <= unidade.leitura_sensores.revisao) return {};
     unidade.leitura_sensores.revisao = mensagem.id_comando;
 
     if (mensagem.tipo == TipoMensagem::DefinirModo) {
@@ -92,6 +93,7 @@ std::vector<Mensagem> AdaptadorHardwareLocal::setpoint(const Mensagem& mensagem)
     if (mensagem.geracao != unidade.leitura_sensores.geracao || mensagem.id_missao != unidade.leitura_sensores.id_missao ||
         mensagem.fase != unidade.leitura_sensores.fase || mensagem.revisao != unidade.leitura_sensores.revisao || unidade.paused) return {};
     if (unidade.leitura_sensores.falha || unidade.leitura_sensores.bateria == 0) return {};
+    if (mensagem.passo <= unidade.leitura_sensores.passo) return {};
     if (mensagem.passo != unidade.leitura_sensores.passo + 1 || mensagem.posicao != unidade.leitura_sensores.posicao ||
         distanciaManhattan(unidade.leitura_sensores.posicao, mensagem.destino) != 1 || !galpao_.podeTransitar(mensagem.destino)) {
         throw std::runtime_error("Setpoint físico inválido");
@@ -158,7 +160,9 @@ std::vector<Mensagem> AdaptadorHardwareLocal::avancarCiclo() {
     const auto agora = std::chrono::steady_clock::now();
     for (auto& par : units_) {
         auto& unidade = par.second;
-        if (unidade.observed != EstadoRobo::RECARREGANDO || unidade.leitura_sensores.falha || unidade.leitura_sensores.bateria >= 100 ||
+        const bool destino_recarga = unidade.leitura_sensores.fase == FaseMissao::INDO_PARA_RECARGA &&
+            unidade.leitura_sensores.posicao == unidade.leitura_sensores.destino;
+        if ((!destino_recarga && unidade.observed != EstadoRobo::RECARREGANDO) || unidade.leitura_sensores.falha || unidade.leitura_sensores.bateria >= 100 ||
             galpao_.obterCelula(unidade.leitura_sensores.posicao.x, unidade.leitura_sensores.posicao.y) != EstadoCelula::ESTACAO_RECARGA ||
             agora - unidade.last_charge < std::chrono::milliseconds(500)) continue;
         unidade.last_charge = agora;

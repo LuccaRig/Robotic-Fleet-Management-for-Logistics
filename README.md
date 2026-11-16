@@ -59,7 +59,7 @@ O broker deve ser executado separadamente. O endereço padrão é `localhost:188
 ./build/app/simulador_exec --cenario cooperativo --interativo --mqtt-host localhost --mqtt-port 1883
 ```
 
-O módulo `IntegracaoMqtt`, em `communication/`, concentra a configuração, a serialização, a publicação da frota e a recepção de comandos. O cliente usa a thread de rede da libmosquitto: seus callbacks acompanham a conexão e enfileiram mensagens, sem modificar os robôs ou a logística. O ciclo central valida e executa os pedidos. A conexão inicial é assíncrona e as reconexões usam intervalos progressivos de até 10 segundos, com renovação da assinatura de comandos. A publicação da telemetria depende da conexão com o broker; recusas da assinatura de comandos são registradas sem interromper a telemetria. Falhas de rede não encerram a simulação. O encerramento solicita a desconexão e aguarda o término da thread antes de destruir o cliente, conforme o [ciclo de vida da libmosquitto](https://mosquitto.org/api/files/mosquitto-h.html#mosquitto_loop_stop).
+O módulo `IntegracaoMqtt`, em `communication/`, concentra a configuração, a serialização, a publicação da frota e a recepção de comandos. O cliente usa a thread de rede da libmosquitto: seus callbacks acompanham a conexão e enfileiram mensagens, sem modificar os robôs ou a logística. O ciclo central valida e executa os pedidos. A conexão inicial é assíncrona e as reconexões usam intervalos progressivos de até 10 segundos, com renovação da assinatura de comandos. A publicação da telemetria depende da conexão com o broker; recusas da assinatura de comandos são registradas sem interromper a telemetria. Falhas no canal de telemetria não encerram a execução com hardware local; a perda de comunicação com o hardware remoto segue o prazo descrito abaixo. O encerramento solicita a desconexão e aguarda o término da thread antes de destruir o cliente, conforme o [ciclo de vida da libmosquitto](https://mosquitto.org/api/files/mosquitto-h.html#mosquitto_loop_stop).
 
 As publicações mantêm QoS 1 e mensagens retidas:
 
@@ -72,7 +72,35 @@ As coordenadas usam objetos JSON, como `"posicao":{"x":10,"y":5}` e `"destino":{
 
 Um robô desconectado continua sendo publicado com `conectado=false` e `disponivel=false`, substituindo seu estado retido anterior. A interface deve usar o snapshot de frota como referência dos IDs conhecidos na execução atual, pois tópicos individuais de execuções anteriores podem permanecer retidos no broker. A publicação continua a cada ciclo enquanto há conexão; após reconectar, o próximo ciclo envia o estado atual. No encerramento normal, a aplicação tenta publicar um último snapshot antes de desconectar. Não há garantia de entrega desse último snapshot se a rede estiver indisponível ou se o processo for interrompido abruptamente.
 
-A integração publica telemetria e recebe comandos de modo, destino manual, falha, bateria, inclusão de cargas e robôs e retomada de missões. Eventos remotos e a ligação entre setpoints e sensores de um simulador externo ainda precisam ser implementados.
+A integração publica telemetria e recebe comandos de modo, destino manual, falha, bateria, inclusão de cargas e robôs e retomada de missões. O histórico remoto é consultado pela ponte HTTP, com eventos individuais e eventos das equipes de cada robô.
+
+## Comunicação com o simulador
+
+A tela inicia o hardware simulado em um processo separado, reutilizando `AdaptadorHardwareLocal`. O simulador executa seu próprio ciclo de 20 ms, recebe comandos físicos e publica sensores quando há mudanças e a cada 500 ms. Também anuncia os robôs disponíveis; esses anúncios fazem o Gestor criar os processos com a geração correspondente.
+
+A central usa `--simulador-mqtt` e recebe as mensagens sem bloquear o ciclo de coordenação. Sem essa opção, a execução usa o adaptador local, inclusive com MQTT desativado. Com um broker disponível, os processos podem ser iniciados em terminais distintos:
+
+```sh
+./build-mqtt/app/simulador_exec --simulador --cenario cooperativo --mapa config/galpao.txt
+./build-mqtt/app/simulador_exec --cenario cooperativo --interativo --simulador-mqtt
+```
+
+Ambos aceitam `--mqtt-host` e `--mqtt-port`. Cada broker deve atender uma única dupla de central e simulador; o lançador web já fornece esse isolamento.
+
+| Tópico | Conteúdo |
+|---|---|
+| `fleet/simulation/commands` | Setpoints, comandos físicos de movimento, acoplamento e parada, intervenções em bateria/falha e disponibilização ou retirada de robôs. |
+| `fleet/simulation/events` | Leituras de sensores e anúncios de disponibilidade ou retirada dos robôs. |
+
+O transporte usa QoS 1, mensagens sem retenção e a serialização binária existente. Rotas completas permanecem entre a central e o processo do robô por IPC; o simulador recebe apenas o setpoint e o contexto físico da equipe. Não há pedidos remotos para avançar ciclos, espelhar observações ou chamar funções internas do adaptador.
+
+As confirmações de movimento e acoplamento vêm dos sensores. A central reenvia o último comando físico pendente a cada 500 ms, e geração, revisão e passo impedem repetir movimentos ou consumir bateria novamente. A recarga avança no simulador enquanto o robô está no destino de recarga. O simulador não precisa receber consultas para continuar seu ciclo.
+
+Após três segundos sem atualizações do simulador ou sem confirmação de um comando físico pendente, a central encerra a operação de forma controlada. Cada mensagem MQTT mantém o limite de 4096 bytes. A fila do canal de simulação comporta 4096 mensagens e seu esgotamento é tratado como erro.
+
+O cenário `cooperativo` começa com duas filas: tamanhos 2 e 4 na baia 1, e 1 e 3 na baia 2, usando os dois destinos. O coletor registra os participantes de cada evento coletivo em `robot_event_members`, sem duplicar o evento. Bancos anteriores recuperam esses vínculos a partir dos transportes já registrados.
+
+Builds e testes desta revisão passaram com MQTT ativado e desativado, incluindo broker real e missões consecutivas. A validação encontrou e corrigiu uma corrida entre sensores antigos e o status de uma nova revisão. Resultados e cenários estão no [guia da interface](visualization/README.md#validação). A [conferência com o enunciado](docs/conformidade-enunciado.md) distingue o funcionamento atendido das diferenças de arquitetura e entregas finais pendentes.
 
 ## Comandos de operação MQTT
 
@@ -117,9 +145,9 @@ As demais operações usam o mesmo tópico e formato de resposta:
 {"id":"retomada-1","acao":"retomar_missao","id_missao":1}
 ```
 
-- `definir_falha` injeta ou remove defeito, inclusive durante uma missão. `definir_bateria` aceita inteiros de 0 a 100. A resposta confirma a atualização dos sensores no simulador local; o estado do processo do robô é acompanhado pela telemetria.
+- `definir_falha` injeta ou remove defeito, inclusive durante uma missão. `definir_bateria` aceita inteiros de 0 a 100. No modo local, a resposta confirma a atualização dos sensores; com simulador MQTT, confirma o encaminhamento da intervenção. O resultado físico é acompanhado pela telemetria.
 - `adicionar_carga` exige ID positivo e único na execução, tamanho de um a quatro e baia e destino existentes. A carga entra no fim da fila da baia, sem ultrapassar a carga que já aguardava uma equipe. A resposta confirma sua inclusão na logística.
-- `adicionar_robo` exige ID não negativo e livre e posição transitável fora de uma passagem. A resposta confirma a criação do processo; aguarde `conectado=true` no snapshot da frota para confirmar prontidão e obter sua geração.
+- `adicionar_robo` exige ID não negativo e livre e posição transitável fora de uma passagem. Com simulador MQTT, a resposta confirma o pedido de disponibilização; o anúncio do simulador inicia a criação do processo. Aguarde `conectado=true` no snapshot da frota para confirmar prontidão e obter sua geração.
 - `retomar_missao` exige missão suspensa e todos os integrantes conectados, da geração original, sem falha, com bateria acima de 15 e estado de suspensão confirmado. A equipe precisa estar na mesma posição lógica e, para transportar, estar completamente acoplada e ter rota compatível. A resposta confirma a autorização pela logística; as confirmações e o avanço da equipe seguem por IPC e telemetria.
 
 IDs de cargas, missões e gerações recebidos em JSON ficam limitados a `9007199254740991`, para preservar a representação inteira do parser. A recuperação de falha e a reposição de bateria não retomam uma missão suspensa automaticamente.

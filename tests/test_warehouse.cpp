@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 #include "route_planner.hpp"
+#include "scenarios.hpp"
 #include <filesystem>
 #include <fstream>
+#include <set>
 
 TEST(WarehouseGridTest, RejectsInvalidLayoutAndKeepsRobotOccupationSeparate) {
     EXPECT_THROW(MapaGalpao(0,3),std::invalid_argument);
@@ -53,4 +55,31 @@ TEST(WarehouseGridTest, RejectsMalformedMapFiles) {
     }
     std::filesystem::remove(caminho);
     EXPECT_THROW(carregarMapa(caminho), std::runtime_error);
+}
+
+TEST(ScenarioTest, StartsCooperativeDemoWithIndependentQueuesAndEveryCargoSize) {
+    const auto cenario = criarCenario("cooperativo");
+    OrganizadorLogistica logistica(cenario.galpao, cenario.cargos);
+    std::set<int> tamanhos;
+    std::map<int, std::vector<IdEntidade>> filas;
+    for (const auto& carga : cenario.cargos) {
+        tamanhos.insert(carga.tamanho);
+        filas[carga.id_baia].push_back(carga.id);
+    }
+    EXPECT_EQ(tamanhos, (std::set<int>{1, 2, 3, 4}));
+    EXPECT_EQ(filas.size(), cenario.galpao.baias().size());
+    EXPECT_EQ(filas.at(1), (std::vector<IdEntidade>{1, 3}));
+    EXPECT_EQ(filas.at(2), (std::vector<IdEntidade>{2, 4}));
+    std::vector<EstadoAtualRobo> frota;
+    for (const auto& inicial : cenario.robos) {
+        EstadoAtualRobo robo;
+        robo.id = inicial.id;
+        robo.posicao = inicial.posicao;
+        robo.conectado = robo.disponivel = true;
+        frota.push_back(robo);
+    }
+    const auto ciclo = logistica.processarCiclo({}, frota);
+    std::set<IdEntidade> despachadas;
+    for (const auto& comando : ciclo.comandos) despachadas.insert(comando.second.id_carga);
+    EXPECT_EQ(despachadas, (std::set<IdEntidade>{1, 2}));
 }

@@ -1,4 +1,5 @@
 #include "runtime.hpp"
+#include "hardware_mqtt.hpp"
 #include <algorithm>
 #include <csignal>
 #include <iostream>
@@ -9,7 +10,7 @@
 #include <map>
 #include <utility>
 
-AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario)
+AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario, bool simulador_mqtt)
     : galpao_(std::move(cenario.galpao)), initial_(std::move(cenario.robos)), collector_(banco),
       recorder_(collector_, [this](const EventoRobo& event) { ++metrics_[event.tipo()]; imprimir("Evento: " + event.descricao() + " | robô " + std::to_string(event.idRobo()) + " | missão " + std::to_string(event.idMissao())); }),
       manager_(std::move(executavel)),
@@ -17,12 +18,14 @@ AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Ce
       hardware_(galpao_),
       logistics_(galpao_, std::move(cenario.cargos)) {
     galpao_.validar();
+    if (simulador_mqtt) simulador_ = std::make_unique<CanalSimulacaoMqtt>();
 }
 AplicacaoCentral::~AplicacaoCentral() { try { parar(); } catch (const std::exception& e) { imprimir("Falha no encerramento: " + std::string(e.what())); } }
 void AplicacaoCentral::iniciar() {
     if (started_) return;
     collector_.iniciar(); started_ = true;
     mqtt_.iniciar();
+    if (simulador_) simulador_->iniciar();
     for (const auto& robo : initial_) if (!adicionarRobo(robo.id, robo.posicao)) throw std::runtime_error("Não foi possível disponibilizar o robô " + std::to_string(robo.id));
     imprimir("Sistema iniciado. Execução " + std::to_string(collector_.idExecucao()));
 }
@@ -34,6 +37,7 @@ void AplicacaoCentral::parar() {
         for (const auto& mensagem : manager_.parar()) aoReceberMensagem(mensagem);
         if (mqtt_.conectada()) mqtt_.publicar(manager_.frota().capturarEstado(), logistics_.cargos(), logistics_.missoes(), passages_.capturarEstado());
     } catch (...) { error = std::current_exception(); }
+    if (simulador_) simulador_->parar();
     mqtt_.parar();
     try { collector_.parar(); } catch (...) { if (!error) error = std::current_exception(); }
     if (error) std::rethrow_exception(error);
@@ -48,6 +52,16 @@ bool AplicacaoCentral::sendCommand(int id, Mensagem mensagem, const std::string&
     pending_.erase(mensagem.id_comando); return false;
 }
 void AplicacaoCentral::aoReceberLeitura(Mensagem leitura_sensores) {
+    if (simulador_) {
+        const auto estado = manager_.frota().obter(leitura_sensores.id_robo);
+        if (!estado || !estado->conectado || estado->geracao != leitura_sensores.geracao ||
+            estado->revisao != leitura_sensores.revisao || estado->id_missao != leitura_sensores.id_missao ||
+            leitura_sensores.sequencia_sensor <= estado->sequencia_sensor) return;
+        leitura_sensores.estado = estado->estado;
+        leitura_sensores.fase = estado->fase;
+        leitura_sensores.modo = estado->modo;
+        leitura_sensores.destino = estado->destino;
+    }
     manager_.atualizarLeituraSensores(leitura_sensores);
     tratarEfeitosPassagem(passages_.confirmar(leitura_sensores));
     if (leitura_sensores.id_missao == 0 && leitura_sensores.fase == FaseMissao::INDO_PARA_DESTINO_MANUAL && (leitura_sensores.falha || leitura_sensores.bateria <= 15)) {
@@ -75,7 +89,8 @@ void AplicacaoCentral::tratarEfeitosPassagem(ResultadoPassagens resultado) {
 }
 void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
     if (m.tipo == TipoMensagem::RoboPronto) {
-        hardware_.registrarRobo(estadoRoboDaMensagem(m));
+        if (!simulador_) hardware_.registrarRobo(estadoRoboDaMensagem(m));
+        robos_solicitados_.erase(m.id_robo);
         tratarEfeitosPassagem(passages_.confirmar(m));
         imprimir("Robô " + std::to_string(m.id_robo) + " pronto, geração " + std::to_string(m.geracao));
     }
@@ -86,7 +101,8 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
             pending_.erase(it);
             auto& original = pendente.mensagem;
             if (m.aceito) {
-                tratarLeiturasHardware(hardware_.confirmarComandoAceito(original));
+                if (simulador_) enviarComandoFisico(original);
+                else tratarLeiturasHardware(hardware_.confirmarComandoAceito(original));
                 if (original.tipo == TipoMensagem::CancelarMissao || original.tipo == TipoMensagem::PausarMissao) {
                     tratarEfeitosPassagem(passages_.cancelar(m.id_robo, original.id_missao));
                 }
@@ -100,24 +116,33 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
             }
         }
     } else if (m.tipo == TipoMensagem::SolicitarAcessoTrecho) {
-        const auto lerLeitura = hardware_.lerLeitura(m.id_robo);
-        if (lerLeitura && lerLeitura->geracao == m.geracao && lerLeitura->id_missao == m.id_missao && lerLeitura->revisao == m.revisao &&
-            lerLeitura->fase == m.fase && !lerLeitura->falha && lerLeitura->bateria > 0 &&
+        const auto lerLeitura = lerLeituraHardware(m.id_robo);
+        if (lerLeitura && lerLeitura->geracao == m.geracao &&
+            ((simulador_ && m.revisao > lerLeitura->revisao) ||
+             (lerLeitura->id_missao == m.id_missao && lerLeitura->revisao == m.revisao && lerLeitura->fase == m.fase)) &&
+            !lerLeitura->falha && lerLeitura->bateria > 0 &&
             (lerLeitura->bateria > 15 || m.fase == FaseMissao::INDO_PARA_RECARGA) && lerLeitura->posicao == m.posicao) {
             tratarEfeitosPassagem(passages_.solicitarAcesso(m));
         }
     } else if (m.tipo == TipoMensagem::DestinoNavegacao) {
-        const auto leitura = hardware_.lerLeitura(m.id_robo);
-        if (!leitura || leitura->geracao != m.geracao || leitura->id_missao != m.id_missao || leitura->revisao != m.revisao ||
-            leitura->fase != m.fase || leitura->falha || leitura->bateria == 0 ||
+        const auto leitura = lerLeituraHardware(m.id_robo);
+        if (!leitura || leitura->geracao != m.geracao ||
+            !((simulador_ && m.revisao > leitura->revisao) ||
+              (leitura->id_missao == m.id_missao && leitura->revisao == m.revisao && leitura->fase == m.fase)) ||
+            leitura->falha || leitura->bateria == 0 ||
             (leitura->bateria <= 15 && m.fase != FaseMissao::INDO_PARA_RECARGA)) return;
         if (!passages_.permiteMovimento(m)) throw std::runtime_error("Movimento sem permissão de passagem");
-        tratarLeiturasHardware(hardware_.setpoint(m));
+        if (simulador_) enviarComandoFisico(m);
+        else tratarLeiturasHardware(hardware_.setpoint(m));
     }
-    else if (m.tipo == TipoMensagem::EstadoAtualRobo) hardware_.registrarObservacao(estadoRoboDaMensagem(m));
+    else if (m.tipo == TipoMensagem::EstadoAtualRobo && !simulador_) hardware_.registrarObservacao(estadoRoboDaMensagem(m));
     else if (m.tipo == TipoMensagem::RoboDesconectado) {
-        hardware_.desconectar(m.id_robo);
-        const auto lerLeitura = hardware_.lerLeitura(m.id_robo);
+        robos_solicitados_.erase(m.id_robo);
+        if (simulador_) {
+            comandos_fisicos_.erase(m.id_robo);
+            simulador_->enviar(m);
+        } else hardware_.desconectar(m.id_robo);
+        const auto lerLeitura = lerLeituraHardware(m.id_robo);
         tratarEfeitosPassagem(passages_.cancelar(m.id_robo, lerLeitura ? lerLeitura->id_missao : 0));
         for (auto it = pending_.begin(); it != pending_.end();) {
             if (it->second.mensagem.id_robo == m.id_robo && it->second.mensagem.geracao == m.geracao) {
@@ -129,9 +154,82 @@ void AplicacaoCentral::aoReceberMensagem(const Mensagem& m) {
     recorder_.aoReceberEventoRobo(m);
     if (!stopped_) eventos_logistica_.push_back(m);
 }
+std::optional<Mensagem> AplicacaoCentral::lerLeituraHardware(int id) const {
+    if (!simulador_) return hardware_.lerLeitura(id);
+    const auto estado = manager_.frota().obter(id);
+    return estado ? std::optional<Mensagem>(mensagemDoEstadoRobo(*estado)) : std::nullopt;
+}
+void AplicacaoCentral::enviarComandoFisico(Mensagem mensagem) {
+    mensagem.rota.clear();
+    if (!simulador_->enviar(mensagem)) throw std::runtime_error("Simulador MQTT desconectado");
+    if (mensagem.tipo != TipoMensagem::AtualizarSensores) {
+        comandos_fisicos_[mensagem.id_robo] = {std::move(mensagem), std::chrono::steady_clock::now()};
+    }
+}
+void AplicacaoCentral::processarSimulador() {
+    const auto agora = std::chrono::steady_clock::now();
+    for (const auto& mensagem : simulador_->receber()) {
+        if (mensagem.id_robo < 0 || !mensagem.geracao) continue;
+        if (mensagem.tipo == TipoMensagem::SaudacaoRobo) {
+            const auto conhecido = robos_simulados_.find(mensagem.id_robo);
+            if (conhecido != robos_simulados_.end()) {
+                if (conhecido->second != mensagem.geracao) throw std::runtime_error("O simulador reiniciou; reinicie a operação");
+            } else {
+                if (!galpao_.podeTransitar(mensagem.posicao) || galpao_.trechoEm(mensagem.posicao) ||
+                    !manager_.iniciarProcessoRobo(mensagem.id_robo, mensagem.posicao.x, mensagem.posicao.y, mensagem.geracao)) {
+                    throw std::runtime_error("Não foi possível iniciar o robô anunciado pelo simulador");
+                }
+                robos_simulados_[mensagem.id_robo] = mensagem.geracao;
+                robos_solicitados_.emplace(mensagem.id_robo, mensagem.posicao);
+            }
+            ultima_leitura_simulador_ = agora;
+        } else if (robos_simulados_.count(mensagem.id_robo) && robos_simulados_.at(mensagem.id_robo) == mensagem.geracao) {
+            ultima_leitura_simulador_ = agora;
+            if (mensagem.tipo == TipoMensagem::AtualizarSensores) {
+                const auto pendente = comandos_fisicos_.find(mensagem.id_robo);
+                if (pendente != comandos_fisicos_.end()) {
+                    const auto& comando = pendente->second.mensagem;
+                    const bool movimento = comando.tipo == TipoMensagem::DestinoNavegacao;
+                    if (mensagem.revisao == (movimento ? comando.revisao : comando.id_comando) &&
+                        (!movimento || (mensagem.passo >= comando.passo && mensagem.posicao == comando.destino))) {
+                        comandos_fisicos_.erase(pendente);
+                    }
+                }
+                aoReceberLeitura(mensagem);
+            } else if (mensagem.tipo == TipoMensagem::RoboEncerrado && removals_.count(mensagem.id_robo)) {
+                if (!mensagem.aceito) throw std::runtime_error("Remoção física recusada pelo simulador");
+                auto resultado = passages_.removerRobo(mensagem.id_robo);
+                if (!resultado.aceito) throw std::runtime_error("Remoção física recusada");
+                tratarEfeitosPassagem(std::move(resultado));
+                robos_simulados_.erase(mensagem.id_robo);
+                removals_.erase(mensagem.id_robo);
+                comandos_fisicos_.erase(mensagem.id_robo);
+            }
+        }
+    }
+    for (const auto& pendente : comandos_fisicos_) {
+        if (agora - pendente.second.enviado >= std::chrono::seconds(3)) throw std::runtime_error("Movimento ou comando físico sem confirmação dos sensores");
+    }
+    if ((!robos_simulados_.empty() || !robos_solicitados_.empty()) && agora - ultima_leitura_simulador_ >= std::chrono::seconds(3)) {
+        throw std::runtime_error("Simulador MQTT sem atualização de sensores ou anúncios");
+    }
+    if (agora - ultima_publicacao_simulador_ < std::chrono::milliseconds(500)) return;
+    for (const auto& robo : robos_solicitados_) {
+        if (manager_.existeProcessoRobo(robo.first)) continue;
+        Mensagem anuncio;
+        anuncio.tipo = TipoMensagem::SaudacaoRobo;
+        anuncio.id_robo = robo.first;
+        anuncio.posicao = robo.second;
+        simulador_->enviar(anuncio);
+    }
+    for (const auto& pendente : comandos_fisicos_) simulador_->enviar(pendente.second.mensagem);
+    ultima_publicacao_simulador_ = agora;
+}
 void AplicacaoCentral::avancarCiclo() {
+    if (simulador_) processarSimulador();
     for (const auto& mensagem : manager_.processarCiclo()) aoReceberMensagem(mensagem);
-    collector_.verificarFalha(); tratarLeiturasHardware(hardware_.avancarCiclo());
+    collector_.verificarFalha();
+    if (!simulador_) tratarLeiturasHardware(hardware_.avancarCiclo());
     mqtt_.processarComandos([this](const ComandoOperador& comando) { executarComandoOperador(comando); });
     const auto agora = std::chrono::steady_clock::now();
     if (!eventos_logistica_.empty() || agora - ultimo_ciclo_logistica_ >= std::chrono::milliseconds(200)) {
@@ -156,6 +254,13 @@ void AplicacaoCentral::avancarCiclo() {
     }
     for (auto it = removals_.begin(); it != removals_.end();) {
         if (manager_.existeProcessoRobo(*it)) { ++it; continue; }
+        if (simulador_) {
+            auto mensagem = *lerLeituraHardware(*it);
+            mensagem.tipo = TipoMensagem::RoboEncerrado;
+            simulador_->enviar(mensagem);
+            ++it;
+            continue;
+        }
         if (!hardware_.removerRobo(*it)) throw std::runtime_error("Remoção física recusada");
         auto resultado = passages_.removerRobo(*it);
         if (!resultado.aceito) throw std::runtime_error("Remoção física recusada");
@@ -168,7 +273,13 @@ void AplicacaoCentral::avancarCiclo() {
     if (mqtt_.conectada()) mqtt_.publicar(manager_.frota().capturarEstado(), logistics_.cargos(), logistics_.missoes(), passages_.capturarEstado());
 }
 bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) {
-    if (hardware_.contemRobo(id) || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;
+    if (id < 0 || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;
+    if (simulador_) {
+        if (robos_solicitados_.count(id) || robos_simulados_.count(id) || manager_.existeProcessoRobo(id)) return false;
+        robos_solicitados_.emplace(id, posicao);
+        return true;
+    }
+    if (hardware_.contemRobo(id)) return false;
     return manager_.iniciarProcessoRobo(id, posicao.x, posicao.y);
 }
 bool AplicacaoCentral::removerRobo(int id) {
@@ -178,12 +289,32 @@ bool AplicacaoCentral::removerRobo(int id) {
 }
 bool AplicacaoCentral::interromperRobo(int id) { for (const auto& p : manager_.processos()) if (p.id == id) return kill(p.pid, SIGTERM) == 0; return false; }
 bool AplicacaoCentral::definirBateria(int id, int bateria) {
+    if (simulador_) {
+        auto mensagem = lerLeituraHardware(id);
+        if (!mensagem || bateria < 0 || bateria > 100) return false;
+        mensagem->tipo = TipoMensagem::AtualizarSensores;
+        mensagem->id_comando = ++commands_;
+        mensagem->texto = "bateria";
+        mensagem->bateria = bateria;
+        enviarComandoFisico(*mensagem);
+        return true;
+    }
     auto leituras = hardware_.injetarLeitura(id, bateria, std::nullopt);
     if (!leituras) return false;
     tratarLeiturasHardware(std::move(*leituras));
     return true;
 }
 bool AplicacaoCentral::definirFalha(int id, bool falha) {
+    if (simulador_) {
+        auto mensagem = lerLeituraHardware(id);
+        if (!mensagem) return false;
+        mensagem->tipo = TipoMensagem::AtualizarSensores;
+        mensagem->id_comando = ++commands_;
+        mensagem->texto = "falha";
+        mensagem->falha = falha;
+        enviarComandoFisico(*mensagem);
+        return true;
+    }
     auto leituras = hardware_.injetarLeitura(id, std::nullopt, falha);
     if (!leituras) return false;
     tratarLeiturasHardware(std::move(*leituras));
@@ -213,7 +344,7 @@ void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
     }
     if (comando.acao == AcaoOperador::AdicionarRobo) {
         if (!adicionarRobo(comando.id_robo, comando.posicao)) throw std::runtime_error("Não foi possível adicionar o robô; confira ID e posição inicial");
-        mqtt_.responder(comando.id, true, "Processo criado; aguarde a prontidão do robô na telemetria");
+        mqtt_.responder(comando.id, true, "Disponibilização solicitada; aguarde a prontidão do robô na telemetria");
         return;
     }
     const auto robo = manager_.frota().obter(comando.id_robo);
@@ -222,7 +353,7 @@ void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
     if (comando.acao == AcaoOperador::DefinirFalha || comando.acao == AcaoOperador::DefinirBateria) {
         const bool aplicado = comando.acao == AcaoOperador::DefinirFalha ? definirFalha(robo->id, comando.falha) : definirBateria(robo->id, comando.bateria);
         if (!aplicado) throw std::runtime_error("Não foi possível atualizar a leitura do robô");
-        mqtt_.responder(comando.id, true, "Leitura atualizada no simulador");
+        mqtt_.responder(comando.id, true, simulador_ ? "Intervenção encaminhada; acompanhe os sensores na telemetria" : "Leitura atualizada no simulador");
         return;
     }
     for (const auto& pendente : pending_) {
@@ -275,6 +406,7 @@ void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
 }
 
 bool AplicacaoCentral::concluido() const {
+    if (simulador_ && (!robos_solicitados_.empty() || !comandos_fisicos_.empty())) return false;
     if (!logistics_.todasCargasEntregues()) return false;
     for (const auto& robo : manager_.frota().capturarEstado()) if (robo.conectado && (robo.id_missao || robo.acoplado || robo.estado != EstadoRobo::DISPONIVEL)) return false;
     return true;

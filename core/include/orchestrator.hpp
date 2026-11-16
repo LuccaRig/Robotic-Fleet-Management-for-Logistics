@@ -21,7 +21,7 @@ public:
     ~GestorRobos();
     GestorRobos(const GestorRobos&) = delete;
     GestorRobos& operator=(const GestorRobos&) = delete;
-    bool iniciarProcessoRobo(int id, int start_x, int start_y);
+    bool iniciarProcessoRobo(int id, int start_x, int start_y, std::uint64_t geracao = 0);
     bool encerrarProcessoRobo(int id);
     bool enviar(int id, Mensagem mensagem);
     bool atualizarLeituraSensores(const Mensagem& leitura);

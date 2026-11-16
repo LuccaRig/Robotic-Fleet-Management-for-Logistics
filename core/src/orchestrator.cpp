@@ -133,8 +133,10 @@ struct GestorRobos::Impl {
 GestorRobos::GestorRobos(std::string executavel) : impl_(std::make_unique<Impl>(std::move(executavel))) {}
 GestorRobos::~GestorRobos() { try { parar(); } catch (...) {} }
 
-bool GestorRobos::iniciarProcessoRobo(int id, int x, int y) {
+bool GestorRobos::iniciarProcessoRobo(int id, int x, int y, std::uint64_t geracao) {
     if (id < 0 || impl_->encerrando || impl_->executavel.empty() || impl_->entradas.count(id)) return false;
+    const auto anterior = impl_->frota.obter(id);
+    if (geracao && anterior && geracao <= anterior->geracao) return false;
     int descritores[2];
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, descritores) != 0) throw std::runtime_error("Não foi possível criar o canal do robô");
     if (fcntl(descritores[0], F_SETFD, FD_CLOEXEC) < 0 || fcntl(descritores[1], F_SETFD, FD_CLOEXEC) < 0) {
@@ -143,7 +145,8 @@ bool GestorRobos::iniciarProcessoRobo(int id, int x, int y) {
         throw std::runtime_error("Falha ao proteger descritores IPC");
     }
 
-    const auto geracao = ++impl_->proxima_geracao;
+    if (!geracao) geracao = ++impl_->proxima_geracao;
+    else if (geracao > impl_->proxima_geracao) impl_->proxima_geracao = geracao;
     std::vector<std::string> argumentos{impl_->executavel, "--robot-worker", "3", std::to_string(id), std::to_string(geracao), std::to_string(x), std::to_string(y)};
     std::vector<char*> argv;
     for (auto& argumento : argumentos) argv.push_back(argumento.data());

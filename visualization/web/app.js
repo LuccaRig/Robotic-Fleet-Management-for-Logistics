@@ -245,7 +245,7 @@ async function loadHistory() {
     if (epoch !== historyEpoch || !$('#history-dialog').open) return;
     $('#history-note').textContent = 'Registros da execução atual, com data e hora de Brasília.';
     if (!data.itens.length) $('#history-table').innerHTML = empty('Nenhum registro', historyView === 'eventos' ? 'Os eventos da operação aparecerão aqui conforme forem registrados.' : 'Os transportes aparecerão quando uma carga for coletada.', 'history');
-    else if (historyView === 'eventos') $('#history-table').innerHTML = `<table><thead><tr><th>Data e hora</th><th>Robô</th><th>Evento</th><th>Missão / carga</th></tr></thead><tbody>${data.itens.map(item => `<tr><td>${timestamp(item.occurred_at_ms)}</td><td>${item.robot_id >= 0 ? robotName(item.robot_id) : 'Central'}</td><td>${escape(item.description)}</td><td>${item.mission_id ? `M${item.mission_id} / C${item.cargo_id}` : 'Sem missão'}</td></tr>`).join('')}</tbody></table>`;
+    else if (historyView === 'eventos') $('#history-table').innerHTML = `<table><thead><tr><th>Data e hora</th><th>Robô</th><th>Evento</th><th>Missão / carga</th></tr></thead><tbody>${data.itens.map(item => `<tr><td>${timestamp(item.occurred_at_ms)}</td><td>${item.robot_id >= 0 ? robotName(item.robot_id) : item.mission_id ? 'Equipe' : 'Central'}</td><td>${escape(item.description)}</td><td>${item.mission_id ? `M${item.mission_id} / C${item.cargo_id}` : 'Sem missão'}</td></tr>`).join('')}</tbody></table>`;
     else $('#history-table').innerHTML = `<table><thead><tr><th>Carga</th><th>Rota</th><th>Robôs participantes</th><th>Coleta</th><th>Entrega</th><th>Situação</th></tr></thead><tbody>${data.itens.map(item => `<tr><td><strong>Carga ${item.cargo_id}</strong><small>Missão ${item.mission_id}</small></td><td>Baia ${item.bay_id}<small>Destino ${escape(item.destination)}</small></td><td>${escape(item.robos || 'Equipe não registrada')}</td><td>${timestamp(item.pickup_at_ms)}</td><td>${timestamp(item.delivered_at_ms)}</td><td>${pill(item.status === 'entregue' ? 'Entregue' : 'Em transporte', 'blue')}</td></tr>`).join('')}</tbody></table>`;
     $('#history-page').textContent = `Página ${historyPage + 1}`;
     $('#history-prev').disabled = historyPage === 0;
@@ -309,9 +309,9 @@ $('#destination-form').onsubmit = event => {
   warehouse?.setTargeting(false);
   operate('definir_destino', { destino: { x: Number($('#destination-x').value), y: Number($('#destination-y').value) } }, 'Destino recebido');
 };
-$('#toggle-fault').onclick = () => operate('definir_falha', { falha: !currentRobot().falha }, currentRobot().falha ? 'Defeito removido' : 'Defeito gerado');
+$('#toggle-fault').onclick = () => operate('definir_falha', { falha: !currentRobot().falha }, currentRobot().falha ? 'Remoção de defeito solicitada' : 'Geração de defeito solicitada');
 $('#battery-level').oninput = event => { $('#battery-output').textContent = `${event.target.value}%`; };
-$('#battery-form').onsubmit = event => { event.preventDefault(); operate('definir_bateria', { bateria: Number($('#battery-level').value) }, 'Bateria atualizada'); };
+$('#battery-form').onsubmit = event => { event.preventDefault(); operate('definir_bateria', { bateria: Number($('#battery-level').value) }, 'Alteração de bateria solicitada'); };
 $('#resume-mission').onclick = () => send({ acao: 'retomar_missao', id_missao: currentRobot().id_missao }, 'Retomada solicitada').catch(() => {});
 $('#open-history').onclick = () => { $('#history-dialog').showModal(); resetHistory(); };
 $('#close-history').onclick = () => $('#history-dialog').close();

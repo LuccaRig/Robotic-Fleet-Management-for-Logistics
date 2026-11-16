@@ -63,6 +63,29 @@ TEST(FleetStateTest, LocalSensorUpdatesPreserveTransportSequenceAndRejectOldRead
     leitura.sequencia_sensor = 1; leitura.bateria = 100; EXPECT_FALSE(frota.atualizarLeituraSensores(leitura));
     EXPECT_EQ(frota.obter(1)->bateria,40);
 }
+TEST(FleetStateTest, AcceptsNewMissionAfterAnEarlierRevisionSensorOvertakesItsStatus) {
+    EstadoFrota frota;
+    ASSERT_TRUE(frota.registrarRobo(1, 1, {0, 0}));
+    EstadoAtualRobo estado;
+    estado.id = 1; estado.geracao = 1; estado.sequencia = 1; estado.revisao = 5;
+    estado.sequencia_sensor = 10; estado.conectado = true;
+    ASSERT_TRUE(frota.atualizar(estado));
+    auto leitura = estado;
+    leitura.sequencia_sensor = 11; leitura.posicao = {1, 0}; leitura.bateria = 70;
+    ASSERT_TRUE(frota.atualizarLeituraSensores(leitura));
+    estado.sequencia = 2; estado.revisao = 6; estado.id_missao = 7;
+    estado.estado = EstadoRobo::INDO_PARA_COLETA; estado.fase = FaseMissao::INDO_PARA_COLETA;
+    ASSERT_TRUE(frota.atualizar(estado));
+    const auto atual = *frota.obter(1);
+    EXPECT_EQ(atual.revisao, 6u);
+    EXPECT_EQ(atual.id_missao, 7);
+    EXPECT_EQ(atual.posicao, (Posicao{1, 0}));
+    EXPECT_EQ(atual.bateria, 70);
+    EXPECT_EQ(atual.sequencia_sensor, 11u);
+    leitura = atual; leitura.sequencia_sensor = 12;
+    ASSERT_TRUE(frota.atualizarLeituraSensores(leitura));
+}
+
 TEST(IpcTest, ZeroTimeoutConsumesQueuedFrameBeforePeerExit) {
     int sockets[2]; ASSERT_EQ(socketpair(AF_UNIX,SOCK_STREAM,0,sockets),0);
     CanalIpc receiver(sockets[0]);

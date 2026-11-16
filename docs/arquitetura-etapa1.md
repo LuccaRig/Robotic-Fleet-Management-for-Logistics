@@ -13,7 +13,8 @@ flowchart LR
     Aplicacao --> Logistica[Organizador da Logística: passo por evento]
     Logistica -->|comandos e eventos| Aplicacao
     Aplicacao --> Passagens[Controle de Passagens]
-    Aplicacao --> Hardware[Adaptador local de hardware]
+    Aplicacao --> Hardware[Hardware local ou canal de comandos físicos]
+    Hardware <-->|MQTT na tela unificada| Simulador[Processo de simulação: adaptador local existente]
     Aplicacao --> Gravador[Gravador de Eventos]
     Gravador --> Coletor[Thread do Coletor de Dados]
     Coletor --> Banco[(SQLite)]
@@ -23,9 +24,13 @@ O ciclo central recebe mensagens do Gestor, atualiza passagens e adaptador, entr
 
 O protocolo IPC usa enquadramento de quatro bytes e payload de até 64 KiB, com serialização explícita. Transporta inicialização, comandos e confirmações, sensores, snapshots, permissões e encerramento. Geração, sequência, missão e revisão permitem rejeitar mensagens antigas. O envio tem prazo de um segundo, a prontidão de dois e a comunicação/confirmação de três segundos.
 
-IPC conecta os processos locais da Etapa 1. A integração MQTT atual publica telemetria opcional da frota e recebe comandos de modo, destino manual, falha, bateria, inclusão de cargas e robôs e retomada de missões; a troca de setpoints e sensores com um simulador externo permanece pendente para a Etapa 2.
+IPC conecta a central aos processos dos robôs. A integração MQTT publica telemetria opcional da frota e recebe comandos de modo, destino manual, falha, bateria, inclusão de cargas e robôs e retomada de missões. Na tela unificada, o hardware simulado executa em outro processo, com `--simulador`, e a central usa `--simulador-mqtt` para trocar setpoints e sensores. Sem essa opção, o adaptador continua local.
 
-O módulo `IntegracaoMqtt`, em `communication/`, concentra a configuração do broker, os tópicos e a serialização JSON. O ciclo central fornece snapshots da frota e controla a inicialização e a parada da integração. O cliente acompanha conexão e desconexão por callbacks e utiliza a thread de rede da libmosquitto para comunicação, reconexão e renovação da assinatura de comandos. A recepção alimenta uma fila protegida por mutex; o ciclo central lê e valida o JSON com cJSON, verifica a geração nas operações sobre robôs existentes e executa os pedidos no domínio. Modo e destino aguardam confirmação por IPC. Os demais comandos confirmam a alteração dos sensores, a inclusão na logística, a criação do processo ou a autorização da retomada, conforme a operação. Repetições do mesmo pedido são deduplicadas em memória. Esses callbacks não alteram o domínio. Robôs desconectados também são publicados para atualizar os estados retidos. Os tópicos e as configurações estão descritos no [README](../README.md#telemetria-mqtt).
+`CanalSimulacaoMqtt` apenas envia mensagens e recebe sensores e anúncios por uma fila protegida. O processo do simulador executa um ciclo próprio de 20 ms e publica leituras por mudança e a cada 500 ms. Os anúncios de disponibilidade criam os processos dos robôs no Gestor, usando a geração fornecida pelo simulador. Não existem chamadas MQTT para avançar ciclos ou espelhar o status lógico da central. O protocolo binário existente é reutilizado, sem enviar rotas completas ao hardware.
+
+O avanço físico continua dependendo dos setpoints e da barreira dos integrantes de uma equipe. As confirmações vêm dos sensores, sem bloquear a central em cada chamada. O último comando físico pendente é reenviado a cada 500 ms; revisão e passo impedem repetir seus efeitos. A falta de atualizações ou de confirmação física por três segundos provoca encerramento controlado. A recarga é calculada pelo simulador a partir da posição e do destino de recarga.
+
+O módulo `IntegracaoMqtt`, em `communication/`, concentra a configuração do broker, os tópicos e a serialização JSON. O ciclo central fornece snapshots da frota e controla a inicialização e a parada da integração. O cliente acompanha conexão e desconexão por callbacks e utiliza a thread de rede da libmosquitto para comunicação, reconexão e renovação da assinatura de comandos. A recepção alimenta uma fila protegida por mutex; o ciclo central lê e valida o JSON com cJSON, verifica a geração nas operações sobre robôs existentes e executa os pedidos no domínio. Modo e destino aguardam confirmação por IPC. Os demais comandos confirmam a inclusão na logística, a autorização da retomada ou o encaminhamento de intervenções e disponibilização ao simulador, conforme a operação. As alterações físicas e a prontidão dos novos robôs são acompanhadas pela telemetria. Repetições do mesmo pedido são deduplicadas em memória. Esses callbacks não alteram o domínio. Robôs desconectados também são publicados para atualizar os estados retidos. Os tópicos e as configurações estão descritos no [README](../README.md#telemetria-mqtt).
 
 O mapa estático é carregado dos arquivos em `config/`, compartilhados com a tela de operação, sem publicação da geometria por MQTT. `--mapa` permite selecionar outro arquivo. A inclusão dinâmica de cargas reutiliza a validação das cargas iniciais e preserva a fila por baia. A retomada aplica primeiro os relatos já recebidos, valida a equipe com os sensores atuais e reutiliza a transição existente; comandos e eventos resultantes saem pelo ciclo normal da logística.
 
@@ -39,11 +44,11 @@ O modo de operação é independente do estado de movimento e acompanha as mensa
 |---|---|
 | Estado e sensores do robô | Mutex local protege os dados compartilhados pelas threads de navegação e status; leituras pendentes preservam movimentos para calcular distância. |
 | Estado corrente da frota | Mantido pelo Gestor e atualizado no ciclo central; snapshots são retornados por cópia, com validação de geração, revisão e sequência. |
-| Cargas, equipes, passagens e hardware local | Acesso exclusivo pelo ciclo central; não precisam de filas, callbacks ou mutexes entre módulos. |
+| Cargas, equipes e passagens | Acesso exclusivo pelo ciclo central. O hardware local acompanha esse ciclo; no modo MQTT, a simulação pertence exclusivamente ao processo remoto, cuja fila de recepção é protegida por mutex. |
 | Canais IPC | O Gestor central possui os sockets e processa mensagens sem thread própria; as threads do robô serializam seus envios. |
 | Eventos e SQLite | O gravador encaminha eventos à fila protegida do coletor, que os grava em sua thread. |
 
-Mutexes não são compartilhados entre processos. O ciclo central executa o tratamento de mensagens, a simulação e as decisões de logística em sequência. O estado de cada robô continua sincronizado entre suas duas threads; a fila do coletor protege o acesso entre a aplicação e a thread de persistência.
+Mutexes não são compartilhados entre processos. O ciclo central executa o tratamento de mensagens e as decisões de logística em sequência. O hardware local acompanha esse ciclo; na tela unificada, o simulador executa seu próprio ciclo em outro processo. O estado de cada robô continua sincronizado entre suas duas threads; a fila do coletor protege o acesso entre a aplicação e a thread de persistência.
 
 Períodos nominais: navegação de 100 ms, status de 500 ms e processamento da logística de 200 ms quando ociosa, com avanço antecipado quando há eventos. Esperas usam `steady_clock`; eventos usam época Unix em milissegundos. Esses períodos não constituem garantia de escalonamento em tempo real.
 
@@ -58,7 +63,7 @@ Períodos nominais: navegação de 100 ms, status de 500 ms e processamento da l
 
 ## Persistência e encerramento
 
-O banco padrão é `logs/etapa1.db`. A migração preserva registros e códigos de eventos antigos. As tabelas `runs`, `robot_events`, `cargo_transports` e `cargo_members` relacionam execução, eventos, missão, carga, baía, destino e participantes. Falha de escrita provoca encerramento controlado.
+O banco padrão é `logs/etapa1.db`. A migração preserva registros e códigos de eventos antigos. As tabelas `runs`, `robot_events`, `cargo_transports`, `cargo_members` e `robot_event_members` relacionam execução, eventos, missão, carga, baía, destino e participantes. Os participantes são associados ao evento coletivo desde a atribuição da missão, permitindo consultar o histórico de cada robô mesmo antes de uma coleta. Registros antigos recuperam os vínculos disponíveis por meio dos transportes existentes. Falha de escrita provoca encerramento controlado.
 
 A parada interrompe novos despachos, solicita encerramento dos robôs, recebe mensagens finais, recolhe os filhos e drena a fila do coletor. O gestor escala para `SIGTERM` após dois segundos e `SIGKILL` após três, quando necessário. Desconexão não provoca reinício automático.
 
@@ -75,6 +80,8 @@ ORDER BY t.mission_id, m.robot_id;
 ```
 
 ## Validação e entrega
+
+Em 16/11/2026, os builds e as suítes completas desta revisão passaram: MQTT desativado com 53 testes unitários e 11 de integração; MQTT ativado com 61 unitários e 14 de integração; e três testes Python de histórico. A validação com simulador separado confirmou o fluxo completo e corrigiu uma corrida entre sensores de uma revisão anterior e o status de uma nova missão. O [guia da interface](../visualization/README.md#validação) apresenta os cenários validados. A [conferência com o enunciado](conformidade-enunciado.md) registra o que ainda difere da especificação. Os resultados seguintes são o histórico da validação anterior.
 
 Em 15/11/2026, os builds e as suítes completas passaram com MQTT desativado (**50 testes unitários e 11 de integração**) e ativado (**58 unitários e 11 de integração**), no macOS. Uma verificação adicional com broker Mosquitto local confirmou comandos de modo e destino, inclusão de robôs e cargas, injeção e remoção de falhas, alteração de bateria, retomada de equipe suspensa, deduplicação, recusa de comandos retidos, reconexão e entrega registrada no SQLite. Comandos no [README](../README.md).
 

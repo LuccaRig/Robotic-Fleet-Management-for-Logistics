@@ -1,5 +1,6 @@
 #include "runtime.hpp"
 #include "scenarios.hpp"
+#include "hardware_mqtt.hpp"
 
 #include <csignal>
 #include <cstdlib>
@@ -10,6 +11,7 @@
 #include <thread>
 #include <vector>
 #include <unistd.h>
+#include <utility>
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
@@ -67,11 +69,17 @@ int main(int argc, char** argv) {
         std::string caminho_banco = "logs/etapa1.db";
         std::string caminho_mapa;
         bool modo_interativo = false;
+        bool modo_simulador = false;
+        bool simulador_mqtt = false;
 
         for (int indice = 1; indice < argc; ++indice) {
             const std::string argumento = argv[indice];
             if (argumento == "--interativo") {
                 modo_interativo = true;
+            } else if (argumento == "--simulador") {
+                modo_simulador = true;
+            } else if (argumento == "--simulador-mqtt") {
+                simulador_mqtt = true;
             } else if ((argumento == "--cenario" || argumento == "--banco" || argumento == "--mapa") && indice + 1 < argc) {
                 const std::string valor = argv[++indice];
                 if (argumento == "--cenario") {
@@ -86,7 +94,7 @@ int main(int argc, char** argv) {
             } else if (argumento == "--mqtt-port" && indice + 1 < argc) {
                 setenv("MQTT_PORT", argv[++indice], 1);
             } else if (argumento == "--ajuda") {
-                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--mapa ARQUIVO] [--interativo] [--mqtt-host HOST] [--mqtt-port PORTA]\n"
+                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--mapa ARQUIVO] [--interativo] [--simulador | --simulador-mqtt] [--mqtt-host HOST] [--mqtt-port PORTA]\n"
                           << "Cenários: " << nomesCenarios() << "\n";
                 return 0;
             } else {
@@ -104,7 +112,20 @@ int main(int argc, char** argv) {
                 caminho_mapa = (std::filesystem::path(executavel).parent_path().parent_path() / caminho_mapa).string();
             }
         }
-        AplicacaoCentral aplicacao(executavel, caminho_banco, criarCenario(nome_cenario, caminho_mapa));
+        if (modo_simulador && simulador_mqtt) throw std::invalid_argument("Escolha --simulador ou --simulador-mqtt");
+        auto cenario = criarCenario(nome_cenario, caminho_mapa);
+        if (modo_simulador) {
+            std::vector<EstadoAtualRobo> robos;
+            for (const auto& inicial : cenario.robos) {
+                EstadoAtualRobo estado;
+                estado.id = inicial.id;
+                estado.posicao = inicial.posicao;
+                robos.push_back(estado);
+            }
+            executarSimuladorMqtt(cenario.galpao, robos, [] { return !sinal_recebido; });
+            return 0;
+        }
+        AplicacaoCentral aplicacao(executavel, caminho_banco, std::move(cenario), simulador_mqtt);
         RoteiroCenario roteiro(nome_cenario);
         aplicacao.iniciar();
 

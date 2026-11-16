@@ -19,7 +19,17 @@ public:
     bool atualizar(EstadoAtualRobo estado) {
         auto it = robos_.find(estado.id);
         // Geração e sequências impedem que mensagens atrasadas restaurem estado antigo.
-        if (it == robos_.end() || estado.geracao != it->second.geracao || estado.sequencia <= it->second.sequencia || estado.revisao < it->second.revisao || estado.sequencia_sensor < it->second.sequencia_sensor || (!it->second.conectado && it->second.sequencia > 0)) return false;
+        if (it == robos_.end() || estado.geracao != it->second.geracao || estado.sequencia <= it->second.sequencia || estado.revisao < it->second.revisao || (!it->second.conectado && it->second.sequencia > 0)) return false;
+        if (estado.sequencia_sensor < it->second.sequencia_sensor) {
+            if (estado.revisao == it->second.revisao) return false;
+            estado.posicao = it->second.posicao;
+            estado.bateria = it->second.bateria;
+            estado.falha = it->second.falha;
+            estado.acoplado = it->second.acoplado;
+            estado.sequencia_sensor = it->second.sequencia_sensor;
+            if (estado.distancia < it->second.distancia) estado.distancia = it->second.distancia;
+            estado.disponivel = disponivelParaCarga(estado);
+        }
         it->second = std::move(estado); return true;
     }
     bool atualizarLeituraSensores(EstadoAtualRobo estado) {

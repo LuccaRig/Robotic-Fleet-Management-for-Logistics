@@ -106,8 +106,10 @@ def history(database, query):
         if view == "eventos":
             sql = "SELECT id, robot_id, cargo_id, mission_id, description, occurred_at_ms FROM robot_events WHERE run_id=?"
             if robot is not None:
-                sql += " AND robot_id=?"
-                params.append(robot)
+                sql += """ AND (robot_id=? OR (robot_id<0 AND EXISTS (
+                    SELECT 1 FROM robot_event_members m WHERE m.event_id=robot_events.id
+                    AND m.robot_id=?)))"""
+                params.extend([robot, robot])
             sql += " ORDER BY id DESC LIMIT 51 OFFSET ?"
         else:
             sql = """SELECT t.*, (SELECT GROUP_CONCAT(m.robot_id, ', ') FROM cargo_members m
@@ -252,15 +254,20 @@ def main():
         bridge.client.loop_start()
         stack.callback(bridge.client.loop_stop)
         stack.callback(bridge.client.disconnect)
+        simulator_log = stack.enter_context((logs / "operacao-simulador.log").open("a"))
+        simulator = subprocess.Popen([str(executable), "--simulador", "--cenario", args.cenario, "--mapa", str(map_path),
+                                      "--mqtt-host", "127.0.0.1", "--mqtt-port", str(port)],
+                                     cwd=temporary, stdout=simulator_log, stderr=subprocess.STDOUT)
+        stack.callback(stop, simulator)
         central_log = stack.enter_context((logs / "operacao-central.log").open("a"))
         process = subprocess.Popen([str(executable), "--cenario", args.cenario, "--mapa", str(map_path), "--banco", str(database),
-                                    "--interativo", "--mqtt-host", "127.0.0.1", "--mqtt-port", str(port)],
+                                    "--interativo", "--simulador-mqtt", "--mqtt-host", "127.0.0.1", "--mqtt-port", str(port)],
                                    cwd=temporary, stdin=subprocess.PIPE, stdout=central_log, stderr=subprocess.STDOUT, text=True)
         stack.callback(stop, process)
         config = {"mapa": map_path.read_text(), "cenario": args.cenario}
         server = ThreadingHTTPServer(("127.0.0.1", args.porta), partial(Handler, bridge=bridge, config=config, process=process, database=database))
         stack.callback(server.server_close)
-        print(f"\nTela de operação disponível em http://127.0.0.1:{args.porta}\nCtrl+C encerra a tela, a central e o broker.\n", flush=True)
+        print(f"\nTela de operação disponível em http://127.0.0.1:{args.porta}\nCtrl+C encerra a tela, a central, o simulador e o broker.\n", flush=True)
         server.serve_forever()
 
 

@@ -63,6 +63,13 @@ void ColetorDados::createTable() {
                 run_id INTEGER NOT NULL, mission_id INTEGER NOT NULL, robot_id INTEGER NOT NULL,
                 PRIMARY KEY(run_id,mission_id,robot_id),
                 FOREIGN KEY(run_id,mission_id) REFERENCES cargo_transports(run_id,mission_id));
+            CREATE TABLE IF NOT EXISTS robot_event_members (
+                event_id INTEGER NOT NULL REFERENCES robot_events(id), robot_id INTEGER NOT NULL,
+                PRIMARY KEY(event_id,robot_id));
+            CREATE INDEX IF NOT EXISTS robot_event_members_by_robot ON robot_event_members(robot_id,event_id);
+            INSERT OR IGNORE INTO robot_event_members(event_id,robot_id)
+                SELECT e.id,m.robot_id FROM robot_events e JOIN cargo_members m
+                ON m.run_id=e.run_id AND m.mission_id=e.mission_id WHERE e.robot_id<0;
             PRAGMA user_version=1;
         )SQL");
         execute(db, "COMMIT");
@@ -125,6 +132,13 @@ void ColetorDados::writeEventToDatabase(const EventoRobo& e) {
         sqlite3_bind_int64(stmt.get(), 10, run_id); sqlite3_bind_int64(stmt.get(), 11, e.idCarga()); sqlite3_bind_int64(stmt.get(), 12, e.idMissao());
         sqlite3_bind_int64(stmt.get(), 13, e.geracao()); texto(stmt.get(), 14, e.origem()); sqlite3_bind_int64(stmt.get(), 15, e.sequenciaOrigem()); sqlite3_bind_int64(stmt.get(), 16, e.instanteOcorrencia());
         done(db, stmt.get()); stmt.reset();
+        if (sqlite3_changes(db) > 0 && e.idRobo() < 0) {
+            const auto event_id = sqlite3_last_insert_rowid(db);
+            for (const auto id : e.participantes()) {
+                auto member = prepare(db, "INSERT OR IGNORE INTO robot_event_members(event_id,robot_id) VALUES (?,?)");
+                sqlite3_bind_int64(member.get(), 1, event_id); sqlite3_bind_int(member.get(), 2, id); done(db, member.get());
+            }
+        }
         if (e.idMissao() > 0 && (e.tipo() == TipoEvento::CARGA_COLETADA || e.tipo() == TipoEvento::CARGA_ENTREGUE)) {
             auto transport = prepare(db, R"SQL(INSERT INTO cargo_transports
                 (run_id,mission_id,cargo_id,bay_id,destination,status,pickup_at_ms,delivered_at_ms)

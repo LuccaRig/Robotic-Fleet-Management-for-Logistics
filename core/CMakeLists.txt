@@ -12,6 +12,7 @@ add_library(core_lib
     src/route_planner.cpp
     src/logistics.cpp
     src/hardware.cpp
+    src/hardware_mqtt.cpp
     src/passages.cpp
     src/event_recorder.cpp
     src/runtime.cpp

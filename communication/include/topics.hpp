@@ -19,6 +19,10 @@ inline const char* commands() { return "fleet/commands"; }
 
 inline const char* commandResults() { return "fleet/commands/results"; }
 
+inline const char* simulatorCommands() { return "fleet/simulation/commands"; }
+
+inline const char* simulatorEvents() { return "fleet/simulation/events"; }
+
 }
 
 #endif

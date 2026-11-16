@@ -22,7 +22,7 @@ std::string caminhoMapaCenario(const std::string& nome) {
 Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa) {
     Cenario s{nome, carregarMapa(caminho_mapa.empty() ? caminhoMapaCenario(nome) : caminho_mapa), {carga(1,1)}, {{1,{2,5}}}};
     if (nome == "base") return s;
-    if (nome == "cooperativo") { s.cargos = {carga(1,2), carga(2,3), carga(3,4)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
+    if (nome == "cooperativo") { s.cargos = {carga(1,2,1,1), carga(2,1,2,2), carga(3,4,1,2), carga(4,3,2,1)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
     else if (nome == "disponibilidade") s.cargos = {carga(1,2)};
     else if (nome == "rota-equipe") { s.cargos = {carga(1,4)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
     else if (nome == "falhas") { s.cargos = {carga(1,2)}; s.robos = {{1,{2,12}},{2,{3,12}}}; }

@@ -18,6 +18,30 @@ TEST(StorageMigrationTest, PreservesLegacyRowsAndPersistsWholeTeam) {
     const auto count = [&](const char* sql) { sqlite3_stmt* s = nullptr; const int prepared = sqlite3_prepare_v2(db,sql,-1,&s,nullptr); if (prepared != SQLITE_OK) return -1; int value = -1; if (sqlite3_step(s) == SQLITE_ROW) value = sqlite3_column_int(s,0); sqlite3_finalize(s); return value; };
     EXPECT_EQ(count("SELECT COUNT(*) FROM robot_events"),3); EXPECT_EQ(count("SELECT COUNT(*) FROM robot_events WHERE description='preservado' AND run_id IS NULL"),1);
     EXPECT_EQ(count("SELECT COUNT(*) FROM cargo_members"),3); EXPECT_EQ(count("SELECT COUNT(*) FROM cargo_transports WHERE cargo_id=7 AND status='entregue'"),1);
+    EXPECT_EQ(count("SELECT COUNT(*) FROM robot_event_members"),6);
+    sqlite3_close(db); std::filesystem::remove(path);
+}
+
+TEST(StorageMigrationTest, PreservesTeamHistoryBeforePickupAndBackfillsExistingTransports) {
+    std::filesystem::create_directories(TEST_DB_DIRECTORY);
+    const auto path = std::string(TEST_DB_DIRECTORY) + "/historico_equipe_" + std::to_string(getpid()) + ".db";
+    std::filesystem::remove(path);
+    {
+        ColetorDados collector(path); collector.iniciar();
+        EventoRobo assigned(-1,1,1,{2,3},TipoEvento::MISSAO_ATRIBUIDA,"Equipe reservada", "Zona 1");
+        assigned.rastrear(1,1,0,"logistica",1,instanteUnixMs(),{1,2});
+        collector.enfileirarEvento(assigned); collector.parar();
+    }
+    sqlite3* db = nullptr; ASSERT_EQ(sqlite3_open(path.c_str(),&db),SQLITE_OK);
+    sqlite3_stmt* stmt = nullptr;
+    ASSERT_EQ(sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM robot_event_members WHERE robot_id=1",-1,&stmt,nullptr),SQLITE_OK);
+    ASSERT_EQ(sqlite3_step(stmt),SQLITE_ROW); EXPECT_EQ(sqlite3_column_int(stmt,0),1); sqlite3_finalize(stmt);
+    ASSERT_EQ(sqlite3_exec(db,"INSERT INTO cargo_transports VALUES(1,2,2,1,'Zona 1','entregue',1,2); INSERT INTO cargo_members VALUES(1,2,3); INSERT INTO robot_events(timestamp,robot_id,position_x,position_y,event_type,description,run_id,mission_id) VALUES('anterior',-1,2,3,7,'Entrega antiga',1,2); DROP TABLE robot_event_members;",nullptr,nullptr,nullptr),SQLITE_OK);
+    sqlite3_close(db);
+    { ColetorDados collector(path); collector.iniciar(); collector.parar(); }
+    ASSERT_EQ(sqlite3_open_v2(path.c_str(),&db,SQLITE_OPEN_READONLY,nullptr),SQLITE_OK);
+    ASSERT_EQ(sqlite3_prepare_v2(db,"SELECT COUNT(*) FROM robot_event_members WHERE robot_id=3",-1,&stmt,nullptr),SQLITE_OK);
+    ASSERT_EQ(sqlite3_step(stmt),SQLITE_ROW); EXPECT_EQ(sqlite3_column_int(stmt,0),1); sqlite3_finalize(stmt);
     sqlite3_close(db); std::filesystem::remove(path);
 }
 TEST(StorageMigrationTest, SurfacesWorkerWriteFailureAndMarksSessionFailed) {
