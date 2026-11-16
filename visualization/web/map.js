@@ -54,8 +54,8 @@ export class Warehouse {
     this.gates = new Map();
     this.full = [0, 0, map.width * CELL + PAD * 2, map.height * CELL + PAD * 2];
     this.view = [...this.full];
-    svg.innerHTML = `<defs><pattern id="floor-grid" width="${CELL}" height="${CELL}" patternUnits="userSpaceOnUse" x="${PAD}" y="${PAD}"><path d="M ${CELL} 0 H 0 V ${CELL}" fill="none" stroke="#dfe6d7" stroke-width=".7"/><circle cx="${CELL / 2}" cy="${CELL / 2}" r=".7" fill="#d5dfcd"/></pattern></defs><rect width="100%" height="100%" fill="#f4f6ef"/>`;
-    svg.append(element('rect', { x: PAD, y: PAD, width: map.width * CELL, height: map.height * CELL, rx: 6, fill: 'url(#floor-grid)', stroke: '#d7e0cf' }));
+    svg.innerHTML = `<defs><pattern id="floor-grid" width="${CELL}" height="${CELL}" patternUnits="userSpaceOnUse" x="${PAD}" y="${PAD}"><path d="M ${CELL} 0 H 0 V ${CELL}" fill="none" stroke="#d7dde6" stroke-width=".7"/><circle cx="${CELL / 2}" cy="${CELL / 2}" r=".7" fill="#cdd4df"/></pattern></defs><rect width="100%" height="100%" fill="#eff2f6"/>`;
+    svg.append(element('rect', { x: PAD, y: PAD, width: map.width * CELL, height: map.height * CELL, rx: 6, fill: 'url(#floor-grid)', stroke: '#cfd6e0' }));
     for (const wall of map.walls) {
       const [x, y] = wall.split(',').map(Number);
       svg.append(element('g', {}, `<rect class="map-wall" x="${PAD + x * CELL + 2}" y="${PAD + y * CELL + 2}" width="${CELL - 4}" height="${CELL - 4}" rx="3"/><path class="wall-top" d="M${PAD + x * CELL + 6} ${PAD + y * CELL + 6}h${CELL - 12}"/>`));
@@ -81,7 +81,7 @@ export class Warehouse {
     for (let x = 0; x < map.width; x++) svg.append(element('text', { x: PAD + (x + .5) * CELL, y: PAD - 13, class: 'map-axis' }, String(x)));
     for (let y = 0; y < map.height; y++) svg.append(element('text', { x: PAD - 18, y: PAD + (y + .5) * CELL + 3, class: 'map-axis' }, String(y)));
     this.cargoLayer = element('g');
-    this.destination = element('g', { class: 'map-destination', visibility: 'hidden' }, '<rect x="-15" y="-15" width="30" height="30" rx="5" fill="#15765b10" stroke="#15765b" stroke-width="1.5" stroke-dasharray="4 3"/><path d="M-7 0H7M0-7V7" stroke="#15765b" stroke-width="1.3"/><text class="map-label" y="-22">DESTINO</text>');
+    this.destination = element('g', { class: 'map-destination', visibility: 'hidden' }, '<rect x="-15" y="-15" width="30" height="30" rx="5" fill="#153c7610" stroke="#153c76" stroke-width="1.5" stroke-dasharray="4 3"/><path d="M-7 0H7M0-7V7" stroke="#153c76" stroke-width="1.3"/><text class="map-label" y="-22">DESTINO</text>');
     this.robotLayer = element('g');
     svg.append(this.destination, this.cargoLayer, this.robotLayer);
     this.fit();
@@ -115,7 +115,7 @@ export class Warehouse {
 
   drawZone(point, kind, label, glyph) {
     const { x, y } = center(point);
-    const color = kind === 'delivery' ? '#70a587' : kind === 'charger' ? '#b4a06d' : '#b6a37c';
+    const color = kind === 'delivery' ? '#7085a5' : kind === 'charger' ? '#b4a06d' : '#b6a37c';
     this.svg.append(element('g', {}, `<rect x="${x - 20}" y="${y - 20}" width="40" height="40" rx="7" fill="${color}18" stroke="${color}70"/><svg x="${x - 9}" y="${y - 9}" width="18" height="18" viewBox="0 0 24 24" color="${color}">${icon(glyph)}</svg><text class="map-label zone-${kind}" x="${x}" y="${y - 28}">${escape(label)}</text>`));
   }
 
@@ -156,7 +156,7 @@ export class Warehouse {
     for (const robot of data.robos) {
       let node = this.robots.get(robot.id);
       if (!node) {
-        node = element('g', { role: 'button', tabindex: '0' }, '<title></title><circle class="robot-selection" r="20"/><ellipse cy="9" rx="12" ry="5" fill="#33533316"/><rect x="-12" y="-7" width="4" height="7" rx="1.5" fill="#647467"/><rect x="8" y="-7" width="4" height="7" rx="1.5" fill="#647467"/><rect x="-12" y="3" width="4" height="7" rx="1.5" fill="#647467"/><rect x="8" y="3" width="4" height="7" rx="1.5" fill="#647467"/><rect class="robot-body" x="-10" y="-10" width="20" height="22" rx="6"/><path d="M-4-6H4" stroke="#c3ecd7" stroke-width="1.5"/><text class="robot-number" y="3"></text>');
+        node = element('g', { role: 'button', tabindex: '0' }, '<title></title><circle class="robot-selection" r="20"/><ellipse cy="9" rx="12" ry="5" fill="#33405316"/><rect x="-12" y="-7" width="4" height="7" rx="1.5" fill="#646a74"/><rect x="8" y="-7" width="4" height="7" rx="1.5" fill="#646a74"/><rect x="-12" y="3" width="4" height="7" rx="1.5" fill="#646a74"/><rect x="8" y="3" width="4" height="7" rx="1.5" fill="#646a74"/><rect class="robot-body" x="-10" y="-10" width="20" height="22" rx="6"/><path d="M-4-6H4" stroke="#c3d3ec" stroke-width="1.5"/><text class="robot-number" y="3"></text>');
         this.interactive(node, () => this.onRobot(robot.id));
         this.robots.set(robot.id, node);
         this.robotLayer.append(node);
@@ -183,7 +183,7 @@ export class Warehouse {
       if (!position) continue;
       let node = this.cargo.get(cargo.id);
       if (!node) {
-        node = element('g', { role: 'button', tabindex: '0' }, '<title></title><rect class="cargo-shape" x="-12" y="-10" width="24" height="23" rx="4" stroke-width="1.2"/><path d="M-12-4 0 2 12-4M0 2v11" fill="none" stroke="#ffffffa0"/><text class="cargo-id" y="-17" text-anchor="middle" font-size="9" font-weight="600" fill="#829374"></text><text class="cargo-size" y="-2" text-anchor="middle" font-size="8" fill="#fff"></text>');
+        node = element('g', { role: 'button', tabindex: '0' }, '<title></title><rect class="cargo-shape" x="-12" y="-10" width="24" height="23" rx="4" stroke-width="1.2"/><path d="M-12-4 0 2 12-4M0 2v11" fill="none" stroke="#ffffffa0"/><text class="cargo-id" y="-17" text-anchor="middle" font-size="9" font-weight="600" fill="#748093"></text><text class="cargo-size" y="-2" text-anchor="middle" font-size="8" fill="#fff"></text>');
         this.interactive(node, () => this.onCargo(cargo.id));
         this.cargo.set(cargo.id, node);
         this.cargoLayer.append(node);
@@ -195,7 +195,7 @@ export class Warehouse {
       node.setAttribute('class', `cargo-marker${selectedCargo === cargo.id ? ' selected' : ''}`);
       node.setAttribute('aria-pressed', String(selectedCargo === cargo.id));
       node.setAttribute('aria-label', `Carga ${cargo.id}, tamanho ${cargo.tamanho}, ${cargo.estado}`);
-      $('.cargo-shape', node).setAttribute('fill', cargo.estado === 'Entregue' ? '#86b49a' : cargo.estado === 'Suspensa' ? '#c98070' : '#c4b184');
+      $('.cargo-shape', node).setAttribute('fill', cargo.estado === 'Entregue' ? '#8698b4' : cargo.estado === 'Suspensa' ? '#c98070' : '#c4b184');
       $('.cargo-shape', node).setAttribute('stroke', '#a38e6260');
       $('.cargo-id', node).textContent = `C${cargo.id}`;
       $('.cargo-size', node).textContent = '•'.repeat(cargo.tamanho);

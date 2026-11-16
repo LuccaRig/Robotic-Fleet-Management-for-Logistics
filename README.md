@@ -21,7 +21,7 @@ O banco padrão é `logs/etapa1.db`. Use `--banco logs/etapa1-demo.db` para outr
 
 ## Tela de operação e simulação
 
-A aplicação web **Órbita**, isolada em `visualization/`, reúne mapa interativo, frota, controle manual, intervenções na simulação, logística e consulta de histórico. Usa o mapa compartilhado, os comandos MQTT existentes e leitura do SQLite. O navegador não implementa regras de navegação ou alocação.
+A aplicação web local, isolada em `visualization/`, reúne mapa interativo, frota, controle manual, intervenções na simulação, logística e consulta de histórico. Usa o mapa compartilhado, os comandos MQTT existentes e leitura do SQLite. O navegador não implementa regras de navegação ou alocação.
 
 Com Python, Mosquitto e o executável compilado com MQTT ativado, a demo pode ser iniciada por um único comando:
 

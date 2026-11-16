@@ -18,7 +18,6 @@ const paths = {
   hand: '<path d="M8 12V6a2 2 0 0 1 4 0v5-7a2 2 0 0 1 4 0v7-5a2 2 0 0 1 4 0v10a6 6 0 0 1-6 6h-2c-2 0-4-1-5-3l-4-6a2 2 0 0 1 3-2l2 2"/>',
   alert: '<path d="m10.3 4-8 14a2 2 0 0 0 1.7 3h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/>',
   play: '<path d="m8 4 12 8-12 8Z"/>',
-  help: '<circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 1 1 5 2c-1 .5-2 1-2 3M12 17h.01"/>',
   'chevron-left': '<path d="m15 5-7 7 7 7"/>',
   'chevron-right': '<path d="m9 5 7 7-7 7"/>',
 };
@@ -31,8 +30,8 @@ export const icons = root => $$('[data-icon]', root).forEach(node => { node.inne
 export const number = value => Number(value || 0).toLocaleString('pt-BR');
 export const robotName = id => `AMR-${String(id).padStart(2, '0')}`;
 export const coordinates = value => value ? `(${value.x}, ${value.y})` : 'Sem destino';
-export const robotTone = robot => !robot.conectado ? 'muted' : robot.falha ? 'red' : robot.bateria <= 15 || robot.estado.includes('recarga') || robot.estado.includes('Recarregando') ? 'amber' : robot.modo === 'manual' ? 'purple' : 'teal';
-export const cargoTone = cargo => cargo.estado === 'Entregue' ? 'teal' : cargo.estado === 'Suspensa' ? 'red' : cargo.estado === 'Pendente' ? 'muted' : 'blue';
+export const robotTone = robot => !robot.conectado ? 'muted' : robot.falha ? 'red' : robot.bateria <= 15 || robot.estado.includes('recarga') || robot.estado.includes('Recarregando') ? 'amber' : robot.modo === 'manual' ? 'purple' : 'blue';
+export const cargoTone = cargo => cargo.estado === 'Suspensa' ? 'red' : cargo.estado === 'Pendente' ? 'muted' : 'blue';
 export const timestamp = value => value ? new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'medium', timeZone: 'America/Sao_Paulo' }).format(new Date(value)) : 'Ainda não registrada';
 
 export async function request(path, options = {}) {
@@ -45,11 +44,11 @@ export async function request(path, options = {}) {
 export function toast(message, tone = 'success', retry) {
   const node = document.createElement('div');
   node.className = `toast ${tone}`;
-  node.innerHTML = `${icon(tone === 'success' ? 'check' : 'alert')}<div><strong>${tone === 'success' ? 'Tudo certo' : 'Atenção à operação'}</strong><p>${escape(message)}</p></div><button class="icon-button" aria-label="Fechar aviso">${icon('close')}</button>`;
+  node.innerHTML = `${icon(tone === 'success' ? 'check' : 'alert')}<div><strong>${tone === 'success' ? 'Confirmação' : 'Aviso'}</strong><p>${escape(message)}</p></div><button class="button secondary icon-button compact" aria-label="Fechar aviso">${icon('close')}</button>`;
   $('button', node).onclick = () => node.remove();
   if (retry) {
     const button = document.createElement('button');
-    button.className = 'text-button';
+    button.className = 'button secondary compact';
     button.textContent = 'Reenviar';
     button.onclick = () => { node.remove(); retry(); };
     $('div', node).append(button);

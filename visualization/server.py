@@ -209,7 +209,7 @@ def stop(process):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Órbita: tela unificada de operação e simulação local")
+    parser = argparse.ArgumentParser(description="Tela unificada de operação e simulação local")
     parser.add_argument("--executavel", default="build-mqtt/app/simulador_exec")
     parser.add_argument("--cenario", default="cooperativo", choices=["base", "cooperativo", "disponibilidade", "passagens", "rota-equipe", "falhas", "recarga", "processos"])
     parser.add_argument("--mapa")
@@ -260,7 +260,7 @@ def main():
         config = {"mapa": map_path.read_text(), "cenario": args.cenario}
         server = ThreadingHTTPServer(("127.0.0.1", args.porta), partial(Handler, bridge=bridge, config=config, process=process, database=database))
         stack.callback(server.server_close)
-        print(f"\nÓrbita está disponível em http://127.0.0.1:{args.porta}\nCtrl+C encerra a tela, a central e o broker.\n", flush=True)
+        print(f"\nTela de operação disponível em http://127.0.0.1:{args.porta}\nCtrl+C encerra a tela, a central e o broker.\n", flush=True)
         server.serve_forever()
 
 

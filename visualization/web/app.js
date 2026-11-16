@@ -4,8 +4,8 @@ import { parseMap, Warehouse } from './map.js';
 icons(document);
 const state = { robos: [], cargas: [], missoes: [], passagens: [], atual: false };
 const pending = new Map();
-const fleetNodes = new Map();
-let map, warehouse, selectedRobot = null, selectedCargo = null, view = 'operacao', modalKind;
+const robotNodes = new Map();
+let map, warehouse, selectedRobot = null, selectedCargo = null, modalKind;
 let historyView = 'eventos', historyPage = 0, historyBusy = false, historyEpoch = 0;
 let modalEpoch = 0;
 let cargoSignature = '', historyRobotSignature = '';
@@ -17,27 +17,6 @@ const missionFor = cargo => state.missoes.find(mission => mission.id === cargo.i
 const teamFor = cargo => missionFor(cargo)?.integrantes.map(robotName).join(', ') || 'Aguardando equipe';
 const pill = (label, tone) => `<span class="status-pill ${tone}">${escape(label)}</span>`;
 const empty = (title, description, glyph = 'box') => `<div class="empty-state">${icon(glyph)}<strong>${escape(title)}</strong><p>${escape(description)}</p></div>`;
-
-function switchView(next) {
-  view = next;
-  window.scrollTo(0, 0);
-  for (const name of ['operacao', 'cargas', 'historico']) {
-    $(`#view-${name}`).hidden = next !== name;
-    $(`#view-${name}`).classList.toggle('active', next === name);
-    const button = $(`[data-view="${name}"]`);
-    button.classList.toggle('active', next === name);
-    if (next === name) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
-  }
-  const copy = {
-    operacao: ['Toda a operação.<br><span>Em perfeita sincronia.</span>', 'Robôs, cargas e decisões. Tudo no mesmo lugar.'],
-    cargas: ['Cada carga.<br><span>No seu devido lugar.</span>', 'Acompanhe filas, equipes e entregas em um só fluxo.'],
-    historico: ['O caminho fica.<br><span>A história também.</span>', 'Eventos e transportes com a rastreabilidade de cada movimento.'],
-  }[next];
-  $('#page-title').innerHTML = copy[0];
-  $('#page-description').textContent = copy[1];
-  warehouse?.setTargeting(false);
-  if (next === 'historico') loadHistory();
-}
 
 function selectRobot(id) {
   selectedRobot = id;
@@ -66,47 +45,45 @@ function renderConnection() {
 }
 
 function renderMetrics() {
-  const connected = state.robos.filter(robot => robot.conectado).length;
-  const available = state.robos.filter(robot => robot.disponivel).length;
   const pendingCargo = state.cargas.filter(cargo => cargo.estado === 'Pendente').length;
   const delivered = state.cargas.filter(cargo => cargo.estado === 'Entregue').length;
   const active = state.cargas.filter(cargo => !['Pendente', 'Entregue', 'Suspensa'].includes(cargo.estado)).length;
-  const percent = state.cargas.length ? Math.round(delivered / state.cargas.length * 100) : 0;
   const alerts = state.robos.filter(robot => robot.falha || !robot.conectado || robot.bateria <= 15).length;
-  $('#metric-robots').textContent = number(connected);
-  $('#metric-robots-total').textContent = `/ ${number(state.robos.length)}`;
-  $('#metric-availability').textContent = `${available} ${available === 1 ? 'disponível para cargas' : 'disponíveis para cargas'}`;
   $('#metric-active').textContent = number(active);
-  $('#metric-pending').textContent = pendingCargo ? `${pendingCargo} ${pendingCargo === 1 ? 'carga aguardando na fila' : 'cargas aguardando na fila'}` : 'Nenhuma carga na fila';
+  $('#metric-pending').textContent = `${number(pendingCargo)} na fila`;
   $('#metric-delivered').textContent = number(delivered);
-  $('#metric-progress').textContent = `${percent}% de ${number(state.cargas.length)} cargas`;
-  $('#metric-progress-bar').style.width = `${percent}%`;
+  $('#metric-total').textContent = `de ${number(state.cargas.length)}`;
   $('#metric-distance').textContent = number(state.robos.reduce((sum, robot) => sum + robot.distancia, 0));
-  $('#metric-alerts').textContent = alerts ? `${alerts} ${alerts === 1 ? 'robô precisa de atenção' : 'robôs precisam de atenção'}` : 'Nenhum alerta ativo';
+  $('#metric-alerts').textContent = number(alerts);
+  $('#alerts-metric').classList.toggle('has-alerts', alerts > 0);
 }
 
-function renderFleet() {
-  $('#fleet-count').textContent = number(state.robos.length);
-  if (state.robos.length && !fleetNodes.size) $('#fleet-list').replaceChildren();
+function renderRobotList() {
+  const list = $('#robot-list');
+  $('#robot-count').textContent = number(state.robos.length);
+  if (state.robos.length && !robotNodes.size) list.replaceChildren();
   for (const robot of state.robos) {
-    let node = fleetNodes.get(robot.id);
+    let node = robotNodes.get(robot.id);
     if (!node) {
       node = document.createElement('button');
-      node.className = 'fleet-item';
-      node.innerHTML = `<span class="fleet-symbol">${icon('robot')}</span><span><strong></strong><span class="fleet-state"></span></span><span class="fleet-battery"></span>`;
+      node.type = 'button';
+      node.className = 'button secondary robot-row';
+      node.innerHTML = `<span class="robot-row-icon">${icon('robot')}</span><span class="robot-row-info"><strong></strong><span class="robot-row-state"></span></span><span class="robot-row-battery"></span>`;
       node.onclick = () => selectRobot(robot.id);
-      fleetNodes.set(robot.id, node);
-      $('#fleet-list').append(node);
+      robotNodes.set(robot.id, node);
+      list.append(node);
     }
-    node.classList.toggle('selected', selectedRobot === robot.id);
-    node.setAttribute('aria-pressed', String(selectedRobot === robot.id));
-    node.setAttribute('aria-label', `${robotName(robot.id)}, ${robot.estado}, bateria ${robot.bateria}%`);
-    $('.fleet-symbol', node).className = `fleet-symbol ${robotTone(robot)}`;
+    node.setAttribute('aria-pressed', String(robot.id === selectedRobot));
+    node.setAttribute('aria-label', `${robotName(robot.id)}, ${robot.conectado ? robot.estado : 'Desconectado'}, bateria ${robot.bateria}%`);
+    node.title = node.getAttribute('aria-label');
+    $('.robot-row-icon', node).className = `robot-row-icon ${robotTone(robot)}`;
     $('strong', node).textContent = robotName(robot.id);
-    $('.fleet-state', node).textContent = robot.conectado ? robot.estado : 'Desconectado';
-    $('.fleet-battery', node).textContent = `${robot.bateria}%`;
+    $('.robot-row-state', node).textContent = robot.conectado ? robot.estado : 'Desconectado';
+    $('.robot-row-state', node).className = `robot-row-state ${robotTone(robot)}`;
+    $('.robot-row-battery', node).textContent = `${robot.bateria}%`;
   }
-  for (const [id, node] of fleetNodes) if (!state.robos.some(robot => robot.id === id)) { node.remove(); fleetNodes.delete(id); }
+  for (const [id, node] of robotNodes) if (!state.robos.some(robot => robot.id === id)) { node.remove(); robotNodes.delete(id); }
+  if (!state.robos.length && !list.children.length) list.innerHTML = '<p class="list-empty">Nenhum robô cadastrado.</p>';
   const signature = state.robos.map(robot => robot.id).join(',');
   if (historyRobotSignature !== signature) {
     const previous = $('#history-robot').value;
@@ -173,15 +150,15 @@ function renderCargo() {
   cargoSignature = signature;
   const filter = $('#cargo-filter').value;
   const cargos = state.cargas.filter(cargo => filter === 'todas' || (filter === 'pendentes' && cargo.estado === 'Pendente') || (filter === 'entregues' && cargo.estado === 'Entregue') || (filter === 'suspensas' && cargo.estado === 'Suspensa') || (filter === 'ativas' && !['Pendente', 'Entregue', 'Suspensa'].includes(cargo.estado)));
-  $('#cargo-table').innerHTML = cargos.length ? `<table><thead><tr><th>Carga</th><th>Origem e destino</th><th>Equipe</th><th>Situação</th><th>Operação</th></tr></thead><tbody>${cargos.map(cargo => `<tr${selectedCargo === cargo.id ? ' class="selected-cargo-row"' : ''}><td><span class="table-glyph">${icon('box')}<span><strong>Carga ${cargo.id}</strong><small>${cargo.tamanho} ${cargo.tamanho === 1 ? 'robô necessário' : 'robôs necessários'}</small></span></span></td><td>Baia ${cargo.id_baia} → Destino ${cargo.id_destino}</td><td>${escape(teamFor(cargo))}<small>${cargo.id_missao ? `Missão ${cargo.id_missao}` : 'Sem missão atribuída'}</small></td><td>${pill(cargo.estado, cargoTone(cargo))}${cargo.motivo ? `<small>${escape(cargo.motivo)}</small>` : ''}</td><td><button class="text-button" data-locate="${cargo.id}">${icon('target')}Localizar</button></td></tr>`).join('')}</tbody></table>` : empty('Nenhuma carga por aqui', state.cargas.length ? 'Nenhuma carga corresponde ao filtro selecionado.' : 'Adicione uma carga para iniciar um novo fluxo logístico.');
-  $('#cargo-preview').innerHTML = state.cargas.length ? state.cargas.slice(-3).map(cargo => `<article class="cargo-tile"><div><span class="cargo-glyph">${icon('box')}</span><div><strong>Carga ${String(cargo.id).padStart(2, '0')}</strong><small>Equipe de ${cargo.tamanho} ${cargo.tamanho === 1 ? 'robô' : 'robôs'}</small></div></div><div class="cargo-route">Baia ${cargo.id_baia}${icon('arrow')}Destino ${cargo.id_destino}</div><div class="cargo-bottom">${pill(cargo.estado, cargoTone(cargo))}<button class="text-button" data-locate="${cargo.id}">No mapa${icon('arrow')}</button></div></article>`).join('') : '<p class="inline-empty">O galpão está pronto. Adicione uma carga para colocar a frota em movimento.</p>';
+  $('#cargo-table').innerHTML = cargos.length ? `<table><thead><tr><th>Carga</th><th>Origem e destino</th><th>Equipe</th><th>Situação</th><th>Operação</th></tr></thead><tbody>${cargos.map(cargo => `<tr${selectedCargo === cargo.id ? ' class="selected-cargo-row"' : ''}><td><span class="table-glyph">${icon('box')}<span><strong>Carga ${cargo.id}</strong><small>${cargo.tamanho} ${cargo.tamanho === 1 ? 'robô necessário' : 'robôs necessários'}</small></span></span></td><td>Baia ${cargo.id_baia} → Destino ${cargo.id_destino}</td><td>${escape(teamFor(cargo))}<small>${cargo.id_missao ? `Missão ${cargo.id_missao}` : 'Sem missão atribuída'}</small></td><td>${pill(cargo.estado, cargoTone(cargo))}${cargo.motivo ? `<small>${escape(cargo.motivo)}</small>` : ''}</td><td><button class="button secondary compact" data-locate="${cargo.id}">${icon('target')}Localizar</button></td></tr>`).join('')}</tbody></table>` : empty('Nenhuma carga', state.cargas.length ? 'Nenhuma carga corresponde ao filtro selecionado.' : 'Nenhuma carga cadastrada na execução atual.');
   $$('[data-locate]').forEach(button => {
     button.onclick = () => {
       selectedCargo = Number(button.dataset.locate);
       const cargo = state.cargas.find(item => item.id === selectedCargo);
       const team = missionFor(cargo)?.integrantes;
       if (team?.length) selectedRobot = team[0];
-      switchView('operacao');
+      $('#cargo-dialog').close();
+      warehouse.setTargeting(false);
       warehouse.fit();
       render();
       $('#warehouse').scrollIntoView({ block: 'center' });
@@ -192,7 +169,7 @@ function renderCargo() {
 function render() {
   renderConnection();
   renderMetrics();
-  renderFleet();
+  renderRobotList();
   renderInspector();
   renderCargo();
   warehouse?.render(state, selectedRobot, selectedCargo);
@@ -260,16 +237,16 @@ async function poll() {
 }
 
 async function loadHistory() {
-  if (view !== 'historico' || historyBusy) return;
+  if (!$('#history-dialog').open || historyBusy) return;
   historyBusy = true;
   const epoch = historyEpoch;
   try {
     const data = await request(`/api/history?visao=${historyView}&pagina=${historyPage}&robo=${encodeURIComponent($('#history-robot').value)}`);
-    if (epoch !== historyEpoch) return;
+    if (epoch !== historyEpoch || !$('#history-dialog').open) return;
     $('#history-note').textContent = 'Registros da execução atual, com data e hora de Brasília.';
-    if (!data.itens.length) $('#history-table').innerHTML = empty('O histórico está começando', historyView === 'eventos' ? 'Os eventos da operação aparecerão aqui conforme forem registrados.' : 'Os transportes aparecerão quando uma carga for coletada.', 'history');
+    if (!data.itens.length) $('#history-table').innerHTML = empty('Nenhum registro', historyView === 'eventos' ? 'Os eventos da operação aparecerão aqui conforme forem registrados.' : 'Os transportes aparecerão quando uma carga for coletada.', 'history');
     else if (historyView === 'eventos') $('#history-table').innerHTML = `<table><thead><tr><th>Data e hora</th><th>Robô</th><th>Evento</th><th>Missão / carga</th></tr></thead><tbody>${data.itens.map(item => `<tr><td>${timestamp(item.occurred_at_ms)}</td><td>${item.robot_id >= 0 ? robotName(item.robot_id) : 'Central'}</td><td>${escape(item.description)}</td><td>${item.mission_id ? `M${item.mission_id} / C${item.cargo_id}` : 'Sem missão'}</td></tr>`).join('')}</tbody></table>`;
-    else $('#history-table').innerHTML = `<table><thead><tr><th>Carga</th><th>Rota</th><th>Robôs participantes</th><th>Coleta</th><th>Entrega</th><th>Situação</th></tr></thead><tbody>${data.itens.map(item => `<tr><td><strong>Carga ${item.cargo_id}</strong><small>Missão ${item.mission_id}</small></td><td>Baia ${item.bay_id}<small>Destino ${escape(item.destination)}</small></td><td>${escape(item.robos || 'Equipe não registrada')}</td><td>${timestamp(item.pickup_at_ms)}</td><td>${timestamp(item.delivered_at_ms)}</td><td>${pill(item.status === 'entregue' ? 'Entregue' : 'Em transporte', item.status === 'entregue' ? 'teal' : 'blue')}</td></tr>`).join('')}</tbody></table>`;
+    else $('#history-table').innerHTML = `<table><thead><tr><th>Carga</th><th>Rota</th><th>Robôs participantes</th><th>Coleta</th><th>Entrega</th><th>Situação</th></tr></thead><tbody>${data.itens.map(item => `<tr><td><strong>Carga ${item.cargo_id}</strong><small>Missão ${item.mission_id}</small></td><td>Baia ${item.bay_id}<small>Destino ${escape(item.destination)}</small></td><td>${escape(item.robos || 'Equipe não registrada')}</td><td>${timestamp(item.pickup_at_ms)}</td><td>${timestamp(item.delivered_at_ms)}</td><td>${pill(item.status === 'entregue' ? 'Entregue' : 'Em transporte', 'blue')}</td></tr>`).join('')}</tbody></table>`;
     $('#history-page').textContent = `Página ${historyPage + 1}`;
     $('#history-prev').disabled = historyPage === 0;
     $('#history-next').disabled = !data.tem_mais;
@@ -286,28 +263,22 @@ function resetHistory() { historyPage = 0; historyEpoch++; loadHistory(); }
 function openModal(kind) {
   modalEpoch++;
   modalKind = kind;
-  const guide = kind === 'guia';
-  $('#modal-title').textContent = guide ? 'Um galpão, uma visão.' : kind === 'carga' ? 'O próximo movimento.' : 'Mais um para a equipe.';
-  $('#modal-eyebrow').textContent = guide ? 'GUIA DA OPERAÇÃO' : kind === 'carga' ? 'ADICIONAR CARGA' : 'ADICIONAR ROBÔ';
-  $('#modal-description').textContent = guide ? 'A operação e a simulação trabalham juntas. Você acompanha e intervém; a central coordena a frota.' : kind === 'carga' ? 'Escolha a baia, o destino e o tamanho da equipe. A carga entra no fim da fila e a central cuida do transporte.' : 'Escolha uma posição livre fora das passagens. O novo robô entra na frota assim que estiver pronto.';
+  $('#modal-title').textContent = kind === 'carga' ? 'Adicionar carga' : 'Adicionar robô';
+  $('#modal-description').textContent = kind === 'carga' ? 'Informe a baia, o destino e o número de robôs necessários. A carga será adicionada ao fim da fila.' : 'Informe a identificação e a posição inicial do robô, fora das passagens.';
   const nextId = Math.max(0, ...(kind === 'carga' ? state.cargas : state.robos).map(item => item.id)) + 1;
   const idField = `<label>Identificação<input name="id_entidade" type="number" min="${kind === 'carga' ? 1 : 0}" max="${kind === 'carga' ? Number.MAX_SAFE_INTEGER : 2147483647}" value="${nextId}" required></label>`;
-  if (guide) $('#modal-fields').innerHTML = `<div class="guide-step full"><b>1</b><div><strong>Veja o galpão em movimento</strong><p>Selecione um robô no mapa ou na lista para acompanhar bateria, posição e missão. Arraste o mapa para navegar e use os botões de zoom.</p></div></div><div class="guide-step full"><b>2</b><div><strong>Assuma o controle quando precisar</strong><p>Com o robô livre, ative o modo manual e escolha o destino. Um marcador indica o destino; ele não representa uma rota calculada.</p></div></div><div class="guide-step full"><b>3</b><div><strong>Explore situações reais</strong><p>Adicione cargas e robôs, gere um defeito ou reduza uma bateria. Recupere os integrantes antes de retomar uma missão suspensa.</p></div></div><div class="guide-step full"><b>4</b><div><strong>Entenda cada resultado</strong><p>Consulte a logística e o histórico. Mensagens confirmam o que a central aceitou e explicam as operações recusadas.</p></div></div>`;
-  else if (kind === 'carga') $('#modal-fields').innerHTML = `${idField}<label>Robôs necessários<select name="tamanho">${[1, 2, 3, 4].map(size => `<option value="${size}">${size} ${size === 1 ? 'robô' : 'robôs'}</option>`).join('')}</select></label><label>Baia de origem<select name="id_baia">${map.bays.map(point => `<option value="${point.id}">Baia ${point.id}</option>`).join('')}</select></label><label>Destino de entrega<select name="id_destino">${map.destinations.map(point => `<option value="${point.id}">Destino ${point.id}</option>`).join('')}</select></label>`;
+  if (kind === 'carga') $('#modal-fields').innerHTML = `${idField}<label>Robôs necessários<select name="tamanho">${[1, 2, 3, 4].map(size => `<option value="${size}">${size} ${size === 1 ? 'robô' : 'robôs'}</option>`).join('')}</select></label><label>Baia de origem<select name="id_baia">${map.bays.map(point => `<option value="${point.id}">Baia ${point.id}</option>`).join('')}</select></label><label>Destino de entrega<select name="id_destino">${map.destinations.map(point => `<option value="${point.id}">Destino ${point.id}</option>`).join('')}</select></label>`;
   else {
     let initial;
     for (let y = 0; y < map.height && !initial; y++) for (let x = 0; x < map.width && !initial; x++) if (!map.walls.has(`${x},${y}`) && !map.passages.some(passage => passage.cells.some(point => point.x === x && point.y === y))) initial = { x, y };
     $('#modal-fields').innerHTML = `${idField}<div></div><label>Posição X<input name="x" type="number" min="0" max="${map.width - 1}" value="${initial?.x ?? 0}" required></label><label>Posição Y<input name="y" type="number" min="0" max="${map.height - 1}" value="${initial?.y ?? 0}" required></label>`;
   }
-  $('#modal-submit').hidden = guide;
   $('#modal-submit').disabled = false;
   $('#modal-submit').innerHTML = `Adicionar${icon('arrow')}`;
-  $('#modal-cancel').textContent = guide ? 'Entendi, vamos operar' : 'Cancelar';
   $('#modal-error').hidden = true;
   $('#modal').showModal();
 }
 
-$$('[data-view]').forEach(button => { button.onclick = () => switchView(button.dataset.view); });
 $$('[data-open]').forEach(button => { button.onclick = () => openModal(button.dataset.open); button.disabled = true; });
 $$('[data-mode]').forEach(button => { button.onclick = () => operate('definir_modo', { modo: button.dataset.mode }, 'Modo de operação atualizado'); });
 $$('[data-layer]').forEach(button => {
@@ -317,7 +288,8 @@ $$('[data-layer]').forEach(button => {
     $('#map-stage').classList.toggle(button.dataset.layer === 'cargas' ? 'no-cargo' : 'no-labels', !active);
   };
 });
-$('#show-cargo-view').onclick = () => switchView('cargas');
+$('#open-cargo').onclick = () => { renderCargo(); $('#cargo-dialog').showModal(); };
+$('#close-cargo').onclick = () => $('#cargo-dialog').close();
 $('#close-cargo-details').onclick = () => { selectedCargo = null; render(); };
 $('#cargo-filter').onchange = renderCargo;
 $('#fit-map').onclick = () => warehouse?.fit();
@@ -341,12 +313,20 @@ $('#toggle-fault').onclick = () => operate('definir_falha', { falha: !currentRob
 $('#battery-level').oninput = event => { $('#battery-output').textContent = `${event.target.value}%`; };
 $('#battery-form').onsubmit = event => { event.preventDefault(); operate('definir_bateria', { bateria: Number($('#battery-level').value) }, 'Bateria atualizada'); };
 $('#resume-mission').onclick = () => send({ acao: 'retomar_missao', id_missao: currentRobot().id_missao }, 'Retomada solicitada').catch(() => {});
-$('#guide').onclick = () => openModal('guia');
+$('#open-history').onclick = () => { $('#history-dialog').showModal(); resetHistory(); };
+$('#close-history').onclick = () => $('#history-dialog').close();
+$('#history-dialog').addEventListener('close', () => { historyEpoch++; });
 $('#modal-close').onclick = $('#modal-cancel').onclick = () => $('#modal').close();
-$('#modal').addEventListener('click', event => { if (event.target === $('#modal')) { const rect = $('#modal').getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('#modal').close(); } });
+for (const dialog of [$('#modal'), $('#history-dialog'), $('#cargo-dialog')]) {
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) dialog.close();
+  });
+}
 $('#modal-form').onsubmit = async event => {
   event.preventDefault();
-  if (modalKind === 'guia' || $('#modal-submit').disabled) return;
+  if ($('#modal-submit').disabled) return;
   const epoch = modalEpoch;
   const values = Object.fromEntries([...new FormData(event.target)].map(([key, value]) => [key, Number(value)]));
   const command = modalKind === 'carga' ? { acao: 'adicionar_carga', carga: { id: values.id_entidade, tamanho: values.tamanho, id_baia: values.id_baia, id_destino: values.id_destino } } : { acao: 'adicionar_robo', id_robo: values.id_entidade, posicao: { x: values.x, y: values.y } };
@@ -370,9 +350,6 @@ $('#history-robot').onchange = resetHistory;
 $('#history-prev').onclick = () => { historyPage = Math.max(0, historyPage - 1); historyEpoch++; loadHistory(); };
 $('#history-next').onclick = () => { historyPage++; historyEpoch++; loadHistory(); };
 setInterval(() => { if (historyPage === 0 && !document.hidden) loadHistory(); }, 3000);
-const tick = () => { $('#clock').textContent = new Intl.DateTimeFormat('pt-BR', { timeStyle: 'medium', timeZone: 'America/Sao_Paulo' }).format(new Date()); };
-tick();
-setInterval(tick, 1000);
 
 try {
   const config = await request('/api/config');
