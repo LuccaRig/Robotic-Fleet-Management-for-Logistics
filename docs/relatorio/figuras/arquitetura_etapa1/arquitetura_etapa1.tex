@@ -1,0 +1,60 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,shapes.geometric}
+\definecolor{bluebg}{HTML}{EDF4FA}
+\definecolor{blueedge}{HTML}{315C84}
+\definecolor{yellowbg}{HTML}{FFF7E7}
+\definecolor{yellowedge}{HTML}{B78123}
+\definecolor{greenbg}{HTML}{E1F1E8}
+\definecolor{orangebg}{HTML}{FBE8D6}
+\begin{document}
+\begin{tikzpicture}[x=1cm,y=1cm,>=Latex,font=\sffamily,
+ box/.style={draw=blueedge,fill=white,rounded corners=3pt,thick,align=center,text width=4.25cm,minimum height=1.20cm,inner sep=4pt,font=\small},
+ rob/.style={box,draw=yellowedge,text width=4.25cm},
+ edge/.style={-Latex,thick,draw=blueedge},
+ note/.style={font=\scriptsize,align=center,fill=white,inner sep=2pt}]
+% Containers with non-overlapping headings
+\filldraw[rounded corners=8pt,draw=blueedge,thick,fill=bluebg] (0,1) rectangle (12.6,17.8);
+\filldraw[rounded corners=8pt,draw=yellowedge,thick,fill=yellowbg] (14.2,1) rectangle (26.8,17.8);
+\node[font=\bfseries\large] at (6.3,17.2) {PROCESSO CENTRAL (C++)};
+\node[font=\small] at (6.3,16.7) {Coordenação sequencial + thread coletora};
+\node[font=\bfseries\large] at (20.5,17.2) {UM PROCESSO POR ROBÔ (C++)};
+\node[font=\small] at (20.5,16.7) {Replicado para cada robô};
+% central left chain
+\node[box] (mgr) at (3.2,14.9) {\textbf{Gestor de Robôs}\\\texttt{posix\_spawn() / waitpid()}\\PID, geração e prontidão};
+\node[box] (org) at (3.2,11.8) {\textbf{Organizador da Logística}\\Missões, equipes e barreiras\\de acoplamento e descarga};
+\node[box] (pass) at (3.2,8.7) {\textbf{Controle de Passagens}\\Filas, reservas e capacidade\\Liberação por sensores};
+\node[box] (hard) at (3.2,5.6) {\textbf{Adaptador de Hardware Local}\\Setpoint para sensor simulado\\Sem GUI na Etapa 1};
+\draw[edge] (mgr) -- node[note,right] {Disponibilidade} (org);
+\draw[edge] (org) -- node[note,right] {Reservas / permissões} (pass);
+\draw[edge] (pass) -- node[note,right] {Comando validado} (hard);
+% central persistence column
+\node[box] (evt) at (9.4,13.65) {\textbf{Registro de Eventos}\\Produção no ciclo central};
+\node[box,fill=greenbg] (col) at (9.4,10.2) {\textbf{Thread Coletora de Dados}\\Fila \texttt{std::queue} (10.000)\\Mutex + variável de condição};
+\node[box,fill=orangebg] (sql) at (9.4,6.9) {\textbf{SQLite (disco)}\\\texttt{runs / robot\_events}\\\texttt{cargo\_transports / cargo\_members}};
+\draw[edge] (org.east) -- ++(.65,0) |- node[note,pos=.72,above] {Eventos de missão} (evt.west);
+\draw[edge] (evt) -- node[note,right] {Fila protegida / aviso} (col);
+\draw[edge] (col) -- node[note,right] {Transações fora do lock} (sql);
+% robot chain
+\node[rob] (rx) at (20.5,14.9) {\textbf{Receptor IPC}\\Decodificação e validação\\Geração / sequência};
+\node[rob,fill={rgb,255:red,251;green,232;blue,175}] (state) at (20.5,11.9) {\textbf{Estado Local Compartilhado}\\Missão, rota, sensores, bateria, falha\\\texttt{std::mutex + condition\_variable}};
+\node[rob,text width=4.25cm] (nav) at (17.35,8.6) {\textbf{Thread Navegação}\\100 ms nominal\\Comandos e confirmações};
+\node[rob,text width=4.25cm] (status) at (23.65,8.6) {\textbf{Thread Status}\\500 ms nominal\\Sensores e disponibilidade};
+\node[rob] (tx) at (20.5,5.1) {\textbf{Canal Emissor IPC}\\\texttt{std::timed\_mutex + poll()}\\Espera limitada};
+\draw[edge] (rx) -- node[note,right] {Atualização sob mutex} (state);
+\draw[blueedge,thick,Latex-Latex] (state.south west) -- node[note,left] {Leitura / aviso} (nav.north);
+\draw[blueedge,thick,Latex-Latex] (state.south east) -- node[note,right] {Leitura / aviso} (status.north);
+\draw[edge] (nav.south) |- (tx.west);
+\draw[edge] (status.south) |- (tx.east);
+% IPC between processes through dedicated middle lane
+\draw[-Latex,very thick,draw=cyan!65!blue] (mgr.east) -- (13.35,14.9) -- (rx.west);
+\node[note,text width=3.0cm] at (13.4,15.95) {\textbf{IPC: socket Unix}\\\texttt{SOCK\_STREAM}\\Prefixo de 4 bytes};
+\draw[-Latex,very thick,draw=cyan!65!blue] (tx.west) -- (13.35,5.1) -- (13.35,3.0) -- (6.3,3.0) -- (6.3,11.8) -- (org.east);
+\node[note,text width=3.3cm] at (13.35,3.8) {Status / solicitações / ACK\\ID, geração e sequência};
+\node[font=\small,align=center] at (13.4,0.0) {\textbf{Legenda:} azul = coordenação; verde = coleta; laranja = persistência; amarelo = processo do robô.\\Setas azuis espessas = IPC entre processos; demais setas = fluxos internos e sincronização.};
+\end{tikzpicture}
+\end{document}
