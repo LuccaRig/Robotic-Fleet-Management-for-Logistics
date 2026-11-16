@@ -19,9 +19,21 @@ Cenários: `base`, `cooperativo`, `disponibilidade`, `passagens`, `rota-equipe`,
 
 O banco padrão é `logs/etapa1.db`. Use `--banco logs/etapa1-demo.db` para outro arquivo. O banco de inspeção versionado é preservado pelas execuções padrão.
 
+## Tela de operação e simulação
+
+A aplicação web **Órbita**, isolada em `visualization/`, reúne mapa interativo, frota, controle manual, intervenções na simulação, logística e consulta de histórico. Usa o mapa compartilhado, os comandos MQTT existentes e leitura do SQLite. O navegador não implementa regras de navegação ou alocação.
+
+Com Python, Mosquitto e o executável compilado com MQTT ativado, a demo pode ser iniciada por um único comando:
+
+```sh
+visualization/.venv/bin/python visualization/server.py
+```
+
+Abra `http://127.0.0.1:8080`. Preparação, opções e funcionamento estão no [guia da tela de operação](visualization/README.md). A extensão de telemetria usada pela tela precisa ser recompilada antes da primeira execução. A interface foi validada no navegador em desktop e celular, com builds e suítes completas nas configurações MQTT ativado e desativado.
+
 ## Mapa estático compartilhado
 
-O cenário usa `config/galpao.txt`; `passagens` usa `config/galpao-passagens.txt`. Esses arquivos substituem o layout fixo no código e podem ser lidos pela futura tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
+O cenário usa `config/galpao.txt`; `passagens` usa `config/galpao-passagens.txt`. Esses arquivos substituem o layout fixo no código e são compartilhados com a tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
 
 Use `--mapa caminho/galpao.txt` para escolher outro arquivo compatível com as baias, destinos e posições iniciais do cenário. Sem essa opção, a aplicação procura a configuração no diretório atual e depois junto ao diretório de build, onde o CMake copia `config/` durante a configuração.
 
@@ -53,7 +65,7 @@ As publicações mantêm QoS 1 e mensagens retidas:
 
 | Tópico | Conteúdo |
 |---|---|
-| `fleet/telemetry/fleet` | Snapshot no formato `{"robos":[...]}`, incluindo os estados conhecidos de robôs desconectados. |
+| `fleet/telemetry/fleet` | Snapshot com `versao:2`, `robos`, `cargas`, `missoes` e ocupação/fila de `passagens`, incluindo robôs desconectados. |
 | `fleet/telemetry/robots/<id>` | Estado individual com posição, destino, estado operacional, bateria, falha, conexão, missão e demais identificadores. |
 
 As coordenadas usam objetos JSON, como `"posicao":{"x":10,"y":5}` e `"destino":{"x":12,"y":5}`. Os campos booleanos usam `true` e `false`; `revisao` identifica a revisão do comando. O campo `modo` contém `manual` ou `automatico`. O mesmo estado serializado alimenta os tópicos individual e de frota.

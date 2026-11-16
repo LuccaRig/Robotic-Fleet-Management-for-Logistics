@@ -106,11 +106,12 @@ void IntegracaoMqtt::iniciar() {
 #endif
 }
 
-void IntegracaoMqtt::publicar(const std::vector<EstadoAtualRobo>& frota) {
+void IntegracaoMqtt::publicar(const std::vector<EstadoAtualRobo>& frota, const std::vector<Carga>& cargas,
+                             const std::vector<MissaoEquipe>& missoes, const std::vector<EstadoTrecho>& passagens) {
     if (!cliente_.isConnected()) return;
     try {
         std::ostringstream snapshot;
-        snapshot << "{\"robos\":[";
+        snapshot << "{\"versao\":2,\"robos\":[";
         bool primeiro = true;
         for (const auto& robo : frota) {
             const auto json = roboParaJson(robo);
@@ -118,6 +119,37 @@ void IntegracaoMqtt::publicar(const std::vector<EstadoAtualRobo>& frota) {
             primeiro = false;
             snapshot << json;
             cliente_.publish(Topics::robotTelemetry(robo.id), json);
+        }
+        snapshot << "],\"cargas\":[";
+        primeiro = true;
+        for (const auto& carga : cargas) {
+            if (!primeiro) snapshot << ',';
+            primeiro = false;
+            snapshot << "{\"id\":" << carga.id << ",\"tamanho\":" << carga.tamanho
+                     << ",\"id_baia\":" << carga.id_baia << ",\"id_destino\":" << carga.id_destino
+                     << ",\"estado\":\"" << escaparJson(nomeEstadoCarga(carga.estado)) << "\""
+                     << ",\"id_missao\":" << carga.id_missao << ",\"motivo\":\"" << escaparJson(carga.motivo) << "\"}";
+        }
+        snapshot << "],\"missoes\":[";
+        primeiro = true;
+        for (const auto& missao : missoes) {
+            if (!primeiro) snapshot << ',';
+            primeiro = false;
+            snapshot << "{\"id\":" << missao.id << ",\"id_carga\":" << missao.id_carga
+                     << ",\"fase\":" << static_cast<int>(missao.fase) << ",\"integrantes\":[";
+            for (std::size_t i = 0; i < missao.integrantes.size(); ++i) {
+                if (i) snapshot << ',';
+                snapshot << missao.integrantes[i];
+            }
+            snapshot << "]}";
+        }
+        snapshot << "],\"passagens\":[";
+        primeiro = true;
+        for (const auto& passagem : passagens) {
+            if (!primeiro) snapshot << ',';
+            primeiro = false;
+            snapshot << "{\"id\":" << passagem.id << ",\"ocupado\":" << passagem.ocupado
+                     << ",\"aguardando\":" << passagem.aguardando << "}";
         }
         snapshot << "]}";
         cliente_.publish(Topics::fleetSnapshot(), snapshot.str());

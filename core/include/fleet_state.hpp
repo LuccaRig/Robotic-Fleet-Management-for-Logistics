@@ -27,6 +27,7 @@ public:
         if (it == robos_.end() || estado.geracao != it->second.geracao || estado.sequencia_sensor <= it->second.sequencia_sensor ||
             estado.revisao < it->second.revisao || !it->second.conectado) return false;
         estado.sequencia = it->second.sequencia;
+        estado.distancia = it->second.distancia;
         it->second = std::move(estado);
         return true;
     }

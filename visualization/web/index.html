@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#152b2a">
+  <meta name="description" content="Órbita, centro de operação e simulação de uma frota robótica colaborativa.">
+  <title>Órbita · Centro de operação</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Ir para a operação</a>
+  <aside class="rail" aria-label="Navegação principal">
+    <a class="brand-mark" href="/" aria-label="Órbita, início"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><ellipse cx="20" cy="20" rx="16" ry="9" transform="rotate(-42 20 20)"/><circle cx="20" cy="20" r="5"/><circle cx="31" cy="10" r="3" class="orbit-dot"/></svg></a>
+    <div class="rail-links">
+      <button class="nav-button active" data-view="operacao" title="Operação" aria-label="Operação" aria-current="page"><span data-icon="map"></span><span>Operação</span></button>
+      <button class="nav-button" data-view="cargas" title="Logística" aria-label="Logística"><span data-icon="box"></span><span>Logística</span></button>
+      <button class="nav-button" data-view="historico" title="Histórico" aria-label="Histórico"><span data-icon="history"></span><span>Histórico</span></button>
+    </div>
+    <div class="rail-bottom"><button class="nav-button" id="guide" title="Guia da operação" aria-label="Guia da operação"><span data-icon="help"></span><span>Guia</span></button><span class="rail-signature">ATR<span>2026.2</span></span></div>
+  </aside>
+
+  <div class="shell">
+    <header class="topbar">
+      <a class="wordmark" href="/">órbita<span>CONTROLE DE FROTA</span></a>
+      <div class="topbar-right"><span class="connection" id="connection"><i></i><span>Conectando à central</span></span><span class="topbar-divider"></span><time id="clock">00:00:00</time><span class="avatar" title="Operação local">OP</span></div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section class="page-heading">
+        <div><p class="eyebrow"><span class="tiny-line"></span> CENTRO DE OPERAÇÃO & SIMULAÇÃO</p><h1 id="page-title">Toda a operação.<br><span>Em perfeita sincronia.</span></h1><p class="page-description" id="page-description">Robôs, cargas e decisões. Tudo no mesmo lugar.</p></div>
+        <div class="heading-actions"><span class="scenario-label" id="scenario-label">Carregando cenário</span><div><button class="button secondary" data-open="robo"><span data-icon="robot"></span>Adicionar robô</button><button class="button primary" data-open="carga"><span data-icon="plus"></span>Nova carga</button></div></div>
+      </section>
+
+      <div id="notice" class="notice" role="status" hidden></div>
+
+      <section class="metrics" aria-label="Resumo da operação">
+        <article class="metric metric-dark"><div class="metric-label">Frota conectada<span data-icon="robot"></span></div><div class="metric-number"><span id="metric-robots">0</span><small id="metric-robots-total">/ 0</small></div><div class="metric-foot"><span class="live-dot"></span><span id="metric-availability">Aguardando a central</span></div><svg class="metric-orbit" viewBox="0 0 160 100" aria-hidden="true"><ellipse cx="95" cy="60" rx="70" ry="24" transform="rotate(-30 95 60)"/><ellipse cx="95" cy="60" rx="52" ry="36" transform="rotate(-30 95 60)"/><circle cx="136" cy="32" r="5"/></svg></article>
+        <article class="metric"><div class="metric-label">Cargas em operação<span class="metric-icon mint" data-icon="box"></span></div><div class="metric-number" id="metric-active">0</div><div class="metric-foot" id="metric-pending">Nenhuma carga na fila</div></article>
+        <article class="metric"><div class="metric-label">Entregas concluídas<span class="metric-icon blue" data-icon="check"></span></div><div class="metric-number" id="metric-delivered">0</div><div class="metric-foot"><span id="metric-progress">0% das cargas</span><span class="mini-progress"><i id="metric-progress-bar"></i></span></div></article>
+        <article class="metric"><div class="metric-label">Distância da frota<span class="metric-icon sand" data-icon="route"></span></div><div class="metric-number"><span id="metric-distance">0</span><small>células</small></div><div class="metric-foot" id="metric-alerts">Nenhum alerta ativo</div></article>
+      </section>
+
+      <section id="view-operacao" class="view active" aria-label="Operação ao vivo">
+        <div class="workspace">
+          <section class="card map-card">
+            <div class="card-heading"><div><p class="eyebrow">VISÃO DO GALPÃO</p><h2>O movimento acontece aqui<span class="live-badge" id="live-badge"><i></i>Aguardando</span></h2></div><button class="icon-button" id="fit-map" title="Enquadrar galpão" aria-label="Enquadrar galpão"><span data-icon="expand"></span></button></div>
+            <div class="map-toolbar"><div class="map-location"><span data-icon="layers"></span><span id="map-size">Mapa compartilhado</span></div><div class="layer-buttons"><button class="layer active" data-layer="cargas" aria-pressed="true"><span data-icon="box"></span>Cargas</button><button class="layer active" data-layer="nomes" aria-pressed="true"><span data-icon="tag"></span>Locais</button></div></div>
+            <div class="map-stage" id="map-stage"><svg id="warehouse" role="group" aria-label="Mapa interativo do galpão. Selecione um robô para ver seus detalhes."></svg><div class="map-empty" id="map-empty"><span class="empty-orbit"></span><strong>Preparando o galpão</strong><span>Aguardando os dados da operação</span></div><div class="target-hint" id="target-hint" hidden><span data-icon="target"></span>Selecione uma célula para definir o destino<button id="cancel-target" class="icon-button" aria-label="Cancelar seleção de destino"><span data-icon="close"></span></button></div><div class="map-controls"><button class="icon-button" id="zoom-out" aria-label="Diminuir zoom"><span data-icon="minus"></span></button><span id="zoom-label">100%</span><button class="icon-button" id="zoom-in" aria-label="Aumentar zoom"><span data-icon="plus"></span></button></div><span class="map-orientation">Y ↓ <span>X →</span></span></div>
+            <div class="map-cargo-details" id="map-cargo-details" hidden><div><strong id="map-cargo-name"></strong><button class="icon-button" id="close-cargo-details" aria-label="Fechar detalhes da carga"><span data-icon="close"></span></button></div><p id="map-cargo-route"></p><div><span id="map-cargo-status" class="status-pill"></span><span id="map-cargo-size"></span></div><p id="map-cargo-team"></p></div>
+            <div class="map-legend"><span><i class="legend-dot teal"></i>Automático</span><span><i class="legend-dot purple"></i>Manual</span><span><i class="legend-dot amber"></i>Recarga</span><span><i class="legend-dot red"></i>Falha</span><span class="legend-passage"><span data-icon="gate"></span>Passagem limitada</span></div>
+          </section>
+
+          <aside class="card inspector" aria-label="Controle do robô selecionado">
+            <div class="card-heading"><div><p class="eyebrow">CONTROLE INDIVIDUAL</p><h2>Um olhar mais perto</h2></div><span class="selection-dot"></span></div>
+            <div id="inspector-empty" class="empty-state"><span data-icon="robot"></span><strong>Sua frota começa aqui</strong><p>Selecione um robô no mapa ou adicione um novo à operação.</p><button class="button secondary" data-open="robo">Adicionar robô</button></div>
+            <div id="inspector-content" hidden>
+              <div class="robot-identity"><span class="robot-portrait" id="robot-portrait"><span data-icon="robot"></span><i></i></span><div><p class="eyebrow">ROBÔ AUTÔNOMO</p><h3 id="robot-name">AMR-01</h3><span class="status-pill" id="robot-status">Disponível</span></div></div>
+              <div class="battery-block"><div><span>Bateria</span><strong id="robot-battery-label">100%</strong></div><div class="battery-track"><i id="robot-battery-bar"></i></div></div>
+              <div class="robot-facts"><div><span>Posição atual</span><strong id="robot-position"></strong></div><div><span>Destino</span><strong id="robot-destination"></strong></div><div><span>Distância</span><strong id="robot-distance"></strong></div><div><span>Acoplamento</span><strong id="robot-coupled"></strong></div><div><span>Missão / carga</span><strong id="robot-mission"></strong></div><div><span>Equipe</span><strong id="robot-team"></strong></div></div>
+              <div class="inspector-section"><div class="section-label">Modo de operação<span id="mode-caption">Controle da central</span></div><div class="segmented mode-switch" role="group" aria-label="Modo do robô"><button id="mode-auto" data-mode="automatico"><span data-icon="auto"></span>Automático</button><button id="mode-manual" data-mode="manual"><span data-icon="hand"></span>Manual</button></div></div>
+              <form id="destination-form" class="inspector-section"><div class="section-label"><label for="destination-place">Destino manual</label><button type="button" class="text-button" id="pick-target"><span data-icon="target"></span>No mapa</button></div><fieldset id="destination-fields"><select id="destination-place"><option value="">Coordenadas livres</option></select><div class="coordinate-fields"><label><span>X</span><input id="destination-x" name="x" type="number" min="0" value="3" required></label><label><span>Y</span><input id="destination-y" name="y" type="number" min="0" value="5" required></label><button class="button primary" type="submit" aria-label="Enviar destino"><span data-icon="arrow"></span></button></div></fieldset><p class="field-hint" id="destination-hint">Ative o modo manual para escolher um destino.</p></form>
+              <div class="inspector-section simulation-section"><div class="section-label">Intervenções<span class="small-label">SIMULAÇÃO</span></div><button class="button fault-button" id="toggle-fault"><span data-icon="alert"></span><span>Gerar defeito</span></button><form id="battery-form"><label class="section-label" for="battery-level">Ajustar bateria<output id="battery-output" for="battery-level">50%</output></label><div class="battery-adjust"><input id="battery-level" type="range" min="0" max="100" value="50"><button class="button secondary compact" type="submit">Aplicar</button></div></form><button class="button secondary resume-button" id="resume-mission" hidden><span data-icon="play"></span>Retomar missão suspensa</button></div>
+            </div>
+          </aside>
+        <section class="card fleet-card"><div class="card-heading"><div><p class="eyebrow">CADA ROBÔ CONTA</p><h2>A equipe em campo <span class="count-badge" id="fleet-count">0</span></h2></div><span class="subtle">Selecione para operar</span></div><div class="fleet-list" id="fleet-list"><p class="inline-empty">Os robôs aparecerão assim que a central estiver conectada.</p></div></section>
+        </div>
+        <section class="card cargo-preview"><div class="card-heading"><div><p class="eyebrow">DO PONTO A AO PONTO B</p><h2>O próximo destino de cada carga</h2></div><button class="text-button" id="show-cargo-view">Ver logística<span data-icon="arrow"></span></button></div><div id="cargo-preview" class="cargo-preview-list"><p class="inline-empty">Aguardando as cargas da operação.</p></div></section>
+      </section>
+
+      <section id="view-cargas" class="view" hidden aria-label="Logística de cargas"><section class="card"><div class="card-heading"><div><p class="eyebrow">FLUXO DE CARGAS</p><h2>Da baia à entrega</h2></div><label class="filter-label" for="cargo-filter">Exibir<select id="cargo-filter"><option value="todas">Todas as cargas</option><option value="pendentes">Na fila</option><option value="ativas">Em operação</option><option value="suspensas">Suspensas</option><option value="entregues">Entregues</option></select></label></div><div id="cargo-table" class="table-wrap"></div></section></section>
+
+      <section id="view-historico" class="view" hidden aria-label="Histórico e rastreabilidade"><section class="card"><div class="card-heading history-heading"><div><p class="eyebrow">CADA MOVIMENTO TEM UMA HISTÓRIA</p><h2>Rastreabilidade da execução</h2></div><div class="history-filters"><div class="segmented" role="group" aria-label="Tipo de histórico"><button data-history="eventos" class="active">Eventos</button><button data-history="cargas">Transportes</button></div><label class="sr-only" for="history-robot">Filtrar por robô</label><select id="history-robot"><option value="">Toda a frota</option></select></div></div><p class="history-note" id="history-note">Registros da execução atual, com data e hora.</p><div id="history-table" class="table-wrap"></div><div class="pagination"><span id="history-page">Página 1</span><div><button class="button secondary compact" id="history-prev" disabled><span data-icon="chevron-left"></span>Anterior</button><button class="button secondary compact" id="history-next" disabled>Próxima<span data-icon="chevron-right"></span></button></div></div></section></section>
+
+      <footer class="page-footer"><span><span class="footer-orbit">◉</span> ÓRBITA <span class="footer-separator">/</span> Logística em movimento.</span><span>Automação em Tempo Real <span class="footer-separator">·</span> UFMG 2026.2</span></footer>
+    </main>
+  </div>
+
+  <dialog id="modal"><form id="modal-form"><div class="modal-heading"><div><p class="eyebrow" id="modal-eyebrow">EXPANDA A OPERAÇÃO</p><h2 id="modal-title">Nova carga</h2></div><button type="button" class="icon-button" id="modal-close" aria-label="Fechar janela"><span data-icon="close"></span></button></div><p class="modal-description" id="modal-description"></p><div id="modal-fields" class="modal-fields"></div><p id="modal-error" class="form-error" role="alert" hidden></p><div class="modal-footer"><button type="button" class="button secondary" id="modal-cancel">Cancelar</button><button type="submit" class="button primary" id="modal-submit">Adicionar<span data-icon="arrow"></span></button></div></form></dialog>
+  <div class="toast-stack" id="toasts" aria-live="polite" aria-relevant="additions"></div>
+</body>
+</html>

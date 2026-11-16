@@ -32,7 +32,7 @@ void AplicacaoCentral::parar() {
     std::exception_ptr error;
     try {
         for (const auto& mensagem : manager_.parar()) aoReceberMensagem(mensagem);
-        mqtt_.publicar(manager_.frota().capturarEstado());
+        if (mqtt_.conectada()) mqtt_.publicar(manager_.frota().capturarEstado(), logistics_.cargos(), logistics_.missoes(), passages_.capturarEstado());
     } catch (...) { error = std::current_exception(); }
     mqtt_.parar();
     try { collector_.parar(); } catch (...) { if (!error) error = std::current_exception(); }
@@ -165,7 +165,7 @@ void AplicacaoCentral::avancarCiclo() {
 
 
     exportarMapaTxt("mapa_execucao.txt");
-    mqtt_.publicar(manager_.frota().capturarEstado());
+    if (mqtt_.conectada()) mqtt_.publicar(manager_.frota().capturarEstado(), logistics_.cargos(), logistics_.missoes(), passages_.capturarEstado());
 }
 bool AplicacaoCentral::adicionarRobo(int id, Posicao posicao) {
     if (hardware_.contemRobo(id) || !galpao_.podeTransitar(posicao) || galpao_.trechoEm(posicao)) return false;

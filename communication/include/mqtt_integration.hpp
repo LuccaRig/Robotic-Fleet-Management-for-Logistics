@@ -4,6 +4,7 @@
 #include "domain.hpp"
 #include "logistics_types.hpp"
 #include "mqtt_client.hpp"
+#include "passages.hpp"
 #include <deque>
 #include <functional>
 #include <mutex>
@@ -34,7 +35,9 @@ public:
 
     ~IntegracaoMqtt();
     void iniciar();
-    void publicar(const std::vector<EstadoAtualRobo>& frota);
+    bool conectada() const { return cliente_.isConnected(); }
+    void publicar(const std::vector<EstadoAtualRobo>& frota, const std::vector<Carga>& cargas,
+                  const std::vector<MissaoEquipe>& missoes, const std::vector<EstadoTrecho>& passagens);
     void enfileirarComando(std::string payload, bool retido = false);
     void processarComandos(const Executor& executar);
     void responder(const std::string& id, bool aceito, const std::string& mensagem);
