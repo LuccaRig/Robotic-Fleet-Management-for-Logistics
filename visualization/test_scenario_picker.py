@@ -1,12 +1,17 @@
 import json
 from functools import partial
 from http.server import ThreadingHTTPServer
+import os
+import subprocess
+import sys
+import tempfile
 import threading
+import time
 import unittest
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from visualization.server import SCENARIOS, ScenarioPickerHandler, ScenarioSelection
+from visualization.server import SCENARIOS, ScenarioPickerHandler, ScenarioSelection, stop
 
 
 class ScenarioPickerTest(unittest.TestCase):
@@ -75,6 +80,41 @@ class ScenarioPickerTest(unittest.TestCase):
         status, response = self.get_json("/api/start-status")
         self.assertEqual(status, 200)
         self.assertEqual(response, {"estado": "error", "erro": "Mosquitto não iniciou"})
+
+    def test_stop_terminates_process_group_descendants(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            ready = os.path.join(temporary, "child-ready")
+            stopped = os.path.join(temporary, "child-stopped")
+            child_code = (
+                "import pathlib,signal,sys,time; "
+                "ready,stopped=map(pathlib.Path,sys.argv[1:]); "
+                "ready.touch(); "
+                "signal.signal(signal.SIGTERM,lambda *_:(stopped.touch(),sys.exit(0))); "
+                "time.sleep(60)"
+            )
+            parent_code = (
+                "import subprocess,sys; "
+                "subprocess.Popen([sys.executable,'-c',sys.argv[1],sys.argv[2],sys.argv[3]]); "
+                "print('ready',flush=True); input()"
+            )
+            process = subprocess.Popen(
+                [sys.executable, "-c", parent_code, child_code, ready, stopped],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                text=True,
+                start_new_session=True,
+            )
+            self.addCleanup(stop, process)
+            self.assertEqual(process.stdout.readline().strip(), "ready")
+            deadline = time.monotonic() + 2
+            while not os.path.exists(ready) and time.monotonic() < deadline:
+                time.sleep(0.01)
+            self.assertTrue(os.path.exists(ready), "child process did not start")
+
+            stop(process)
+
+            self.assertTrue(os.path.exists(stopped), "child process group was not terminated")
+            process.stdout.close()
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from contextlib import ExitStack, closing
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from queue import Full, Queue
 from pathlib import Path
 import shutil
@@ -297,22 +298,49 @@ class ScenarioPickerHandler(SimpleHTTPRequestHandler):
 
 
 def stop(process):
-    if process.poll() is not None:
-        return
+    process_group = process.pid
     try:
-        if process.stdin:
-            process.stdin.write("sair\n")
-            process.stdin.flush()
-        else:
-            process.terminate()
-        process.wait(timeout=8)
-    except (OSError, subprocess.TimeoutExpired):
-        process.terminate()
+        if process.poll() is None:
+            if process.stdin:
+                try:
+                    process.stdin.write("sair\n")
+                    process.stdin.flush()
+                except OSError:
+                    pass
+                try:
+                    process.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    pass
+            if process.poll() is None:
+                try:
+                    os.killpg(process_group, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    try:
+                        os.killpg(process_group, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    process.wait()
+
         try:
-            process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait()
+            os.killpg(process_group, signal.SIGTERM)
+        except ProcessLookupError:
+            return
+        deadline = time.monotonic() + 1
+        while time.monotonic() < deadline:
+            try:
+                os.killpg(process_group, 0)
+            except ProcessLookupError:
+                break
+            time.sleep(0.05)
+        else:
+            try:
+                os.killpg(process_group, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
     finally:
         if process.stdin:
             try:
@@ -335,7 +363,8 @@ def start_services(stack, args, scenario, executable, database):
     broker_config = temporary / "mosquitto.conf"
     broker_config.write_text(f"listener {port} 127.0.0.1\nallow_anonymous true\npersistence false\n")
     broker_log = stack.enter_context((logs / "operacao-mqtt.log").open("a"))
-    broker = subprocess.Popen([args.broker, "-c", str(broker_config)], stdout=broker_log, stderr=subprocess.STDOUT)
+    broker = subprocess.Popen([args.broker, "-c", str(broker_config)], stdout=broker_log,
+                              stderr=subprocess.STDOUT, start_new_session=True)
     stack.callback(stop, broker)
     deadline = time.monotonic() + 5
     while True:
@@ -353,12 +382,14 @@ def start_services(stack, args, scenario, executable, database):
     simulator_log = stack.enter_context((logs / "operacao-simulador.log").open("a"))
     simulator = subprocess.Popen([str(executable), "--simulador", "--cenario", scenario, "--mapa", str(map_path),
                                   "--mqtt-host", "127.0.0.1", "--mqtt-port", str(port)],
-                                 cwd=temporary, stdout=simulator_log, stderr=subprocess.STDOUT)
+                                 cwd=temporary, stdout=simulator_log, stderr=subprocess.STDOUT,
+                                 start_new_session=True)
     stack.callback(stop, simulator)
     central_log = stack.enter_context((logs / "operacao-central.log").open("a"))
     process = subprocess.Popen([str(executable), "--cenario", scenario, "--mapa", str(map_path), "--banco", str(database),
                                 "--interativo", "--simulador-mqtt", "--mqtt-host", "127.0.0.1", "--mqtt-port", str(port)],
-                               cwd=temporary, stdin=subprocess.PIPE, stdout=central_log, stderr=subprocess.STDOUT, text=True)
+                               cwd=temporary, stdin=subprocess.PIPE, stdout=central_log, stderr=subprocess.STDOUT,
+                               text=True, start_new_session=True)
     stack.callback(stop, process)
     config = {"mapa": map_path.read_text(), "cenario": scenario}
     return {"bridge": bridge, "config": config, "process": process, "database": database}
