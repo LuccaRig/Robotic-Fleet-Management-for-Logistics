@@ -155,6 +155,10 @@
   .modal-description { padding: 12px 22px 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
   .modal-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 22px; }
   .modal-fields label { display: flex; flex-direction: column; gap: 8px; font-size: 12px; font-weight: 600; }
+  .batch-mode-action { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .batch-mode-action span, .batch-route-note { color: var(--muted); font-size: 11px; line-height: 1.5; }
+  .batch-count-field { max-width: 220px; }
+  .batch-route-note { align-self: center; margin: 0; }
   .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 22px; border-top: 1px solid var(--border); background: #f8fafc; }
   .history-filters, .dialog-filters { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 18px 22px; }
   .history-filters select { width: 165px; }
@@ -249,6 +253,7 @@
     .metric:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
     .metric small { font-size: 11px; }
     .card-heading { padding: 16px; }
+    .batch-mode-action { align-items: flex-start; flex-direction: column; }
     .map-toolbar { align-items: flex-start; flex-direction: column; padding: 10px 16px; }
     .map-stage { height: 400px; }
     .map-legend { gap: 10px; padding: 12px 16px; }

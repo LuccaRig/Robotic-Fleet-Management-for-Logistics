@@ -1,5 +1,6 @@
 #include "logistics.hpp"
 #include <algorithm>
+#include <set>
 #include <stdexcept>
 
 OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, std::vector<Carga> carga)
@@ -8,6 +9,38 @@ OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, std::vector
     for (auto& c : carga) adicionarCarga(std::move(c));
 }
 void OrganizadorLogistica::adicionarCarga(Carga carga) {
+    adicionarCargas({std::move(carga)});
+}
+void OrganizadorLogistica::adicionarCargas(std::vector<Carga> cargas) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    std::set<IdEntidade> ids;
+    for (const auto& carga : cargas) {
+        if (carga.id <= 0 || carga.tamanho < 1 || carga.tamanho > 4 || !baias_.count(carga.id_baia) ||
+            !galpao_.destinos().count(carga.id_destino) || cargas_.count(carga.id) || !ids.insert(carga.id).second) {
+            throw std::invalid_argument("Cadastro de carga inválido ou ID duplicado");
+        }
+    }
+
+    std::vector<IdEntidade> inseridas;
+    inseridas.reserve(cargas.size());
+    try {
+        for (auto& carga : cargas) {
+            const auto id = carga.id;
+            adicionarCargaSemBloqueio(std::move(carga));
+            inseridas.push_back(id);
+        }
+    } catch (...) {
+        for (const auto id : inseridas) {
+            const auto encontrada = cargas_.find(id);
+            if (encontrada == cargas_.end()) continue;
+            auto& fila = baias_.at(encontrada->second.id_baia).fila_cargas;
+            fila.erase(std::find(fila.begin(), fila.end(), id));
+            cargas_.erase(encontrada);
+        }
+        throw;
+    }
+}
+void OrganizadorLogistica::adicionarCargaSemBloqueio(Carga carga) {
     if (carga.id <= 0 || carga.tamanho < 1 || carga.tamanho > 4 || !baias_.count(carga.id_baia) ||
         !galpao_.destinos().count(carga.id_destino) || cargas_.count(carga.id)) throw std::invalid_argument("Cadastro de carga inválido ou ID duplicado");
     carga.estado = EstadoCarga::PENDENTE;
@@ -15,10 +48,16 @@ void OrganizadorLogistica::adicionarCarga(Carga carga) {
     carga.motivo.clear();
     auto& fila = baias_.at(carga.id_baia).fila_cargas;
     fila.push_back(carga.id);
+    bool remover_da_fila_se_houver_erro = true;
     try {
-        cargas_.emplace(carga.id, std::move(carga));
+        if (!cargas_.emplace(carga.id, std::move(carga)).second) {
+            fila.pop_back();
+            remover_da_fila_se_houver_erro = false;
+            throw std::invalid_argument("Cadastro de carga inválido ou ID duplicado");
+        }
+        remover_da_fila_se_houver_erro = false;
     } catch (...) {
-        fila.pop_back();
+        if (remover_da_fila_se_houver_erro) fila.pop_back();
         throw;
     }
 }
@@ -27,6 +66,7 @@ void OrganizadorLogistica::atualizarMissoes(const std::vector<Mensagem>& mensage
     for (auto& par : missoes_) avancarMissao(par.second);
 }
 void OrganizadorLogistica::retomarMissao(IdEntidade id, const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota) {
+    std::lock_guard<std::mutex> lock(mutex_);
     atualizarMissoes(mensagens, frota);
     const auto missao = missoes_.find(id);
     if (missao == missoes_.end()) throw std::invalid_argument("Missão inexistente");
@@ -35,6 +75,7 @@ void OrganizadorLogistica::retomarMissao(IdEntidade id, const std::vector<Mensag
     if (missao->second.fase == FaseMissao::SUSPENSO) throw std::runtime_error(cargas_.at(missao->second.id_carga).motivo);
 }
 ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
+    std::lock_guard<std::mutex> lock(mutex_);
     atualizarMissoes(mensagens, frota);
     agendarCargas(frota, bloqueados);
     ResultadoCicloLogistica resultado;
@@ -243,6 +284,6 @@ void OrganizadorLogistica::executarComando(MissaoEquipe& missao, TipoMensagem ti
     missao.relatos.clear();
 }
 void OrganizadorLogistica::registrarAviso(AvisoLogistica::TipoAviso tipo, const MissaoEquipe& missao) { avisos_.push_back({tipo, cargas_.at(missao.id_carga), missao, instanteUnixMs()}); }
-std::vector<Carga> OrganizadorLogistica::cargos() const { std::vector<Carga> result; for (const auto& c : cargas_) result.push_back(c.second); return result; }
-std::vector<MissaoEquipe> OrganizadorLogistica::missoes() const { std::vector<MissaoEquipe> result; for (const auto& m : missoes_) result.push_back(m.second); return result; }
-bool OrganizadorLogistica::todasCargasEntregues() const { for (const auto& c : cargos()) if (c.estado != EstadoCarga::ENTREGUE) return false; return true; }
+std::vector<Carga> OrganizadorLogistica::cargos() const { std::lock_guard<std::mutex> lock(mutex_); std::vector<Carga> result; for (const auto& c : cargas_) result.push_back(c.second); return result; }
+std::vector<MissaoEquipe> OrganizadorLogistica::missoes() const { std::lock_guard<std::mutex> lock(mutex_); std::vector<MissaoEquipe> result; for (const auto& m : missoes_) result.push_back(m.second); return result; }
+bool OrganizadorLogistica::todasCargasEntregues() const { std::lock_guard<std::mutex> lock(mutex_); for (const auto& c : cargas_) if (c.second.estado != EstadoCarga::ENTREGUE) return false; return true; }

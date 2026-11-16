@@ -26,18 +26,11 @@ except ImportError:
 ROOT = Path(__file__).resolve().parent.parent
 WEB = Path(__file__).resolve().parent / "web"
 ACTIONS = {"definir_modo", "definir_destino", "definir_falha", "definir_bateria",
-           "adicionar_carga", "adicionar_robo", "retomar_missao"}
+           "adicionar_carga", "adicionar_lote_cargas", "adicionar_robo", "retomar_missao"}
 SCENARIOS = {
     "base": "Base",
-    "cooperativo": "Cooperativo",
-    "disponibilidade": "Disponibilidade",
     "escala": "Escala · 15 robôs",
     "estresse-passagens": "Estresse de passagens · 100 robôs",
-    "passagens": "Passagens",
-    "rota-equipe": "Rota em equipe",
-    "falhas": "Falhas",
-    "recarga": "Recarga",
-    "processos": "Processos",
 }
 SCENARIO_MAPS = {
     "passagens": "config/galpao-passagens.txt",
@@ -138,7 +131,7 @@ class Bridge:
         if not self.snapshot()["atual"]:
             raise ConnectionError("Aguarde a conexão com a central para enviar comandos")
         payload = json.dumps(command, ensure_ascii=False, allow_nan=False)
-        if len(payload.encode()) > 4096:
+        if len(payload.encode()) > 16384:
             raise ValueError("Comando muito longo")
         result = self.client.publish("fleet/commands", payload, qos=1, retain=False)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
@@ -227,8 +220,8 @@ class Handler(SimpleHTTPRequestHandler):
                 self.send_json({"erro": "Origem não permitida"}, 403)
                 return
             length = int(self.headers.get("Content-Length", "0"))
-            if not 0 < length <= 4096 or self.headers.get_content_type() != "application/json":
-                raise ValueError("Envie um comando JSON de até 4096 bytes")
+            if not 0 < length <= 16384 or self.headers.get_content_type() != "application/json":
+                raise ValueError("Envie um comando JSON de até 16384 bytes")
             command = json.loads(self.rfile.read(length))
             if self.process.poll() is not None:
                 raise ConnectionError("A central foi encerrada")

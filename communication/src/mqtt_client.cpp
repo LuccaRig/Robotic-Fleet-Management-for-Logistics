@@ -56,8 +56,8 @@ struct ClienteMqtt::Impl {
     static void aoReceber(mosquitto*, void* dados, const mosquitto_message* mensagem) {
         auto& estado = *static_cast<Impl*>(dados);
         if (!mensagem || !estado.receptor || !mensagem->topic || estado.topico != mensagem->topic) return;
-        if (mensagem->payloadlen < 0 || mensagem->payloadlen > 4096) {
-            std::cerr << "MQTT: mensagem descartada por exceder 4096 bytes\n";
+        if (mensagem->payloadlen < 0 || mensagem->payloadlen > 16384) {
+            std::cerr << "MQTT: mensagem descartada por exceder 16384 bytes\n";
             return;
         }
         try {

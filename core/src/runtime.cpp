@@ -328,6 +328,10 @@ void AplicacaoCentral::adicionarCarga(Carga carga) {
     logistics_.adicionarCarga(std::move(carga));
     ultimo_ciclo_logistica_ = {};
 }
+void AplicacaoCentral::adicionarCargas(std::vector<Carga> cargas) {
+    logistics_.adicionarCargas(std::move(cargas));
+    ultimo_ciclo_logistica_ = {};
+}
 
 void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
     if (!started_ || stopped_) throw std::runtime_error("Aplicação não está em execução");
@@ -335,6 +339,11 @@ void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
     if (comando.acao == AcaoOperador::AdicionarCarga) {
         adicionarCarga(comando.carga);
         mqtt_.responder(comando.id, true, "Carga adicionada ao fim da fila da baia");
+        return;
+    }
+    if (comando.acao == AcaoOperador::AdicionarLoteCargas) {
+        adicionarCargas(comando.cargas);
+        mqtt_.responder(comando.id, true, "Lote de cargas adicionado atomicamente às filas das baias");
         return;
     }
     if (comando.acao == AcaoOperador::RetomarMissao) {

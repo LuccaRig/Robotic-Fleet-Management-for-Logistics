@@ -22,6 +22,14 @@ bool mesmoPedido(const ComandoOperador& primeiro, const ComandoOperador& segundo
         case AcaoOperador::AdicionarCarga:
             return primeiro.carga.id == segundo.carga.id && primeiro.carga.tamanho == segundo.carga.tamanho &&
                 primeiro.carga.id_baia == segundo.carga.id_baia && primeiro.carga.id_destino == segundo.carga.id_destino;
+        case AcaoOperador::AdicionarLoteCargas:
+            if (primeiro.cargas.size() != segundo.cargas.size()) return false;
+            for (std::size_t i = 0; i < primeiro.cargas.size(); ++i) {
+                const auto& a = primeiro.cargas[i];
+                const auto& b = segundo.cargas[i];
+                if (a.id != b.id || a.tamanho != b.tamanho || a.id_baia != b.id_baia || a.id_destino != b.id_destino) return false;
+            }
+            return true;
         case AcaoOperador::RetomarMissao: return primeiro.id_missao == segundo.id_missao;
         case AcaoOperador::AdicionarRobo: return primeiro.posicao == segundo.posicao;
         case AcaoOperador::DefinirModo: return primeiro.modo == segundo.modo;
@@ -182,6 +190,16 @@ double lerInteiro(const cJSON* objeto, const char* nome, double minimo, double m
     return campo->valuedouble;
 }
 
+Carga lerCarga(const cJSON* objeto) {
+    validarObjeto(objeto);
+    Carga carga;
+    carga.id = static_cast<IdEntidade>(lerInteiro(objeto, "id", 1, 9007199254740991.0));
+    carga.tamanho = static_cast<int>(lerInteiro(objeto, "tamanho", 1, 4));
+    carga.id_baia = static_cast<int>(lerInteiro(objeto, "id_baia", 0, std::numeric_limits<int>::max()));
+    carga.id_destino = static_cast<int>(lerInteiro(objeto, "id_destino", 0, std::numeric_limits<int>::max()));
+    return carga;
+}
+
 Posicao lerPosicao(const cJSON* objeto, const char* nome) {
     const auto* campo = cJSON_GetObjectItemCaseSensitive(objeto, nome);
     validarObjeto(campo);
@@ -194,7 +212,7 @@ Posicao lerPosicao(const cJSON* objeto, const char* nome) {
 ComandoOperador decodificarComandoOperador(const std::string& payload, std::string* id_requisicao) {
     if (id_requisicao) id_requisicao->clear();
 #if defined(ENABLE_MQTT) && ENABLE_MQTT
-    if (payload.empty() || payload.size() > 4096 || payload.find('\0') != std::string::npos || payload.find("\\u0000") != std::string::npos) {
+    if (payload.empty() || payload.size() > 16384 || payload.find('\0') != std::string::npos || payload.find("\\u0000") != std::string::npos) {
         throw std::invalid_argument("Comando JSON vazio, muito longo ou com caractere nulo");
     }
     std::unique_ptr<cJSON, decltype(&cJSON_Delete)> objeto(
@@ -209,12 +227,22 @@ ComandoOperador decodificarComandoOperador(const std::string& payload, std::stri
     const auto acao = lerTexto(objeto.get(), "acao");
     if (acao == "adicionar_carga") {
         const auto* carga = cJSON_GetObjectItemCaseSensitive(objeto.get(), "carga");
-        validarObjeto(carga);
         comando.acao = AcaoOperador::AdicionarCarga;
-        comando.carga.id = static_cast<IdEntidade>(lerInteiro(carga, "id", 1, 9007199254740991.0));
-        comando.carga.tamanho = static_cast<int>(lerInteiro(carga, "tamanho", 1, 4));
-        comando.carga.id_baia = static_cast<int>(lerInteiro(carga, "id_baia", 0, std::numeric_limits<int>::max()));
-        comando.carga.id_destino = static_cast<int>(lerInteiro(carga, "id_destino", 0, std::numeric_limits<int>::max()));
+        comando.carga = lerCarga(carga);
+        return comando;
+    }
+    if (acao == "adicionar_lote_cargas") {
+        const auto* cargas = cJSON_GetObjectItemCaseSensitive(objeto.get(), "cargas");
+        if (!cJSON_IsArray(cargas) || cJSON_GetArraySize(cargas) < 1 || cJSON_GetArraySize(cargas) > 60) {
+            throw std::invalid_argument("O lote deve conter de 1 a 60 cargas");
+        }
+        comando.acao = AcaoOperador::AdicionarLoteCargas;
+        std::set<IdEntidade> ids;
+        for (const auto* item = cargas->child; item; item = item->next) {
+            auto carga = lerCarga(item);
+            if (!ids.insert(carga.id).second) throw std::invalid_argument("O lote contém IDs de carga duplicados");
+            comando.cargas.push_back(std::move(carga));
+        }
         return comando;
     }
     if (acao == "retomar_missao") {
@@ -255,7 +283,7 @@ ComandoOperador decodificarComandoOperador(const std::string& payload, std::stri
 }
 
 void IntegracaoMqtt::enfileirarComando(std::string payload, bool retido) {
-    if (payload.size() > 4096) throw std::invalid_argument("Comando MQTT excede 4096 bytes");
+    if (payload.size() > 16384) throw std::invalid_argument("Comando MQTT excede 16384 bytes");
     std::lock_guard<std::mutex> lock(mutex_fila_);
     if (fila_.size() >= 256) throw std::runtime_error("Fila de comandos MQTT esgotada");
     fila_.push_back({std::move(payload), retido});

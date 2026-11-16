@@ -4,6 +4,7 @@
 #include "fleet_state.hpp"
 #include "protocol.hpp"
 #include "route_planner.hpp"
+#include <mutex>
 #include <utility>
 #include <vector>
 
@@ -25,6 +26,7 @@ class OrganizadorLogistica {
 public:
     OrganizadorLogistica(const MapaGalpao& galpao, std::vector<Carga> carga);
     void adicionarCarga(Carga carga);
+    void adicionarCargas(std::vector<Carga> cargas);
     void retomarMissao(IdEntidade id, const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota);
     ResultadoCicloLogistica processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados = {});
     std::vector<Carga> cargos() const;
@@ -33,6 +35,7 @@ public:
 private:
     const MapaGalpao& galpao_;
     PlanejadorRotas planejador_;
+    mutable std::mutex mutex_;
     std::map<IdEntidade, Carga> cargas_;
     std::map<int, BaiaCarregamento> baias_;
     std::map<IdEntidade, MissaoEquipe> missoes_;
@@ -40,6 +43,7 @@ private:
     std::set<int> em_recarga_;
     std::vector<std::pair<int, Mensagem>> acoes_;
     std::vector<AvisoLogistica> avisos_;
+    void adicionarCargaSemBloqueio(Carga carga);
     void atualizarMissoes(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota);
     void agendarCargas(const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados);
     void registrarMensagem(const Mensagem& mensagem, const std::vector<EstadoAtualRobo>& frota);

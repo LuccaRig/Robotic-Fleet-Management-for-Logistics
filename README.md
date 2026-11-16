@@ -113,7 +113,7 @@ O transporte usa QoS 1, mensagens sem retenção e a serialização binária exi
 
 As confirmações de movimento e acoplamento vêm dos sensores. A central reenvia o último comando físico pendente a cada 500 ms, e geração, revisão e passo impedem repetir movimentos ou consumir bateria novamente. A recarga avança no simulador enquanto o robô está no destino de recarga. O simulador não precisa receber consultas para continuar seu ciclo.
 
-Após três segundos sem atualizações do simulador ou sem confirmação de um comando físico pendente, a central encerra a operação de forma controlada. Cada mensagem MQTT mantém o limite de 4096 bytes. A fila do canal de simulação comporta 4096 mensagens e seu esgotamento é tratado como erro.
+Após três segundos sem atualizações do simulador ou sem confirmação de um comando físico pendente, a central encerra a operação de forma controlada. Comandos JSON de operação aceitam até 16384 bytes para transportar lotes de até 60 cargas; as demais mensagens MQTT mantêm o limite de 4096 bytes. A fila do canal de simulação comporta 4096 mensagens e seu esgotamento é tratado como erro.
 
 O cenário `cooperativo` começa com duas filas: tamanhos 2 e 4 na baia 1, e 1 e 3 na baia 2, usando os dois destinos. O coletor registra os participantes de cada evento coletivo em `robot_event_members`, sem duplicar o evento. Bancos anteriores recuperam esses vínculos a partir dos transportes já registrados.
 
@@ -177,7 +177,7 @@ As regras de operação são:
 - A bateria deve permitir alcançar o destino e preservar acesso a um carregador com margem de segurança. Um destino em uma estação de recarga inicia a recarga. O encaminhamento automático por bateria baixa permanece ativo também no modo manual.
 - Falha ou bateria baixa interrompe o trajeto manual. A recuperação de uma falha não reinicia esse trajeto; é necessário enviar outro destino. A ocupação física de passagens continua preservada até a saída confirmada.
 - Reenvie o mesmo ID com os mesmos dados para recuperar a resposta sem repetir a ação. Reutilizar o ID com outros dados é recusado. A deduplicação é mantida em memória para até 1024 pedidos, preservando os pendentes; ela não persiste entre execuções.
-- Mensagens entregues como retidas são recusadas. O limite é de 4096 bytes por mensagem e 256 mensagens aguardando processamento. Mensagens acima desses limites são descartadas e registradas no terminal; sem confirmação, o cliente pode reenviar o mesmo pedido.
+- Mensagens entregues como retidas são recusadas. Comandos de operação aceitam até 16384 bytes e a fila comporta 256 mensagens aguardando processamento. Mensagens acima desses limites são descartadas e registradas no terminal; sem confirmação, o cliente pode reenviar o mesmo pedido.
 
 Trocas de modo e destinos confirmados são registrados no SQLite com timestamp. O protocolo IPC usa a versão 2 para transportar o modo de operação, exigindo que central e processos de robôs utilizem a mesma versão do executável.
 

@@ -5,10 +5,11 @@ icons(document);
 const state = { robos: [], cargas: [], missoes: [], passagens: [], atual: false };
 const pending = new Map();
 const robotNodes = new Map();
-let map, warehouse, selectedRobot = null, selectedCargo = null, modalKind;
+let map, warehouse, selectedRobot = null, selectedCargo = null, modalKind, modalMode = 'single';
 let historyView = 'eventos', historyPage = 0, historyBusy = false, historyEpoch = 0;
 let modalEpoch = 0;
-let cargoSignature = '', historyRobotSignature = '';
+let cargoSignature = '', historyRobotSignature = '', lastGeneratedCargoId = 0;
+let cargoRoutes = new Map();
 
 const currentRobot = () => state.robos.find(robot => robot.id === selectedRobot);
 const busy = (action, robot) => [...pending.values()].some(item => item.command.acao === action && (robot == null || item.command.id_robo === robot));
@@ -175,7 +176,7 @@ function render() {
   warehouse?.render(state, selectedRobot, selectedCargo);
 }
 
-async function send(command, label, originalId) {
+async function send(command, label, originalId, notify = true) {
   const id = originalId || crypto.randomUUID();
   if (pending.has(id)) return;
   const payload = { ...command, id };
@@ -200,10 +201,10 @@ async function send(command, label, originalId) {
   }
   try {
     const result = await promise;
-    toast(`${label}. ${result.mensagem}`);
+    if (notify) toast(`${label}. ${result.mensagem}`);
     return result;
   } catch (error) {
-    toast(error.message, 'warning', error.retry);
+    if (notify) toast(error.message, 'warning', error.retry);
     throw error;
   } finally { renderInspector(); }
 }
@@ -260,21 +261,129 @@ async function loadHistory() {
 
 function resetHistory() { historyPage = 0; historyEpoch++; loadHistory(); }
 
+function nextCargoId() {
+  const currentMax = Math.max(0, ...state.cargas.map(cargo => cargo.id));
+  return Math.max(currentMax, lastGeneratedCargoId) + 1;
+}
+
+function routeExistsForCargo(start, destination, teamSize) {
+  const traversable = point => {
+    if (point.x < 0 || point.y < 0 || point.x >= map.width || point.y >= map.height || map.walls.has(`${point.x},${point.y}`)) return false;
+    const passage = map.passages.find(item => item.cells.some(cell => cell.x === point.x && cell.y === point.y));
+    return !passage || passage.capacity >= teamSize;
+  };
+  if (!traversable(start) || !traversable(destination)) return false;
+  const key = point => `${point.x},${point.y}`;
+  const visited = new Set([key(start)]);
+  const queue = [start];
+  for (let index = 0; index < queue.length; index++) {
+    const current = queue[index];
+    if (current.x === destination.x && current.y === destination.y) return true;
+    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
+      const next = { x: current.x + dx, y: current.y + dy };
+      const nextKey = key(next);
+      if (!visited.has(nextKey) && traversable(next)) {
+        visited.add(nextKey);
+        queue.push(next);
+      }
+    }
+  }
+  return false;
+}
+
+function feasibleCargoPairs(teamSize) {
+  if (cargoRoutes.has(teamSize)) return cargoRoutes.get(teamSize);
+  const pairs = map.bays.flatMap(bay => map.destinations
+    .filter(destination => routeExistsForCargo(bay, destination, teamSize))
+    .map(destination => ({ bay: bay.id, destination: destination.id })));
+  cargoRoutes.set(teamSize, pairs);
+  return pairs;
+}
+
+function randomCargoBatch(count, firstId) {
+  const options = [1, 2, 3, 4]
+    .map(size => ({ size, pairs: feasibleCargoPairs(size) }))
+    .filter(option => option.pairs.length);
+  if (!options.length) throw new Error('Não há rotas válidas para criar cargas neste mapa.');
+  return Array.from({ length: count }, (_, index) => {
+    const option = options[Math.floor(Math.random() * options.length)];
+    const pair = option.pairs[Math.floor(Math.random() * option.pairs.length)];
+    return { id: firstId + index, tamanho: option.size, id_baia: pair.bay, id_destino: pair.destination };
+  });
+}
+
+function setCargoModalMode(mode) {
+  modalMode = mode;
+  const firstId = nextCargoId();
+  if (mode === 'single') {
+    const idField = `<label>Identificação<input name="id_entidade" type="number" min="1" max="${Number.MAX_SAFE_INTEGER}" value="${firstId}" required></label>`;
+    $('#modal-description').textContent = 'Informe a baia, o destino e o número de robôs necessários. A carga será adicionada ao fim da fila.';
+    $('#modal-fields').innerHTML = `${idField}<label>Robôs necessários<select name="tamanho">${[1, 2, 3, 4].map(size => `<option value="${size}">${size} ${size === 1 ? 'robô' : 'robôs'}</option>`).join('')}</select></label><label>Baia de origem<select name="id_baia">${map.bays.map(point => `<option value="${point.id}">Baia ${point.id}</option>`).join('')}</select></label><label>Destino de entrega<select name="id_destino">${map.destinations.map(point => `<option value="${point.id}">Destino ${point.id}</option>`).join('')}</select></label><div class="batch-mode-action"><button type="button" class="button secondary" id="open-cargo-batch">Adicionar lote de cargas</button><span>Gere várias cargas com equipes e rotas aleatórias.</span></div>`;
+    $('#open-cargo-batch').onclick = () => setCargoModalMode('batch');
+    $('#modal-submit').innerHTML = `Adicionar${icon('arrow')}`;
+    $('#modal-submit').disabled = false;
+    return;
+  }
+
+  const sizes = [1, 2, 3, 4].filter(size => feasibleCargoPairs(size).length);
+  $('#modal-description').textContent = 'Cada carga recebe um tamanho de equipe e uma rota válidos para o mapa. As cargas entram em sequência nas filas das baias.';
+  $('#modal-fields').innerHTML = `<div class="batch-mode-action"><button type="button" class="button secondary" id="back-to-single-cargo">Voltar para carga única</button><span>Até 60 cargas por lote.</span></div><label class="batch-count-field">Quantidade de cargas<input name="batch_count" type="number" min="1" max="60" step="1" value="10" required></label><p class="batch-route-note">${sizes.length ? `Tamanhos de equipe possíveis neste mapa: ${sizes.join(', ')} robô(s).` : 'Este mapa não tem rotas válidas para cargas.'}</p>`;
+  $('#back-to-single-cargo').onclick = () => setCargoModalMode('single');
+  $('#modal-submit').innerHTML = `Adicionar lote${icon('arrow')}`;
+  $('#modal-submit').disabled = sizes.length === 0;
+}
+
+async function submitCargoBatch(count, epoch) {
+  if (!Number.isInteger(count) || count < 1 || count > 60) {
+    throw new Error('A quantidade deve ser um número inteiro entre 1 e 60.');
+  }
+  const firstId = nextCargoId();
+  if (firstId + count - 1 > Number.MAX_SAFE_INTEGER) throw new Error('Não há IDs de carga disponíveis para este lote.');
+  const cargos = randomCargoBatch(count, firstId);
+  lastGeneratedCargoId = firstId + count - 1;
+  $('#modal-submit').disabled = true;
+  $('#modal-close').disabled = true;
+  $('#modal-cancel').disabled = true;
+  $('#modal-fields').querySelectorAll('input, button, select').forEach(field => { field.disabled = true; });
+  $('#modal-error').hidden = true;
+  $('#modal-description').textContent = `Enviando as ${count} cargas como uma única operação. A central só libera a distribuição após registrar o lote completo...`;
+  try {
+    await send({ acao: 'adicionar_lote_cargas', cargas: cargos }, 'Lote de cargas adicionado', undefined, false);
+  } catch (error) {
+    $('#modal-error').textContent = `Lote não confirmado. Confira a lista de cargas antes de tentar novamente. ${error.message}`;
+    $('#modal-error').hidden = false;
+    $('#modal-description').textContent = 'O lote é registrado em uma única operação para que o agendador não distribua equipes enquanto as cargas ainda estão sendo incluídas.';
+    toast('Não foi possível confirmar o lote de cargas', 'warning');
+    $('#modal-fields').querySelectorAll('input, button, select').forEach(field => { field.disabled = false; });
+    $('#modal-submit').disabled = false;
+    $('#modal-close').disabled = false;
+    $('#modal-cancel').disabled = false;
+    return;
+  }
+  if (epoch === modalEpoch) {
+    toast(`Lote concluído: ${count} cargas adicionadas`);
+    $('#modal').close();
+  }
+}
+
 function openModal(kind) {
   modalEpoch++;
   modalKind = kind;
+  $('#modal-close').disabled = false;
+  $('#modal-cancel').disabled = false;
   $('#modal-title').textContent = kind === 'carga' ? 'Adicionar carga' : 'Adicionar robô';
-  $('#modal-description').textContent = kind === 'carga' ? 'Informe a baia, o destino e o número de robôs necessários. A carga será adicionada ao fim da fila.' : 'Informe a identificação e a posição inicial do robô, fora das passagens.';
-  const nextId = Math.max(0, ...(kind === 'carga' ? state.cargas : state.robos).map(item => item.id)) + 1;
-  const idField = `<label>Identificação<input name="id_entidade" type="number" min="${kind === 'carga' ? 1 : 0}" max="${kind === 'carga' ? Number.MAX_SAFE_INTEGER : 2147483647}" value="${nextId}" required></label>`;
-  if (kind === 'carga') $('#modal-fields').innerHTML = `${idField}<label>Robôs necessários<select name="tamanho">${[1, 2, 3, 4].map(size => `<option value="${size}">${size} ${size === 1 ? 'robô' : 'robôs'}</option>`).join('')}</select></label><label>Baia de origem<select name="id_baia">${map.bays.map(point => `<option value="${point.id}">Baia ${point.id}</option>`).join('')}</select></label><label>Destino de entrega<select name="id_destino">${map.destinations.map(point => `<option value="${point.id}">Destino ${point.id}</option>`).join('')}</select></label>`;
-  else {
+  if (kind === 'carga') {
+    setCargoModalMode('single');
+  } else {
+    $('#modal-description').textContent = 'Informe a identificação e a posição inicial do robô, fora das passagens.';
+    const nextId = Math.max(0, ...state.robos.map(item => item.id)) + 1;
+    const idField = `<label>Identificação<input name="id_entidade" type="number" min="0" max="2147483647" value="${nextId}" required></label>`;
     let initial;
     for (let y = 0; y < map.height && !initial; y++) for (let x = 0; x < map.width && !initial; x++) if (!map.walls.has(`${x},${y}`) && !map.passages.some(passage => passage.cells.some(point => point.x === x && point.y === y))) initial = { x, y };
     $('#modal-fields').innerHTML = `${idField}<div></div><label>Posição X<input name="x" type="number" min="0" max="${map.width - 1}" value="${initial?.x ?? 0}" required></label><label>Posição Y<input name="y" type="number" min="0" max="${map.height - 1}" value="${initial?.y ?? 0}" required></label>`;
+    $('#modal-submit').innerHTML = `Adicionar${icon('arrow')}`;
   }
   $('#modal-submit').disabled = false;
-  $('#modal-submit').innerHTML = `Adicionar${icon('arrow')}`;
   $('#modal-error').hidden = true;
   $('#modal').showModal();
 }
@@ -328,8 +437,18 @@ $('#modal-form').onsubmit = async event => {
   event.preventDefault();
   if ($('#modal-submit').disabled) return;
   const epoch = modalEpoch;
+  if (modalKind === 'carga' && modalMode === 'batch') {
+    try {
+      await submitCargoBatch(Number(new FormData(event.target).get('batch_count')), epoch);
+    } catch (error) {
+      $('#modal-error').textContent = error.message;
+      $('#modal-error').hidden = false;
+    }
+    return;
+  }
   const values = Object.fromEntries([...new FormData(event.target)].map(([key, value]) => [key, Number(value)]));
   const command = modalKind === 'carga' ? { acao: 'adicionar_carga', carga: { id: values.id_entidade, tamanho: values.tamanho, id_baia: values.id_baia, id_destino: values.id_destino } } : { acao: 'adicionar_robo', id_robo: values.id_entidade, posicao: { x: values.x, y: values.y } };
+  if (modalKind === 'carga') lastGeneratedCargoId = Math.max(lastGeneratedCargoId, command.carga.id);
   $('#modal-submit').disabled = true;
   $('#modal-submit').textContent = 'Aguardando confirmação';
   $('#modal-error').hidden = true;

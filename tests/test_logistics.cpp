@@ -242,3 +242,28 @@ TEST(LogisticsTest, AppendsDynamicCargoWithoutBypassingBlockedBayHead) {
     EXPECT_EQ(resultado.comandos.front().second.id_carga, 1);
     EXPECT_EQ(resultado.comandos.front().first, 2);
 }
+
+TEST(LogisticsTest, AddsCargoBatchAtomicallyBeforeScheduling) {
+    auto mapa = layout();
+    EstadoFrota frota;
+    registrarRobo(frota, 1);
+    registrarRobo(frota, 2);
+    OrganizadorLogistica logistica(mapa, {});
+    auto primeira = load(1);
+    primeira.id = 10;
+    auto segunda = load(1);
+    segunda.id = 11;
+    auto invalida = load(1);
+    invalida.id = 12;
+    invalida.id_baia = 99;
+
+    EXPECT_THROW(logistica.adicionarCargas({primeira, invalida}), std::invalid_argument);
+    EXPECT_TRUE(logistica.cargos().empty());
+
+    logistica.adicionarCargas({primeira, segunda});
+    const auto resultado = logistica.processarCiclo({}, frota.capturarEstado());
+    ASSERT_EQ(logistica.cargos().size(), 2u);
+    ASSERT_EQ(resultado.comandos.size(), 2u);
+    EXPECT_EQ(resultado.comandos[0].second.id_carga, 10);
+    EXPECT_EQ(resultado.comandos[1].second.id_carga, 11);
+}

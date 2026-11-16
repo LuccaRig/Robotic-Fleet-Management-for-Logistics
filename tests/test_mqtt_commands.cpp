@@ -38,6 +38,8 @@ TEST(MqttCommandsTest, RejectsMalformedAmbiguousAndOutOfRangeCommands) {
         R"({"id":"a","acao":"adicionar_robo","id_robo":2,"posicao":{"x":-1,"y":1}})",
         R"({"id":"a","acao":"adicionar_carga","carga":{"id":1,"tamanho":5,"id_baia":1,"id_destino":1}})",
         R"({"id":"a","acao":"adicionar_carga","carga":{"id":1,"tamanho":1,"id_baia":1}})",
+        R"({"id":"lote","acao":"adicionar_lote_cargas","cargas":[]})",
+        R"({"id":"lote","acao":"adicionar_lote_cargas","cargas":[{"id":1,"tamanho":1,"id_baia":1,"id_destino":1},{"id":1,"tamanho":2,"id_baia":1,"id_destino":1}]})",
         R"({"id":"a","acao":"retomar_missao","id_missao":0})"
     };
     for (const auto& payload : invalidos) {
@@ -67,6 +69,11 @@ TEST(MqttCommandsTest, DecodesSimulatorAndLogisticsOperations) {
     EXPECT_EQ(carga.carga.tamanho, 4);
     EXPECT_EQ(carga.carga.id_baia, 1);
     EXPECT_EQ(carga.carga.id_destino, 2);
+    const auto lote = decodificarComandoOperador(R"({"id":"l","acao":"adicionar_lote_cargas","cargas":[{"id":12,"tamanho":4,"id_baia":1,"id_destino":2},{"id":13,"tamanho":1,"id_baia":2,"id_destino":1}]})");
+    EXPECT_EQ(lote.acao, AcaoOperador::AdicionarLoteCargas);
+    ASSERT_EQ(lote.cargas.size(), 2u);
+    EXPECT_EQ(lote.cargas[0].id, 12);
+    EXPECT_EQ(lote.cargas[1].id, 13);
     const auto missao = decodificarComandoOperador(R"({"id":"m","acao":"retomar_missao","id_missao":7})");
     EXPECT_EQ(missao.acao, AcaoOperador::RetomarMissao);
     EXPECT_EQ(missao.id_missao, 7);
@@ -75,6 +82,7 @@ TEST(MqttCommandsTest, DecodesSimulatorAndLogisticsOperations) {
 TEST(MqttCommandsTest, DeduplicatesOperationsWithoutRobotGeneration) {
     const std::vector<std::string> pedidos{
         R"({"id":"c","acao":"adicionar_carga","carga":{"id":12,"tamanho":4,"id_baia":1,"id_destino":2}})",
+        R"({"id":"lote","acao":"adicionar_lote_cargas","cargas":[{"id":12,"tamanho":4,"id_baia":1,"id_destino":2},{"id":13,"tamanho":2,"id_baia":2,"id_destino":1}]})",
         R"({"id":"n","acao":"adicionar_robo","id_robo":2,"posicao":{"x":3,"y":5}})",
         R"({"id":"m","acao":"retomar_missao","id_missao":7})"
     };
@@ -89,12 +97,14 @@ TEST(MqttCommandsTest, DeduplicatesOperationsWithoutRobotGeneration) {
         mqtt.enfileirarComando(payload);
     }
     mqtt.processarComandos(executar);
-    EXPECT_EQ(executados, 3);
+    EXPECT_EQ(executados, 4);
+    mqtt.enfileirarComando(R"({"id":"lote","acao":"adicionar_lote_cargas","cargas":[{"id":12,"tamanho":4,"id_baia":1,"id_destino":2},{"id":13,"tamanho":2,"id_baia":2,"id_destino":1}]})");
+    mqtt.enfileirarComando(R"({"id":"lote","acao":"adicionar_lote_cargas","cargas":[{"id":12,"tamanho":1,"id_baia":1,"id_destino":2},{"id":13,"tamanho":2,"id_baia":2,"id_destino":1}]})");
     mqtt.enfileirarComando(R"({"id":"c","acao":"adicionar_carga","carga":{"id":12,"tamanho":3,"id_baia":1,"id_destino":2}})");
     mqtt.enfileirarComando(R"({"id":"n","acao":"adicionar_robo","id_robo":2,"posicao":{"x":4,"y":5}})");
     mqtt.enfileirarComando(R"({"id":"m","acao":"retomar_missao","id_missao":8})");
     mqtt.processarComandos(executar);
-    EXPECT_EQ(executados, 3);
+    EXPECT_EQ(executados, 4);
 }
 
 TEST(MqttCommandsTest, ExecutesOnlyOnCentralCycleAndDeduplicatesPendingAndFinishedRequests) {
@@ -136,7 +146,7 @@ TEST(MqttCommandsTest, RejectsRetainedMessagesAndContinuesAfterInvalidRequest) {
 
 TEST(MqttCommandsTest, BoundsQueueAndPayloadSize) {
     IntegracaoMqtt mqtt;
-    EXPECT_THROW(mqtt.enfileirarComando(std::string(4097, 'x')), std::invalid_argument);
+    EXPECT_THROW(mqtt.enfileirarComando(std::string(16385, 'x')), std::invalid_argument);
     for (int i = 0; i < 256; ++i) mqtt.enfileirarComando(pedido);
     EXPECT_THROW(mqtt.enfileirarComando(pedido), std::runtime_error);
     int executados = 0;

@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-enum class AcaoOperador { DefinirModo, DefinirDestino, DefinirFalha, DefinirBateria, AdicionarCarga, AdicionarRobo, RetomarMissao };
+enum class AcaoOperador { DefinirModo, DefinirDestino, DefinirFalha, DefinirBateria, AdicionarCarga, AdicionarLoteCargas, AdicionarRobo, RetomarMissao };
 
 struct ComandoOperador {
     std::string id;
@@ -23,6 +23,7 @@ struct ComandoOperador {
     bool falha = false;
     int bateria = 100;
     Carga carga;
+    std::vector<Carga> cargas;
     Posicao posicao;
     IdEntidade id_missao = 0;
 };

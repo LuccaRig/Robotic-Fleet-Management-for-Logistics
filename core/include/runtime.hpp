@@ -33,6 +33,7 @@ public:
     bool definirBateria(int id, int bateria);
     bool definirFalha(int id, bool falha);
     void adicionarCarga(Carga carga);
+    void adicionarCargas(std::vector<Carga> cargas);
     void retomar(IdEntidade id_missao);
     bool concluido() const;
     void exportarMapaTxt(const std::string& caminho_arquivo) const;
