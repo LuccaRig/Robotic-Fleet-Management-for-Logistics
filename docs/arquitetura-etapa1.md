@@ -55,7 +55,7 @@ Períodos nominais: navegação de 100 ms, status de 500 ms e processamento da l
 ## Fluxo de operação
 
 1. **Recepção:** o ciclo central pede ao Gestor mensagens IPC disponíveis e snapshots atualizados. O Gestor mantém processos, PID, geração, canal e estado corrente, rejeitando mensagens antigas.
-2. **Alocação:** baias e robôs são percorridos por ID, preservando a fila de cargas de cada baía. A equipe de um a quatro integrantes é reservada por inteiro, considerando conectividade, falha, disponibilidade e energia para coleta, entrega e acesso ao carregador.
+2. **Alocação:** baias e robôs são percorridos por ID em rodadas, preservando a fila de cargas de cada baía. Robôs livres são enviados progressivamente para a carga mais antiga; equipes incompletas aguardam na baia sem acoplar, e cargas seguintes só recebem robôs depois que a equipe anterior estiver completa. A alocação considera conectividade, falha, disponibilidade e energia para coleta, entrega e acesso ao carregador.
 3. **Rotas:** BFS com movimentos ortogonais respeita obstáculos e capacidade estrutural das passagens. Terreno e instalações são separados da posição dos robôs. Sem equipe ou rota, a carga permanece pendente com motivo consultável.
 4. **Transporte:** a missão passa por reunião na baía, acoplamento, transporte e desacoplamento. Cada fase exige confirmação de todos. Durante o transporte, o adaptador avança a posição lógica somente após propostas compatíveis do mesmo passo por toda a equipe. A entrega exige desacoplamento completo.
 5. **Passagens:** a reserva da equipe é indivisível e consome uma vaga por integrante. Fluxos opostos aguardam o esvaziamento, respeitando a fila. A liberação exige posição de saída confirmada; falha ou desconexão preserva a ocupação física.

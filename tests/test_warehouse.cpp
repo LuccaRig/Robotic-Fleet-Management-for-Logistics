@@ -81,5 +81,5 @@ TEST(ScenarioTest, StartsCooperativeDemoWithIndependentQueuesAndEveryCargoSize) 
     const auto ciclo = logistica.processarCiclo({}, frota);
     std::set<IdEntidade> despachadas;
     for (const auto& comando : ciclo.comandos) despachadas.insert(comando.second.id_carga);
-    EXPECT_EQ(despachadas, (std::set<IdEntidade>{1, 2}));
+    EXPECT_EQ(despachadas, (std::set<IdEntidade>{1, 2, 3}));
 }

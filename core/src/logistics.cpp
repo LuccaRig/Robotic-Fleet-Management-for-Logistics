@@ -46,37 +46,85 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
     std::set<int> robos_reservados = bloqueados;
     for (const auto& pair : missoes_) if (pair.second.fase != FaseMissao::NENHUMA) robos_reservados.insert(pair.second.integrantes.begin(), pair.second.integrantes.end());
     std::set<int> robos_que_precisam_recarga;
-    for (auto& par_baia : baias_) {
-        auto& baia = par_baia.second;
-        if (baia.fila_cargas.empty()) continue;
-        auto& carga = cargas_.at(baia.fila_cargas.front());
-        if (carga.estado != EstadoCarga::PENDENTE) continue;
-        const auto destino = galpao_.destinos().at(carga.id_destino).posicao;
-        auto rota_entrega = planejador_.calcularRota(baia.posicao, destino, carga.tamanho);
-        const auto rota_carregador = planejador_.carregadorMaisProximo(destino);
-        if (!rota_entrega || !rota_carregador) { carga.motivo = "Sem rota compatível com a carga ou sem carregador alcançável"; continue; }
-        std::vector<EstadoAtualRobo> equipe_escolhida;
-        for (const auto& robo : frota) {
-            if (!robo.disponivel || !disponivelParaCarga(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id)) continue;
-            const auto rota_coleta = planejador_.calcularRota(robo.posicao, baia.posicao);
-            if (!rota_coleta) continue;
-            const auto custo_bateria = rota_coleta->size() + rota_entrega->size() + rota_carregador->second.size() + 15;
-            if (static_cast<std::size_t>(robo.bateria) <= custo_bateria) { robos_que_precisam_recarga.insert(robo.id); continue; }
-            equipe_escolhida.push_back(robo); if (equipe_escolhida.size() == static_cast<std::size_t>(carga.tamanho)) break;
+    bool houve_alocacao;
+    do {
+        houve_alocacao = false;
+        for (auto& par_baia : baias_) {
+            auto& baia = par_baia.second;
+            for (const auto id_carga : baia.fila_cargas) {
+                auto& carga = cargas_.at(id_carga);
+                if (carga.estado == EstadoCarga::ENTREGUE) continue;
+
+                MissaoEquipe* missao = nullptr;
+                const bool nova_missao = carga.estado == EstadoCarga::PENDENTE;
+                if (nova_missao) {
+                    if (carga.id_missao != 0) throw std::logic_error("Carga pendente com missão associada");
+                } else if (carga.estado == EstadoCarga::REUNINDO_EQUIPE) {
+                    const auto encontrada = missoes_.find(carga.id_missao);
+                    if (encontrada == missoes_.end()) throw std::logic_error("Missão da carga não encontrada");
+                    missao = &encontrada->second;
+                    if (missao->integrantes.size() >= static_cast<std::size_t>(carga.tamanho)) continue;
+                } else {
+                    const auto encontrada = missoes_.find(carga.id_missao);
+                    if (encontrada != missoes_.end() &&
+                        encontrada->second.integrantes.size() >= static_cast<std::size_t>(carga.tamanho)) continue;
+                    break;
+                }
+
+                const auto destino = galpao_.destinos().at(carga.id_destino).posicao;
+                auto rota_entrega = planejador_.calcularRota(baia.posicao, destino, carga.tamanho);
+                const auto rota_carregador = planejador_.carregadorMaisProximo(destino);
+                if (!rota_entrega || !rota_carregador) {
+                    carga.motivo = "Sem rota compatível com a carga ou sem carregador alcançável";
+                    break;
+                }
+                if (missao && missao->rota_entrega != *rota_entrega) {
+                    throw std::logic_error("Rota da missão da carga foi alterada");
+                }
+
+                const auto integrantes_atuais = missao ? missao->integrantes.size() : 0;
+                const auto faltantes = static_cast<std::size_t>(carga.tamanho) - integrantes_atuais;
+                std::vector<EstadoAtualRobo> equipe_escolhida;
+                for (const auto& robo : frota) {
+                    if (!robo.disponivel || !disponivelParaCarga(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id)) continue;
+                    const auto rota_coleta = planejador_.calcularRota(robo.posicao, baia.posicao);
+                    if (!rota_coleta) continue;
+                    const auto custo_bateria = rota_coleta->size() + rota_entrega->size() + rota_carregador->second.size() + 15;
+                    if (static_cast<std::size_t>(robo.bateria) <= custo_bateria) { robos_que_precisam_recarga.insert(robo.id); continue; }
+                    equipe_escolhida.push_back(robo);
+                    if (equipe_escolhida.size() == faltantes) break;
+                }
+                if (equipe_escolhida.empty()) {
+                    carga.motivo = "Aguardando robôs livres com rota e bateria suficientes";
+                    break;
+                }
+
+                if (nova_missao) {
+                    MissaoEquipe nova; nova.id = ++proxima_missao_; nova.id_carga = carga.id; nova.rota_entrega = *rota_entrega;
+                    missao = &missoes_.emplace(nova.id, std::move(nova)).first->second;
+                    carga.estado = EstadoCarga::REUNINDO_EQUIPE;
+                    carga.id_missao = missao->id;
+                }
+                for (const auto& robo : equipe_escolhida) {
+                    missao->integrantes.push_back(robo.id);
+                    missao->geracoes[robo.id] = robo.geracao;
+                    robos_reservados.insert(robo.id);
+                    houve_alocacao = true;
+                    Mensagem m; m.tipo = TipoMensagem::AtribuirMissao; m.fase = FaseMissao::INDO_PARA_COLETA; m.id_missao = missao->id;
+                    m.id_carga = carga.id; m.id_equipe = missao->id; m.id_baia = baia.id; m.destino = baia.posicao;
+                    m.rota = *planejador_.calcularRota(robo.posicao, baia.posicao); m.integrantes = {robo.id};
+                    acoes_.emplace_back(robo.id, std::move(m));
+                }
+                if (nova_missao) registrarAviso(AvisoLogistica::TipoAviso::MissaoAtribuida, *missao);
+                if (missao->integrantes.size() < static_cast<std::size_t>(carga.tamanho)) {
+                    carga.motivo = "Aguardando mais robôs para completar a equipe";
+                    break;
+                }
+                carga.motivo.clear();
+                break;
+            }
         }
-        if (equipe_escolhida.size() != static_cast<std::size_t>(carga.tamanho)) { carga.motivo = "Aguardando equipe completa com rota e bateria suficientes"; continue; }
-        MissaoEquipe missao; missao.id = ++proxima_missao_; missao.id_carga = carga.id; missao.rota_entrega = *rota_entrega;
-        for (const auto& robo : equipe_escolhida) { missao.integrantes.push_back(robo.id); missao.geracoes[robo.id] = robo.geracao; robos_reservados.insert(robo.id); }
-        carga.estado = EstadoCarga::REUNINDO_EQUIPE; carga.id_missao = missao.id; carga.motivo.clear();
-        auto& missao_registrada = missoes_.emplace(missao.id, std::move(missao)).first->second;
-        for (const auto& robo : equipe_escolhida) {
-            Mensagem m; m.tipo = TipoMensagem::AtribuirMissao; m.fase = FaseMissao::INDO_PARA_COLETA; m.id_missao = missao_registrada.id;
-            m.id_carga = carga.id; m.id_equipe = missao_registrada.id; m.id_baia = baia.id; m.destino = baia.posicao;
-            m.rota = *planejador_.calcularRota(robo.posicao, baia.posicao); m.integrantes = {robo.id};
-            acoes_.emplace_back(robo.id, std::move(m));
-        }
-        registrarAviso(AvisoLogistica::TipoAviso::MissaoAtribuida, missao_registrada);
-    }
+    } while (houve_alocacao);
     for (const auto& robo : frota) {
         if (em_recarga_.count(robo.id) && (!robo.conectado || (robo.estado == EstadoRobo::DISPONIVEL && robo.bateria == 100))) em_recarga_.erase(robo.id);
         if (!robo.conectado || !roboLivre(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.bateria == 100) continue;
@@ -124,7 +172,9 @@ void OrganizadorLogistica::avancarMissao(MissaoEquipe& missao) {
     };
     auto& carga = cargas_.at(missao.id_carga);
     // Cada transição espera a confirmação de todos os integrantes antes de avançar a equipe.
-    if (missao.fase == FaseMissao::INDO_PARA_COLETA && all([](const EstadoAtualRobo& s) { return s.estado == EstadoRobo::AGUARDANDO_EQUIPE && s.fase == FaseMissao::COLETA_PRONTA && !s.falha; })) {
+    if (missao.fase == FaseMissao::INDO_PARA_COLETA &&
+        missao.integrantes.size() == static_cast<std::size_t>(carga.tamanho) &&
+        all([](const EstadoAtualRobo& s) { return s.estado == EstadoRobo::AGUARDANDO_EQUIPE && s.fase == FaseMissao::COLETA_PRONTA && !s.falha; })) {
         registrarAviso(AvisoLogistica::TipoAviso::EquipeReunida, missao); carga.estado = EstadoCarga::ACOPLANDO;
         executarComando(missao, TipoMensagem::Acoplar, FaseMissao::ACOPLANDO);
     } else if (missao.fase == FaseMissao::ACOPLANDO && all([](const EstadoAtualRobo& s) { return s.acoplado && s.estado == EstadoRobo::AGUARDANDO_EQUIPE && !s.falha; })) {
@@ -137,8 +187,9 @@ void OrganizadorLogistica::avancarMissao(MissaoEquipe& missao) {
     } else if (missao.fase == FaseMissao::DESACOPLANDO && all([](const EstadoAtualRobo& s) { return !s.acoplado && s.estado == EstadoRobo::AGUARDANDO_DESCARGA && s.fase == FaseMissao::DESACOPLANDO && !s.falha; })) {
         carga.estado = EstadoCarga::ENTREGUE; carga.motivo.clear();
         auto& fila = baias_.at(carga.id_baia).fila_cargas;
-        if (fila.empty() || fila.front() != carga.id) throw std::logic_error("Fila da baía inconsistente");
-        fila.pop_front(); registrarAviso(AvisoLogistica::TipoAviso::CargaEntregue, missao);
+        const auto carga_na_fila = std::find(fila.begin(), fila.end(), carga.id);
+        if (carga_na_fila == fila.end()) throw std::logic_error("Carga não encontrada na fila da baía");
+        fila.erase(carga_na_fila); registrarAviso(AvisoLogistica::TipoAviso::CargaEntregue, missao);
         executarComando(missao, TipoMensagem::CancelarMissao, FaseMissao::NENHUMA);
     }
 }

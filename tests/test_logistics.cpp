@@ -9,18 +9,31 @@ MapaGalpao layout() { MapaGalpao map(6,5); map.adicionarBaia({1,{1,1},{}}); map.
 void registrarRobo(EstadoFrota& frota, int id) {
     frota.registrarRobo(id,1,{0,1}); EstadoAtualRobo s; s.id = id; s.geracao = 1; s.sequencia = 1; s.posicao = {0,1}; s.disponivel = true; s.conectado = true; frota.atualizar(s);
 }
+void registrarRoboOcupado(EstadoFrota& frota, int id) {
+    registrarRobo(frota, id);
+    auto estado = *frota.obter(id);
+    estado.sequencia = 2; estado.estado = EstadoRobo::INDO_PARA_ENTREGA; estado.fase = FaseMissao::INDO_PARA_ENTREGA;
+    estado.id_missao = 99; estado.disponivel = false;
+    frota.atualizar(estado);
+}
+void liberarRobo(EstadoFrota& frota, int id) {
+    auto estado = *frota.obter(id);
+    ++estado.sequencia; estado.estado = EstadoRobo::DISPONIVEL; estado.fase = FaseMissao::NENHUMA;
+    estado.id_missao = 0; estado.id_carga = 0; estado.id_equipe = 0; estado.disponivel = true;
+    frota.atualizar(estado);
+}
 Carga load(int tamanho) { Carga c; c.id = 1; c.tamanho = tamanho; c.id_baia = 1; c.id_destino = 1; return c; }
-Mensagem report(int id, EstadoRobo estado, FaseMissao fase, bool acoplado = false) {
-    Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = id; m.geracao = 1; m.sequencia = 2; m.id_missao = 1;
+Mensagem report(int id, EstadoRobo estado, FaseMissao fase, bool acoplado = false, IdEntidade missao = 1) {
+    Mensagem m; m.tipo = TipoMensagem::EstadoAtualRobo; m.id_robo = id; m.geracao = 1; m.sequencia = 2; m.id_missao = missao;
     m.estado = estado; m.fase = fase; m.acoplado = acoplado; m.posicao = {1,1}; return m;
 }
 struct SaidasLogistica {
-    std::vector<Mensagem> comandos;
+    std::vector<std::pair<int, Mensagem>> comandos;
     std::vector<AvisoLogistica::TipoAviso> eventos;
 };
 void cycle(OrganizadorLogistica& organizador, const EstadoFrota& frota, SaidasLogistica& saidas, std::initializer_list<Mensagem> mensagens = {}) {
     auto resultado = organizador.processarCiclo(std::vector<Mensagem>(mensagens), frota.capturarEstado());
-    for (auto& comando : resultado.comandos) saidas.comandos.push_back(std::move(comando.second));
+    for (auto& comando : resultado.comandos) saidas.comandos.push_back(std::move(comando));
     for (const auto& evento : resultado.eventos) saidas.eventos.push_back(evento.tipo);
 }
 Mensagem resume(IdEntidade id) { Mensagem m; m.tipo = TipoMensagem::RetomarMissao; m.id_missao = id; return m; }
@@ -31,24 +44,83 @@ TEST(LogisticsTest, WaitsForCompleteTeamAndAllArrivalReports) {
     auto map = layout(); EstadoFrota frota; registrarRobo(frota,1); SaidasLogistica saidas;
     OrganizadorLogistica organizer(map,{load(2)});
     
-    std::cout << " -> Ciclo 1: Apenas robô 1 presente. Verificando pendência de carga.\n";
-    cycle(organizer,frota,saidas); EXPECT_TRUE(saidas.comandos.empty()); EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::PENDENTE);
+    std::cout << " -> Ciclo 1: Robô 1 inicia a coleta enquanto aguarda completar a equipe.\n";
+    cycle(organizer,frota,saidas); ASSERT_EQ(saidas.comandos.size(),1u);
+    EXPECT_EQ(saidas.comandos[0].second.tipo,TipoMensagem::AtribuirMissao);
+    EXPECT_EQ(saidas.comandos[0].first,1);
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::REUNINDO_EQUIPE);
     
-    std::cout << " -> Ciclo 2: Adicionando robô 2 para completar equipe e atribuir missão.\n";
-    registrarRobo(frota,2); cycle(organizer,frota,saidas); ASSERT_EQ(saidas.comandos.size(),2u); EXPECT_EQ(saidas.comandos[0].tipo,TipoMensagem::AtribuirMissao);
+    std::cout << " -> Robô 1 aguarda na baia sem acoplar antes da chegada da equipe.\n";
+    cycle(organizer,frota,saidas,{report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)});
+    EXPECT_EQ(saidas.comandos.size(),1u);
+
+    std::cout << " -> Ciclo 2: Robô 2 completa a equipe e recebe a missão.\n";
+    registrarRobo(frota,2); cycle(organizer,frota,saidas); ASSERT_EQ(saidas.comandos.size(),2u);
+    EXPECT_EQ(saidas.comandos.back().second.tipo,TipoMensagem::AtribuirMissao);
+    EXPECT_EQ(saidas.comandos.back().first,2);
     ASSERT_EQ(saidas.eventos.size(),1u); EXPECT_EQ(saidas.eventos.front(),AvisoLogistica::TipoAviso::MissaoAtribuida);
     
     std::cout << " -> Relatando chegada dos robôs e acoplamento da carga.\n";
-    cycle(organizer,frota,saidas,{report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)}); EXPECT_EQ(saidas.comandos.size(),2u);
-    cycle(organizer,frota,saidas,{report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)}); ASSERT_EQ(saidas.comandos.size(),4u); EXPECT_EQ(saidas.comandos.back().tipo,TipoMensagem::Acoplar);
+    cycle(organizer,frota,saidas,{report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)}); ASSERT_EQ(saidas.comandos.size(),4u); EXPECT_EQ(saidas.comandos.back().second.tipo,TipoMensagem::Acoplar);
     cycle(organizer,frota,saidas,{report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)}); EXPECT_EQ(saidas.comandos.size(),4u);
-    cycle(organizer,frota,saidas,{report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)}); ASSERT_EQ(saidas.comandos.size(),6u); EXPECT_EQ(saidas.comandos.back().fase,FaseMissao::INDO_PARA_ENTREGA);
+    cycle(organizer,frota,saidas,{report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::ACOPLANDO,true)}); ASSERT_EQ(saidas.comandos.size(),6u); EXPECT_EQ(saidas.comandos.back().second.fase,FaseMissao::INDO_PARA_ENTREGA);
     
     std::cout << " -> Realizando entrega e desacoplamento final.\n";
     cycle(organizer,frota,saidas,{report(1,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::ENTREGA_PRONTA,true), report(2,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::ENTREGA_PRONTA,true)}); ASSERT_EQ(saidas.comandos.size(),8u);
     cycle(organizer,frota,saidas,{report(1,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::DESACOPLANDO,false)}); EXPECT_NE(organizer.cargos()[0].estado,EstadoCarga::ENTREGUE);
     cycle(organizer,frota,saidas,{report(2,EstadoRobo::AGUARDANDO_DESCARGA,FaseMissao::DESACOPLANDO,false)}); EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::ENTREGUE);
     std::cout << "[SUCESSO] LogisticsTest.WaitsForCompleteTeamAndAllArrivalReports passou!\n";
+}
+
+TEST(LogisticsTest, AddsNewlyFreeRobotsToPartialTeamBeforeCoupling) {
+    auto map = layout(); EstadoFrota frota;
+    registrarRobo(frota, 1); registrarRoboOcupado(frota, 2); registrarRoboOcupado(frota, 3);
+    SaidasLogistica saidas; OrganizadorLogistica organizer(map,{load(3)});
+
+    cycle(organizer, frota, saidas);
+    ASSERT_EQ(saidas.comandos.size(), 1u);
+    EXPECT_EQ(saidas.comandos.front().first, 1);
+    cycle(organizer, frota, saidas,{report(1,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)});
+    EXPECT_EQ(saidas.comandos.size(), 1u);
+
+    liberarRobo(frota, 2);
+    cycle(organizer, frota, saidas);
+    ASSERT_EQ(saidas.comandos.size(), 2u);
+    EXPECT_EQ(saidas.comandos.back().first, 2);
+    cycle(organizer, frota, saidas,{report(2,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)});
+    EXPECT_EQ(saidas.comandos.size(), 2u);
+
+    liberarRobo(frota, 3);
+    cycle(organizer, frota, saidas);
+    ASSERT_EQ(saidas.comandos.size(), 3u);
+    EXPECT_EQ(saidas.comandos.back().first, 3);
+    cycle(organizer, frota, saidas,{report(3,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA)});
+    ASSERT_EQ(saidas.comandos.size(), 6u);
+    for (std::size_t i = 3; i < saidas.comandos.size(); ++i)
+        EXPECT_EQ(saidas.comandos[i].second.tipo, TipoMensagem::Acoplar);
+    EXPECT_EQ(organizer.cargos()[0].estado, EstadoCarga::ACOPLANDO);
+}
+
+TEST(LogisticsTest, AssignsConcurrentCargoTeamsInFifoOrder) {
+    auto map = layout(); EstadoFrota frota;
+    for (int id = 1; id <= 6; ++id) registrarRobo(frota, id);
+    auto primeira = load(4);
+    auto segunda = load(4); segunda.id = 2;
+    SaidasLogistica saidas; OrganizadorLogistica organizer(map,{primeira, segunda});
+
+    cycle(organizer, frota, saidas);
+    ASSERT_EQ(saidas.comandos.size(), 6u);
+    for (std::size_t i = 0; i < 4; ++i) EXPECT_EQ(saidas.comandos[i].second.id_carga, 1);
+    for (std::size_t i = 4; i < 6; ++i) EXPECT_EQ(saidas.comandos[i].second.id_carga, 2);
+    ASSERT_EQ(organizer.missoes().size(), 2u);
+    EXPECT_EQ(organizer.missoes()[0].integrantes.size(), 4u);
+    EXPECT_EQ(organizer.missoes()[1].integrantes.size(), 2u);
+
+    cycle(organizer, frota, saidas,{
+        report(5,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA,false,2),
+        report(6,EstadoRobo::AGUARDANDO_EQUIPE,FaseMissao::COLETA_PRONTA,false,2)});
+    EXPECT_EQ(saidas.comandos.size(), 6u);
+    EXPECT_EQ(organizer.cargos()[1].estado, EstadoCarga::REUNINDO_EQUIPE);
 }
 
 TEST(LogisticsTest, CancelsBeforeCouplingAndPreservesQueue) {
@@ -59,7 +131,11 @@ TEST(LogisticsTest, CancelsBeforeCouplingAndPreservesQueue) {
     std::cout << " -> Simulando falha antes do acoplamento e verificando cancelamento.\n";
     auto falha = report(1,EstadoRobo::COM_FALHA,FaseMissao::INDO_PARA_COLETA); falha.falha = true;
     auto estado = estadoRoboDaMensagem(falha); estado.sequencia = 3; frota.atualizar(estado); cycle(organizer,frota,saidas,{falha});
-    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::PENDENTE); EXPECT_EQ(organizer.missoes()[0].fase,FaseMissao::NENHUMA);
+    EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::REUNINDO_EQUIPE);
+    EXPECT_EQ(organizer.missoes()[0].fase,FaseMissao::NENHUMA);
+    ASSERT_EQ(organizer.missoes().size(),2u);
+    EXPECT_EQ(organizer.missoes()[1].integrantes.size(),1u);
+    EXPECT_EQ(saidas.comandos.back().first,2);
     std::cout << "[SUCESSO] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue passou!\n";
 }
 
@@ -118,7 +194,9 @@ TEST(LogisticsTest, AppendsDynamicCargoWithoutBypassingBlockedBayHead) {
     nova.id_missao = 99;
     nova.motivo = "Antigo";
     logistica.adicionarCarga(nova);
-    EXPECT_TRUE(logistica.processarCiclo({}, frota.capturarEstado()).comandos.empty());
+    const auto inicial = logistica.processarCiclo({}, frota.capturarEstado());
+    ASSERT_EQ(inicial.comandos.size(), 1u);
+    EXPECT_EQ(inicial.comandos.front().second.id_carga, 1);
     ASSERT_EQ(logistica.cargos().size(), 2u);
     EXPECT_EQ(logistica.cargos()[1].estado, EstadoCarga::PENDENTE);
     EXPECT_EQ(logistica.cargos()[1].id_missao, 0);
@@ -136,6 +214,7 @@ TEST(LogisticsTest, AppendsDynamicCargoWithoutBypassingBlockedBayHead) {
     EXPECT_EQ(logistica.cargos().size(), 2u);
     registrarRobo(frota, 2);
     const auto resultado = logistica.processarCiclo({}, frota.capturarEstado());
-    ASSERT_EQ(resultado.comandos.size(), 2u);
-    for (const auto& comando : resultado.comandos) EXPECT_EQ(comando.second.id_carga, 1);
+    ASSERT_EQ(resultado.comandos.size(), 1u);
+    EXPECT_EQ(resultado.comandos.front().second.id_carga, 1);
+    EXPECT_EQ(resultado.comandos.front().first, 2);
 }
