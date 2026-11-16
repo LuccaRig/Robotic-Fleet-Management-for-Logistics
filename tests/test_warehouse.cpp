@@ -85,6 +85,53 @@ TEST(ScenarioTest, ScaleScenarioUsesLargeMapAndFifteenRobots) {
     EXPECT_EQ(despachados, ids_robos);
 }
 
+TEST(ScenarioTest, PassageStressScenarioUsesOneHundredRobotsAndSixtyMixedCargos) {
+    const auto cenario = criarCenario("estresse-passagens");
+    PlanejadorRotas planner(cenario.galpao);
+    EXPECT_EQ(cenario.galpao.largura(), 50);
+    EXPECT_EQ(cenario.galpao.altura(), 30);
+    ASSERT_EQ(cenario.galpao.passagens().size(), 4u);
+    for (int id = 1; id <= 4; ++id) {
+        EXPECT_EQ(cenario.galpao.passagens().at(id).capacidade, id);
+    }
+
+    ASSERT_EQ(cenario.robos.size(), 100u);
+    std::set<int> ids_robos;
+    for (const auto& robo : cenario.robos) {
+        EXPECT_TRUE(ids_robos.insert(robo.id).second);
+        EXPECT_EQ(cenario.galpao.obterCelula(robo.posicao.x, robo.posicao.y), EstadoCelula::LIVRE);
+    }
+    EXPECT_EQ(*ids_robos.begin(), 1);
+    EXPECT_EQ(*ids_robos.rbegin(), 100);
+
+    ASSERT_EQ(cenario.cargos.size(), 60u);
+    std::set<int> tamanhos;
+    std::map<int, int> frequencias;
+    for (const auto& cargo : cenario.cargos) {
+        tamanhos.insert(cargo.tamanho);
+        ++frequencias[cargo.tamanho];
+        EXPECT_EQ(cargo.id_baia, cargo.id_destino);
+        EXPECT_GE(cargo.tamanho, 1);
+        EXPECT_LE(cargo.tamanho, 4);
+    }
+    EXPECT_EQ(tamanhos, (std::set<int>{1, 2, 3, 4}));
+    EXPECT_EQ(frequencias, (std::map<int, int>{{1, 15}, {2, 15}, {3, 15}, {4, 15}}));
+    for (const auto& cargo : cenario.cargos) {
+        const auto& origem = cenario.galpao.baias().at(cargo.id_baia).posicao;
+        const auto& destino = cenario.galpao.destinos().at(cargo.id_destino).posicao;
+        const auto rota = planner.calcularRota(origem, destino, cargo.tamanho);
+        ASSERT_TRUE(rota);
+        bool cruzou_passagem = false;
+        for (const auto posicao : *rota) {
+            if (const auto* passagem = cenario.galpao.trechoEm(posicao)) {
+                cruzou_passagem = true;
+                EXPECT_EQ(passagem->capacidade, cargo.tamanho);
+            }
+        }
+        EXPECT_TRUE(cruzou_passagem) << "carga " << cargo.id;
+    }
+}
+
 TEST(WarehouseGridTest, RejectsMalformedMapFiles) {
     std::filesystem::create_directories(TEST_DB_DIRECTORY);
     const auto caminho = std::string(TEST_DB_DIRECTORY) + "/mapa_invalido.txt";

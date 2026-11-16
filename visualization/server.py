@@ -32,13 +32,18 @@ SCENARIOS = {
     "cooperativo": "Cooperativo",
     "disponibilidade": "Disponibilidade",
     "escala": "Escala · 15 robôs",
+    "estresse-passagens": "Estresse de passagens · 100 robôs",
     "passagens": "Passagens",
     "rota-equipe": "Rota em equipe",
     "falhas": "Falhas",
     "recarga": "Recarga",
     "processos": "Processos",
 }
-SCENARIO_MAPS = {"passagens": "config/galpao-passagens.txt", "escala": "config/galpao-escala.txt"}
+SCENARIO_MAPS = {
+    "passagens": "config/galpao-passagens.txt",
+    "escala": "config/galpao-escala.txt",
+    "estresse-passagens": "config/galpao-estresse-passagens.txt",
+}
 
 
 class ScenarioSelection:

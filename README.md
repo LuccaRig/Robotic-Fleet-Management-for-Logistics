@@ -38,7 +38,7 @@ cmake --build build --parallel 2
 ./build/app/simulador_exec --cenario cooperativo --interativo
 ```
 
-Cenários: `base`, `cooperativo`, `disponibilidade`, `escala`, `passagens`, `rota-equipe`, `falhas`, `recarga` e `processos`. Para testar a nova configuração maior, execute `./build/app/simulador_exec --cenario escala`. Esse cenário usa um mapa de 32x20, 15 robôs e 8 cargas; as equipes necessárias totalizam 15 robôs.
+Cenários: `base`, `cooperativo`, `disponibilidade`, `escala`, `estresse-passagens`, `passagens`, `rota-equipe`, `falhas`, `recarga` e `processos`. `escala` usa um mapa de 32x20 com 15 robôs e 8 cargas. Para testar o controle de capacidade e filas das passagens com carga elevada, execute `./build/app/simulador_exec --cenario estresse-passagens`: o mapa 50x30 inclui 100 robôs, 60 cargas com equipes de 1 a 4 integrantes e passagens com capacidades 1, 2, 3 e 4. O teste termina somente após entregar todas as cargas, observar fila e atingir a capacidade de cada passagem.
 
 O modo automático encerra ao concluir as entregas, com prazo máximo de 120 segundos. No modo interativo, use `ajuda` para listar comandos e `sair` para encerrar.
 
@@ -50,7 +50,7 @@ A aplicação web local reúne o mapa, a frota, os controles e o histórico. Par
 
 ## Mapa estático compartilhado
 
-Os cenários usam `config/galpao.txt`, `passagens` usa `config/galpao-passagens.txt`, e `escala` usa `config/galpao-escala.txt`. Esses arquivos substituem o layout fixo no código e são compartilhados com a tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
+Os cenários usam `config/galpao.txt`, `passagens` usa `config/galpao-passagens.txt`, `escala` usa `config/galpao-escala.txt` e `estresse-passagens` usa `config/galpao-estresse-passagens.txt`. Esses arquivos substituem o layout fixo no código e são compartilhados com a tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
 
 Use `--mapa caminho/galpao.txt` para escolher outro arquivo compatível com as baias, destinos e posições iniciais do cenário. Sem essa opção, a aplicação procura a configuração no diretório atual e depois junto ao diretório de build, onde o CMake copia `config/` durante a configuração.
 

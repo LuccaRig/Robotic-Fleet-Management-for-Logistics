@@ -17,6 +17,7 @@ private:
     std::uint64_t generation_ = 0;
     bool queue_observed_ = false;
     std::set<int> passages_seen_;
+    std::set<int> passages_saturated_;
 };
 
 #endif

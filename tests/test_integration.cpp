@@ -52,6 +52,33 @@ TEST_P(Etapa1Integration, CompletesScenarioAndReapsEveryWorker) {
 
 INSTANTIATE_TEST_SUITE_P(Cenarios,Etapa1Integration,::testing::Values("base","cooperativo","disponibilidade","passagens","rota-equipe","falhas","recarga","processos"));
 
+TEST(Etapa1IntegrationStress, EnforcesPassageCapacityWithOneHundredRobotsAndSixtyCargos) {
+    const std::string scenario = "estresse-passagens";
+    const auto path = std::string(TEST_DB_DIRECTORY) + "/integracao_" + scenario + "_" + std::to_string(getpid()) + ".db";
+    std::filesystem::create_directories(TEST_DB_DIRECTORY);
+    std::filesystem::remove(path);
+    AplicacaoCentral runtime(SIMULATOR_EXECUTABLE_PATH, path, criarCenario(scenario));
+    RoteiroCenario script(scenario);
+    runtime.iniciar();
+
+    const auto prazo = std::chrono::steady_clock::now() + std::chrono::seconds(120);
+    while (!script.concluido(runtime) && std::chrono::steady_clock::now() < prazo) {
+        runtime.avancarCiclo();
+        script.avancarCiclo(runtime);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    ASSERT_TRUE(script.concluido(runtime));
+    for (const auto& trecho : runtime.passagens()) {
+        EXPECT_EQ(trecho.maximo, trecho.capacidade) << "passagem " << trecho.id;
+        EXPECT_EQ(trecho.ocupado, 0) << "passagem " << trecho.id;
+    }
+    EXPECT_EQ(runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE), 60u);
+    runtime.parar();
+    EXPECT_TRUE(runtime.processos().empty());
+    std::filesystem::remove(path);
+}
+
 TEST(Etapa1Shutdown, StopsActiveWorkersAndDrainsAcceptedEvents) {
     std::cout << "\n[TESTE] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents iniciado...\n" << std::unitbuf;
     std::filesystem::create_directories(TEST_DB_DIRECTORY);

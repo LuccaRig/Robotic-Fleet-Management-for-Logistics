@@ -25,7 +25,7 @@ O executável C++ inicia o servidor Python sem exigir flags. O lançador usa `vi
 
 Abra **http://127.0.0.1:8080** e escolha um cenário na página inicial. Depois da confirmação, o servidor inicia um broker local isolado, o processo de simulação do hardware e a central em modo interativo; a tela muda automaticamente para a operação. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra os serviços iniciados pelo servidor.
 
-Para iniciar diretamente sem a página de escolha, passe `--cenario` ao servidor. Por exemplo, para testar a frota maior no mapa de 32x20, use `visualization/.venv/bin/python visualization/server.py --cenario escala`; esse cenário usa 15 robôs, oito cargas e quatro baias. Para começar sem cargas e explorar o controle manual:
+Para iniciar diretamente sem a página de escolha, passe `--cenario` ao servidor. `escala` usa 15 robôs e oito cargas. Para testar o limite das passagens com carga alta, escolha `estresse-passagens` na página inicial ou rode `visualization/.venv/bin/python visualization/server.py --cenario estresse-passagens`; o cenário usa 100 robôs, 60 cargas com equipes de 1 a 4 integrantes e quatro passagens de capacidade 1, 2, 3 e 4. Todas as entregas cruzam a divisória central pelas passagens, permitindo observar fila, ocupação e sentido no mapa. Para começar sem cargas e explorar o controle manual:
 
 ```sh
 visualization/.venv/bin/python visualization/server.py --cenario processos
@@ -36,7 +36,7 @@ Opções:
 | Opção | Padrão | Uso |
 |---|---|---|
 | `--executavel` | `build-mqtt/app/simulador_exec` | Executável compilado com MQTT ativado. O lançador C++ fornece automaticamente o caminho do build atual. |
-| `--cenario` | Escolha no navegador | Inicia diretamente o cenário informado, sem mostrar a página de escolha. Inclui `escala` (mapa 32x20 e 15 robôs). O roteiro automático de demonstração não é executado; as intervenções são feitas na tela. |
+| `--cenario` | Escolha no navegador | Inicia diretamente o cenário informado, sem mostrar a página de escolha. Inclui `escala` (15 robôs) e `estresse-passagens` (100 robôs, 60 cargas e quatro capacidades de passagem). O roteiro automático de demonstração não é executado; as intervenções são feitas na tela. |
 | `--mapa` | Mapa correspondente ao cenário | Arquivo compartilhado de configuração do galpão. |
 | `--banco` | `logs/operacao.db` | Banco da operação, que preserva execuções anteriores. A tela consulta a execução mais recente. |
 | `--porta` | `8080` | Porta HTTP, acessível somente na máquina local. |

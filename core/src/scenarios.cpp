@@ -15,10 +15,11 @@ bool allSuspended(const AplicacaoCentral& runtime, const MissaoEquipe& missao, b
     return true;
 }
 }
-std::string nomesCenarios() { return "base, cooperativo, disponibilidade, escala, passagens, rota-equipe, falhas, recarga, processos"; }
+std::string nomesCenarios() { return "base, cooperativo, disponibilidade, escala, estresse-passagens, passagens, rota-equipe, falhas, recarga, processos"; }
 std::string caminhoMapaCenario(const std::string& nome) {
     if (nome == "passagens") return "config/galpao-passagens.txt";
     if (nome == "escala") return "config/galpao-escala.txt";
+    if (nome == "estresse-passagens") return "config/galpao-estresse-passagens.txt";
     return "config/galpao.txt";
 }
 Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa) {
@@ -32,6 +33,28 @@ Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa) {
                    {5,{2,14}},{6,{3,14}},{7,{4,14}},{8,{5,14}},
                    {9,{27,5}},{10,{28,5}},{11,{27,14}},{12,{28,14}},
                    {13,{23,5}},{14,{23,14}},{15,{16,10}}};
+    }
+    else if (nome == "estresse-passagens") {
+        s.cargos.clear();
+        s.robos.clear();
+        for (int id = 1; id <= 60; ++id) {
+            const int tamanho = (id - 1) % 4 + 1;
+            const bool lado_direito = id % 2 == 0;
+            const int baia = tamanho + (lado_direito ? 4 : 0);
+            const int destino = baia;
+            s.cargos.push_back(carga(id, tamanho, baia, destino));
+        }
+        int id_robo = 1;
+        for (int linha = 0; linha < 5; ++linha) {
+            for (int coluna = 0; coluna < 10; ++coluna) {
+                s.robos.push_back({id_robo++, {4 + coluna * 2, 2 + linha * 6}});
+            }
+        }
+        for (int linha = 0; linha < 5; ++linha) {
+            for (int coluna = 0; coluna < 10; ++coluna) {
+                s.robos.push_back({id_robo++, {26 + coluna * 2, 2 + linha * 6}});
+            }
+        }
     }
     else if (nome == "disponibilidade") s.cargos = {carga(1,2)};
     else if (nome == "rota-equipe") { s.cargos = {carga(1,4)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
@@ -48,6 +71,7 @@ void RoteiroCenario::avancarCiclo(AplicacaoCentral& runtime) {
     for (const auto& p : runtime.passagens()) {
         if (p.ocupado < 0 || p.ocupado > p.capacidade || p.maximo > p.capacidade) throw std::runtime_error("Invariante de capacidade violada");
         if (p.maximo > 0) passages_seen_.insert(p.id);
+        if (p.maximo == p.capacidade) passages_saturated_.insert(p.id);
         if (p.aguardando > 0) queue_observed_ = true;
     }
     const auto first = runtime.frota().obter(1);
@@ -98,6 +122,8 @@ bool RoteiroCenario::concluido(const AplicacaoCentral& runtime) const {
     if (name_ == "recarga") return stage_ == 3;
     if (name_ == "processos") return stage_ == 5;
     if (name_ == "falhas") return stage_ == 6 && runtime.quantidadeEventos(TipoEvento::MISSAO_CANCELADA) && runtime.quantidadeEventos(TipoEvento::MISSAO_SUSPENSA);
+    if (name_ == "estresse-passagens") return runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE) == 60 &&
+        queue_observed_ && passages_saturated_.size() == 4;
     if (name_ == "passagens") return queue_observed_ && passages_seen_.count(1) && passages_seen_.count(2) && passages_seen_.count(3);
     if (name_ == "rota-equipe") return passages_seen_.count(11) && passages_seen_.count(12) && passages_seen_.count(13) && !passages_seen_.count(1) && !passages_seen_.count(2) && !passages_seen_.count(3);
     return runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE) > 0;
