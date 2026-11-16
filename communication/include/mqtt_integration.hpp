@@ -2,6 +2,7 @@
 #define MQTT_INTEGRATION_HPP
 
 #include "domain.hpp"
+#include "logistics_types.hpp"
 #include "mqtt_client.hpp"
 #include <deque>
 #include <functional>
@@ -9,7 +10,7 @@
 #include <string>
 #include <vector>
 
-enum class AcaoOperador { DefinirModo, DefinirDestino };
+enum class AcaoOperador { DefinirModo, DefinirDestino, DefinirFalha, DefinirBateria, AdicionarCarga, AdicionarRobo, RetomarMissao };
 
 struct ComandoOperador {
     std::string id;
@@ -18,6 +19,11 @@ struct ComandoOperador {
     AcaoOperador acao = AcaoOperador::DefinirModo;
     ModoOperacao modo = ModoOperacao::AUTOMATICO;
     Posicao destino;
+    bool falha = false;
+    int bateria = 100;
+    Carga carga;
+    Posicao posicao;
+    IdEntidade id_missao = 0;
 };
 
 ComandoOperador decodificarComandoOperador(const std::string& payload, std::string* id_requisicao = nullptr);

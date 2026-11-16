@@ -21,8 +21,19 @@
 
 namespace {
 bool mesmoPedido(const ComandoOperador& primeiro, const ComandoOperador& segundo) {
-    return primeiro.id_robo == segundo.id_robo && primeiro.geracao == segundo.geracao && primeiro.acao == segundo.acao &&
-        (primeiro.acao == AcaoOperador::DefinirModo ? primeiro.modo == segundo.modo : primeiro.destino == segundo.destino);
+    if (primeiro.acao != segundo.acao || primeiro.id_robo != segundo.id_robo || primeiro.geracao != segundo.geracao) return false;
+    switch (primeiro.acao) {
+        case AcaoOperador::AdicionarCarga:
+            return primeiro.carga.id == segundo.carga.id && primeiro.carga.tamanho == segundo.carga.tamanho &&
+                primeiro.carga.id_baia == segundo.carga.id_baia && primeiro.carga.id_destino == segundo.carga.id_destino;
+        case AcaoOperador::RetomarMissao: return primeiro.id_missao == segundo.id_missao;
+        case AcaoOperador::AdicionarRobo: return primeiro.posicao == segundo.posicao;
+        case AcaoOperador::DefinirModo: return primeiro.modo == segundo.modo;
+        case AcaoOperador::DefinirDestino: return primeiro.destino == segundo.destino;
+        case AcaoOperador::DefinirFalha: return primeiro.falha == segundo.falha;
+        case AcaoOperador::DefinirBateria: return primeiro.bateria == segundo.bateria;
+    }
+    return false;
 }
 
 std::string escaparJson(const std::string& texto) {
@@ -155,6 +166,13 @@ double lerInteiro(const cJSON* objeto, const char* nome, double minimo, double m
     }
     return campo->valuedouble;
 }
+
+Posicao lerPosicao(const cJSON* objeto, const char* nome) {
+    const auto* campo = cJSON_GetObjectItemCaseSensitive(objeto, nome);
+    validarObjeto(campo);
+    return {static_cast<int>(lerInteiro(campo, "x", 0, std::numeric_limits<int>::max())),
+            static_cast<int>(lerInteiro(campo, "y", 0, std::numeric_limits<int>::max()))};
+}
 }
 #endif
 
@@ -173,22 +191,47 @@ ComandoOperador decodificarComandoOperador(const std::string& payload, std::stri
     comando.id = lerTexto(objeto.get(), "id");
     if (comando.id.empty() || comando.id.size() > 64) throw std::invalid_argument("ID da requisição deve ter de 1 a 64 bytes");
     if (id_requisicao) *id_requisicao = comando.id;
-    comando.id_robo = static_cast<int>(lerInteiro(objeto.get(), "id_robo", 0, std::numeric_limits<int>::max()));
-    comando.geracao = static_cast<std::uint64_t>(lerInteiro(objeto.get(), "geracao", 1, 9007199254740991.0));
     const auto acao = lerTexto(objeto.get(), "acao");
+    if (acao == "adicionar_carga") {
+        const auto* carga = cJSON_GetObjectItemCaseSensitive(objeto.get(), "carga");
+        validarObjeto(carga);
+        comando.acao = AcaoOperador::AdicionarCarga;
+        comando.carga.id = static_cast<IdEntidade>(lerInteiro(carga, "id", 1, 9007199254740991.0));
+        comando.carga.tamanho = static_cast<int>(lerInteiro(carga, "tamanho", 1, 4));
+        comando.carga.id_baia = static_cast<int>(lerInteiro(carga, "id_baia", 0, std::numeric_limits<int>::max()));
+        comando.carga.id_destino = static_cast<int>(lerInteiro(carga, "id_destino", 0, std::numeric_limits<int>::max()));
+        return comando;
+    }
+    if (acao == "retomar_missao") {
+        comando.acao = AcaoOperador::RetomarMissao;
+        comando.id_missao = static_cast<IdEntidade>(lerInteiro(objeto.get(), "id_missao", 1, 9007199254740991.0));
+        return comando;
+    }
+    comando.id_robo = static_cast<int>(lerInteiro(objeto.get(), "id_robo", 0, std::numeric_limits<int>::max()));
+    if (acao == "adicionar_robo") {
+        comando.acao = AcaoOperador::AdicionarRobo;
+        comando.posicao = lerPosicao(objeto.get(), "posicao");
+        return comando;
+    }
+    comando.geracao = static_cast<std::uint64_t>(lerInteiro(objeto.get(), "geracao", 1, 9007199254740991.0));
     if (acao == "definir_modo") {
         const auto modo = lerTexto(objeto.get(), "modo");
         if (modo != "manual" && modo != "automatico") throw std::invalid_argument("Modo deve ser manual ou automatico");
         comando.acao = AcaoOperador::DefinirModo;
         comando.modo = modo == "manual" ? ModoOperacao::MANUAL : ModoOperacao::AUTOMATICO;
     } else if (acao == "definir_destino") {
-        const auto* destino = cJSON_GetObjectItemCaseSensitive(objeto.get(), "destino");
-        validarObjeto(destino);
         comando.acao = AcaoOperador::DefinirDestino;
-        comando.destino.x = static_cast<int>(lerInteiro(destino, "x", 0, std::numeric_limits<int>::max()));
-        comando.destino.y = static_cast<int>(lerInteiro(destino, "y", 0, std::numeric_limits<int>::max()));
+        comando.destino = lerPosicao(objeto.get(), "destino");
+    } else if (acao == "definir_falha") {
+        const auto* falha = cJSON_GetObjectItemCaseSensitive(objeto.get(), "falha");
+        if (!cJSON_IsBool(falha)) throw std::invalid_argument("Informe o campo booleano: falha");
+        comando.acao = AcaoOperador::DefinirFalha;
+        comando.falha = cJSON_IsTrue(falha);
+    } else if (acao == "definir_bateria") {
+        comando.acao = AcaoOperador::DefinirBateria;
+        comando.bateria = static_cast<int>(lerInteiro(objeto.get(), "bateria", 0, 100));
     } else {
-        throw std::invalid_argument("Ação desconhecida; use definir_modo ou definir_destino");
+        throw std::invalid_argument("Ação de operação desconhecida");
     }
     return comando;
 #else

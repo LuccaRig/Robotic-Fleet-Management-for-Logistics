@@ -3,7 +3,8 @@
 
 #include "runtime.hpp"
 
-Cenario criarCenario(const std::string& nome);
+Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa = {});
+std::string caminhoMapaCenario(const std::string& nome);
 std::string nomesCenarios();
 class RoteiroCenario {
 public:

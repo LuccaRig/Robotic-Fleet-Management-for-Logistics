@@ -4,6 +4,7 @@
 #include "logistics_types.hpp"
 #include <cstdint>
 #include <map>
+#include <string>
 #include <vector>
 
 enum class EstadoCelula : std::uint8_t {
@@ -47,5 +48,7 @@ private:
     std::map<int, TrechoRestrito> passages_;
     std::size_t index(int x, int y) const { return static_cast<std::size_t>(y) * largura_ + x; }
 };
+
+MapaGalpao carregarMapa(const std::string& caminho);
 
 #endif

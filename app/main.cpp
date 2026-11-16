@@ -65,16 +65,19 @@ int main(int argc, char** argv) {
 
         std::string nome_cenario = "base";
         std::string caminho_banco = "logs/etapa1.db";
+        std::string caminho_mapa;
         bool modo_interativo = false;
 
         for (int indice = 1; indice < argc; ++indice) {
             const std::string argumento = argv[indice];
             if (argumento == "--interativo") {
                 modo_interativo = true;
-            } else if ((argumento == "--cenario" || argumento == "--banco") && indice + 1 < argc) {
+            } else if ((argumento == "--cenario" || argumento == "--banco" || argumento == "--mapa") && indice + 1 < argc) {
                 const std::string valor = argv[++indice];
                 if (argumento == "--cenario") {
                     nome_cenario = valor;
+                } else if (argumento == "--mapa") {
+                    caminho_mapa = valor;
                 } else {
                     caminho_banco = valor;
                 }
@@ -83,7 +86,7 @@ int main(int argc, char** argv) {
             } else if (argumento == "--mqtt-port" && indice + 1 < argc) {
                 setenv("MQTT_PORT", argv[++indice], 1);
             } else if (argumento == "--ajuda") {
-                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--interativo] [--mqtt-host HOST] [--mqtt-port PORTA]\n"
+                std::cout << "Uso: simulador_exec [--cenario NOME] [--banco logs/etapa1.db] [--mapa ARQUIVO] [--interativo] [--mqtt-host HOST] [--mqtt-port PORTA]\n"
                           << "Cenários: " << nomesCenarios() << "\n";
                 return 0;
             } else {
@@ -94,8 +97,14 @@ int main(int argc, char** argv) {
         std::signal(SIGINT, tratarSinal);
         std::signal(SIGTERM, tratarSinal);
 
-        AplicacaoCentral aplicacao(
-            localizarExecutavel(argv[0]), caminho_banco, criarCenario(nome_cenario));
+        const auto executavel = localizarExecutavel(argv[0]);
+        if (caminho_mapa.empty()) {
+            caminho_mapa = caminhoMapaCenario(nome_cenario);
+            if (!std::filesystem::exists(caminho_mapa)) {
+                caminho_mapa = (std::filesystem::path(executavel).parent_path().parent_path() / caminho_mapa).string();
+            }
+        }
+        AplicacaoCentral aplicacao(executavel, caminho_banco, criarCenario(nome_cenario, caminho_mapa));
         RoteiroCenario roteiro(nome_cenario);
         aplicacao.iniciar();
 

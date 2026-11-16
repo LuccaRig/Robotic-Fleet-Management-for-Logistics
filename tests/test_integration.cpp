@@ -139,3 +139,83 @@ TEST(Etapa2Manual, ControlsRealWorkerAndPreservesPassageReservations) {
     EXPECT_TRUE(runtime.processos().empty());
     std::filesystem::remove(banco);
 }
+
+TEST(Etapa2Operations, AddsCargoAndRobotAndRecoversSuspendedTeam) {
+    std::filesystem::create_directories(TEST_DB_DIRECTORY);
+    const auto banco = std::string(TEST_DB_DIRECTORY) + "/operacoes_" + std::to_string(getpid()) + ".db";
+    std::filesystem::remove(banco);
+    Cenario cenario{"operacoes", MapaGalpao(6, 5), {}, {{1, {0, 1}}}};
+    cenario.galpao.adicionarBaia({1, {1, 1}, {}});
+    cenario.galpao.adicionarDestino({1, {4, 1}});
+    cenario.galpao.definirCelula(0, 0, EstadoCelula::ESTACAO_RECARGA);
+    AplicacaoCentral runtime(SIMULATOR_EXECUTABLE_PATH, banco, std::move(cenario));
+    runtime.iniciar();
+    const auto esperar = [&](auto condicao) {
+        const auto prazo = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+        while (std::chrono::steady_clock::now() < prazo) {
+            runtime.avancarCiclo();
+            if (condicao()) return true;
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        return false;
+    };
+    ComandoOperador comando;
+    int pedido = 0;
+    const auto enviar = [&] {
+        comando.id = "operacao-" + std::to_string(++pedido);
+        runtime.executarComandoOperador(comando);
+    };
+    comando.acao = AcaoOperador::AdicionarCarga;
+    comando.carga.id = 1;
+    comando.carga.tamanho = 2;
+    comando.carga.id_baia = 1;
+    comando.carga.id_destino = 1;
+    enviar();
+    EXPECT_THROW(enviar(), std::invalid_argument);
+    ASSERT_TRUE(esperar([&] {
+        const auto robo = runtime.frota().obter(1);
+        return robo && robo->conectado;
+    }));
+    EXPECT_EQ(runtime.cargos().front().estado, EstadoCarga::PENDENTE);
+    comando.acao = AcaoOperador::AdicionarRobo;
+    comando.id_robo = 2;
+    comando.posicao = {0, 2};
+    enviar();
+    EXPECT_THROW(enviar(), std::runtime_error);
+    ASSERT_TRUE(esperar([&] {
+        return runtime.cargos().front().estado == EstadoCarga::EM_TRANSPORTE;
+    }));
+    comando.geracao = runtime.frota().obter(2)->geracao;
+    comando.acao = AcaoOperador::DefinirBateria;
+    comando.bateria = 10;
+    ++comando.geracao;
+    EXPECT_THROW(enviar(), std::runtime_error);
+    --comando.geracao;
+    enviar();
+    ASSERT_TRUE(esperar([&] { return runtime.cargos().front().estado == EstadoCarga::SUSPENSO; }));
+    comando.acao = AcaoOperador::DefinirFalha;
+    comando.falha = true;
+    enviar();
+    comando.acao = AcaoOperador::RetomarMissao;
+    comando.id_missao = runtime.cargos().front().id_missao;
+    EXPECT_THROW(enviar(), std::runtime_error);
+    comando.acao = AcaoOperador::DefinirFalha;
+    comando.falha = false;
+    enviar();
+    comando.acao = AcaoOperador::DefinirBateria;
+    comando.bateria = 100;
+    enviar();
+    ASSERT_TRUE(esperar([&] {
+        const auto primeiro = runtime.frota().obter(1);
+        const auto segundo = runtime.frota().obter(2);
+        return primeiro->estado == EstadoRobo::SUSPENSO && segundo->estado == EstadoRobo::SUSPENSO && !segundo->falha;
+    }));
+    comando.acao = AcaoOperador::RetomarMissao;
+    enviar();
+    ASSERT_TRUE(esperar([&] { return runtime.concluido(); }));
+    EXPECT_EQ(runtime.cargos().front().estado, EstadoCarga::ENTREGUE);
+    EXPECT_EQ(runtime.quantidadeEventos(TipoEvento::MISSAO_RETOMADA), 1u);
+    runtime.parar();
+    EXPECT_TRUE(runtime.processos().empty());
+    std::filesystem::remove(banco);
+}

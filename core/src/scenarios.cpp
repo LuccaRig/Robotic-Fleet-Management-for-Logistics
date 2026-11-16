@@ -4,23 +4,6 @@
 #include <unistd.h>
 
 namespace {
-MapaGalpao layout() {
-    MapaGalpao map(21, 15);
-    for (int x = 0; x < 21; ++x) { map.definirCelula(x, 0, EstadoCelula::OBSTACULO); map.definirCelula(x, 14, EstadoCelula::OBSTACULO); }
-    for (int y = 1; y < 14; ++y) {
-        map.definirCelula(0, y, EstadoCelula::OBSTACULO); map.definirCelula(20, y, EstadoCelula::OBSTACULO);
-        for (const int x : {6, 12, 17}) map.definirCelula(x, y, EstadoCelula::OBSTACULO);
-    }
-    int id = 0;
-    for (const auto item : std::vector<std::pair<int,int>>{{6,3},{12,4},{17,5}}) {
-        ++id; map.definirCelula(item.first, item.second, EstadoCelula::LIVRE); map.adicionarTrecho({id, id, {{item.first, item.second}}});
-        map.definirCelula(item.first, 10, EstadoCelula::LIVRE); map.adicionarTrecho({10 + id, 4, {{item.first, 10}}});
-    }
-    map.adicionarBaia({1, {2,3}, {}}); map.adicionarBaia({2, {2,10}, {}});
-    map.adicionarDestino({1, {19,3}}); map.adicionarDestino({2, {19,10}});
-    map.definirCelula(2, 1, EstadoCelula::ESTACAO_RECARGA); map.definirCelula(19, 12, EstadoCelula::ESTACAO_RECARGA);
-    return map;
-}
 Carga carga(IdEntidade id, int tamanho, int bay = 1, int destino = 1) {
     Carga c; c.id = id; c.tamanho = tamanho; c.id_baia = bay; c.id_destino = destino; return c;
 }
@@ -33,8 +16,11 @@ bool allSuspended(const AplicacaoCentral& runtime, const MissaoEquipe& missao, b
 }
 }
 std::string nomesCenarios() { return "base, cooperativo, disponibilidade, passagens, rota-equipe, falhas, recarga, processos"; }
-Cenario criarCenario(const std::string& nome) {
-    Cenario s{nome, layout(), {carga(1,1)}, {{1,{2,5}}}};
+std::string caminhoMapaCenario(const std::string& nome) {
+    return nome == "passagens" ? "config/galpao-passagens.txt" : "config/galpao.txt";
+}
+Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa) {
+    Cenario s{nome, carregarMapa(caminho_mapa.empty() ? caminhoMapaCenario(nome) : caminho_mapa), {carga(1,1)}, {{1,{2,5}}}};
     if (nome == "base") return s;
     if (nome == "cooperativo") { s.cargos = {carga(1,2), carga(2,3), carga(3,4)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
     else if (nome == "disponibilidade") s.cargos = {carga(1,2)};
@@ -43,8 +29,6 @@ Cenario criarCenario(const std::string& nome) {
     else if (nome == "recarga") s.robos = {{1,{2,2}}};
     else if (nome == "processos") s.cargos.clear();
     else if (nome == "passagens") {
-        s.galpao.adicionarBaia({3,{19,3},{}}); s.galpao.adicionarBaia({4,{3,3},{}}); s.galpao.adicionarBaia({5,{4,3},{}});
-        s.galpao.adicionarBaia({6,{18,3},{}}); s.galpao.adicionarBaia({7,{19,4},{}}); s.galpao.adicionarDestino({3,{2,3}});
         s.cargos = {carga(1,1,1,1), carga(2,1,4,1), carga(3,1,5,1), carga(4,1,3,3), carga(5,1,6,3), carga(6,1,7,3)};
         s.robos = {{1,{2,3}},{2,{3,3}},{3,{4,3}},{4,{19,3}},{5,{18,3}},{6,{19,4}}};
     } else throw std::invalid_argument("Cenário desconhecido. Opções: " + nomesCenarios());

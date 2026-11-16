@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <map>
+#include <utility>
 
 AplicacaoCentral::AplicacaoCentral(std::string executavel, std::string banco, Cenario cenario)
     : galpao_(std::move(cenario.galpao)), initial_(std::move(cenario.robos)), collector_(banco),
@@ -189,18 +190,41 @@ bool AplicacaoCentral::definirFalha(int id, bool falha) {
     return true;
 }
 void AplicacaoCentral::retomar(IdEntidade id_missao) {
-    Mensagem mensagem;
-    mensagem.tipo = TipoMensagem::RetomarMissao;
-    mensagem.id_missao = id_missao;
-    eventos_logistica_.push_back(std::move(mensagem));
+    ultimo_ciclo_logistica_ = {};
+    logistics_.retomarMissao(id_missao, std::exchange(eventos_logistica_, {}), manager_.frota().capturarEstado());
+}
+void AplicacaoCentral::adicionarCarga(Carga carga) {
+    logistics_.adicionarCarga(std::move(carga));
+    ultimo_ciclo_logistica_ = {};
 }
 
 void AplicacaoCentral::executarComandoOperador(const ComandoOperador& comando) {
     if (!started_ || stopped_) throw std::runtime_error("Aplicação não está em execução");
     if (comando.id.empty()) throw std::invalid_argument("Informe o ID da requisição de operação");
+    if (comando.acao == AcaoOperador::AdicionarCarga) {
+        adicionarCarga(comando.carga);
+        mqtt_.responder(comando.id, true, "Carga adicionada ao fim da fila da baia");
+        return;
+    }
+    if (comando.acao == AcaoOperador::RetomarMissao) {
+        retomar(comando.id_missao);
+        mqtt_.responder(comando.id, true, "Retomada autorizada; acompanhe a equipe na telemetria");
+        return;
+    }
+    if (comando.acao == AcaoOperador::AdicionarRobo) {
+        if (!adicionarRobo(comando.id_robo, comando.posicao)) throw std::runtime_error("Não foi possível adicionar o robô; confira ID e posição inicial");
+        mqtt_.responder(comando.id, true, "Processo criado; aguarde a prontidão do robô na telemetria");
+        return;
+    }
     const auto robo = manager_.frota().obter(comando.id_robo);
     if (!robo || !robo->conectado) throw std::runtime_error("Robô inexistente ou desconectado");
     if (robo->geracao != comando.geracao) throw std::runtime_error("Geração do robô desatualizada; consulte a telemetria");
+    if (comando.acao == AcaoOperador::DefinirFalha || comando.acao == AcaoOperador::DefinirBateria) {
+        const bool aplicado = comando.acao == AcaoOperador::DefinirFalha ? definirFalha(robo->id, comando.falha) : definirBateria(robo->id, comando.bateria);
+        if (!aplicado) throw std::runtime_error("Não foi possível atualizar a leitura do robô");
+        mqtt_.responder(comando.id, true, "Leitura atualizada no simulador");
+        return;
+    }
     for (const auto& pendente : pending_) {
         if (pendente.second.mensagem.id_robo == robo->id) throw std::runtime_error("Aguarde a confirmação do comando anterior deste robô");
     }

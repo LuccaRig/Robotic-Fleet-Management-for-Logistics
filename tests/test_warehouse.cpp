@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 #include "route_planner.hpp"
+#include <filesystem>
+#include <fstream>
 
 TEST(WarehouseGridTest, RejectsInvalidLayoutAndKeepsRobotOccupationSeparate) {
     EXPECT_THROW(MapaGalpao(0,3),std::invalid_argument);
@@ -22,4 +24,33 @@ TEST(RoutePlannerTest, AvoidsWallsAndInsufficientCapacity) {
 TEST(RoutePlannerTest, DistinguishesUnreachableCharger) {
     MapaGalpao map(3,3); PlanejadorRotas planner(map); EXPECT_FALSE(planner.carregadorMaisProximo({1,1}));
     map.definirCelula(0,0,EstadoCelula::ESTACAO_RECARGA); ASSERT_TRUE(planner.carregadorMaisProximo({1,1}));
+}
+
+TEST(WarehouseGridTest, LoadsSharedScenarioMapsWithTheirMetadata) {
+    const auto mapa = carregarMapa("config/galpao.txt");
+    EXPECT_EQ(mapa.largura(), 21);
+    EXPECT_EQ(mapa.altura(), 15);
+    EXPECT_EQ(mapa.baias().size(), 2u);
+    EXPECT_EQ(mapa.destinos().size(), 2u);
+    EXPECT_EQ(mapa.carregadores().size(), 2u);
+    EXPECT_EQ(mapa.passagens().size(), 6u);
+    EXPECT_EQ(mapa.obterCelula(6, 2), EstadoCelula::OBSTACULO);
+    EXPECT_EQ(mapa.passagens().at(1).cells.front(), (Posicao{6, 3}));
+    EXPECT_EQ(mapa.passagens().at(3).capacidade, 3);
+    EXPECT_EQ(mapa.passagens().at(13).capacidade, 4);
+    const auto passagens = carregarMapa("config/galpao-passagens.txt");
+    EXPECT_EQ(passagens.baias().size(), 7u);
+    EXPECT_EQ(passagens.destinos().at(3).posicao, (Posicao{2, 3}));
+}
+
+TEST(WarehouseGridTest, RejectsMalformedMapFiles) {
+    std::filesystem::create_directories(TEST_DB_DIRECTORY);
+    const auto caminho = std::string(TEST_DB_DIRECTORY) + "/mapa_invalido.txt";
+    for (const std::string conteudo : {"0 3\n", "3 3 sobra\n", "3 3\nbaia 1 1\n", "3 3\nparede 0 0 3 2\n",
+            "3 3\npassagem 1 5 1 1 1\n", "3 3\npassagem 1 1 2 1 1 1 1\n", "3 3\ncarregador 1 1 sobra\n", "3 3\ndesconhecido 1\n"}) {
+        { std::ofstream arquivo(caminho); arquivo << conteudo; }
+        EXPECT_THROW(carregarMapa(caminho), std::invalid_argument) << conteudo;
+    }
+    std::filesystem::remove(caminho);
+    EXPECT_THROW(carregarMapa(caminho), std::runtime_error);
 }

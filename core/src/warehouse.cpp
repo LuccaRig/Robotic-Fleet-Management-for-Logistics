@@ -1,8 +1,11 @@
 #include "warehouse.hpp"
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
+#include <utility>
 
 MapaGalpao::MapaGalpao(int width, int height) : largura_(width), altura_(height) {
     if (width <= 0 || height <= 0 || static_cast<long long>(width) * height > 1000000) throw std::invalid_argument("Dimensões de mapa inválidas");
@@ -67,4 +70,67 @@ void MapaGalpao::validar() const {
     }
     for (const auto& b : baias_) if (!podeTransitar(b.second.posicao) || trechoEm(b.second.posicao)) throw std::invalid_argument("Baía em posição inválida");
     for (const auto& d : destinations_) if (!podeTransitar(d.second.posicao) || trechoEm(d.second.posicao)) throw std::invalid_argument("Destino em posição inválida");
+}
+
+MapaGalpao carregarMapa(const std::string& caminho) {
+    std::ifstream arquivo(caminho);
+    if (!arquivo) throw std::runtime_error("Não foi possível abrir o mapa: " + caminho);
+    std::string texto, extra;
+    std::getline(arquivo, texto);
+    std::istringstream dimensoes(texto);
+    int largura, altura;
+    if (!(dimensoes >> largura >> altura) || dimensoes >> extra) throw std::invalid_argument("Dimensões inválidas no mapa: " + caminho);
+    MapaGalpao mapa(largura, altura);
+    int numero_linha = 1;
+    while (std::getline(arquivo, texto)) {
+        ++numero_linha;
+        std::istringstream linha(texto);
+        std::string tipo;
+        if (!(linha >> tipo)) continue;
+        try {
+            const auto ler = [&](auto&... valores) {
+                if (!(linha >> ... >> valores)) throw std::invalid_argument("Dados incompletos ou inválidos");
+            };
+            if (tipo == "parede") {
+                int x0, y0, x1, y1;
+                ler(x0, y0, x1, y1);
+                if (x0 < 0 || y0 < 0 || x1 < x0 || y1 < y0 || x1 >= largura || y1 >= altura) throw std::invalid_argument("Parede fora do mapa");
+                for (int y = y0; y <= y1; ++y) for (int x = x0; x <= x1; ++x) mapa.definirCelula(x, y, EstadoCelula::OBSTACULO);
+            } else if (tipo == "baia") {
+                BaiaCarregamento baia;
+                ler(baia.id, baia.posicao.x, baia.posicao.y);
+                mapa.adicionarBaia(std::move(baia));
+            } else if (tipo == "destino") {
+                DestinoEntrega destino;
+                ler(destino.id, destino.posicao.x, destino.posicao.y);
+                mapa.adicionarDestino(destino);
+            } else if (tipo == "carregador") {
+                Posicao posicao;
+                ler(posicao.x, posicao.y);
+                if (!mapa.podeTransitar(posicao)) throw std::invalid_argument("Carregador em posição inválida");
+                mapa.definirCelula(posicao.x, posicao.y, EstadoCelula::ESTACAO_RECARGA);
+            } else if (tipo == "passagem") {
+                TrechoRestrito passagem;
+                int quantidade;
+                ler(passagem.id, passagem.capacidade, quantidade);
+                if (quantidade < 1 || quantidade > largura * altura) throw std::invalid_argument("Quantidade de células inválida");
+                for (int i = 0; i < quantidade; ++i) {
+                    Posicao posicao;
+                    ler(posicao.x, posicao.y);
+                    if (std::find(passagem.cells.begin(), passagem.cells.end(), posicao) != passagem.cells.end()) throw std::invalid_argument("Célula repetida na passagem");
+                    mapa.definirCelula(posicao.x, posicao.y, EstadoCelula::LIVRE);
+                    passagem.cells.push_back(posicao);
+                }
+                mapa.adicionarTrecho(std::move(passagem));
+            } else {
+                throw std::invalid_argument("Tipo de elemento desconhecido: " + tipo);
+            }
+            if (linha >> extra) throw std::invalid_argument("Dados adicionais inesperados");
+        } catch (const std::exception& erro) {
+            throw std::invalid_argument(caminho + ":" + std::to_string(numero_linha) + ": " + erro.what());
+        }
+    }
+    if (arquivo.bad()) throw std::runtime_error("Falha ao ler o mapa: " + caminho);
+    mapa.validar();
+    return mapa;
 }

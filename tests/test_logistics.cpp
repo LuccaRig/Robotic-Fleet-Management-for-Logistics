@@ -92,12 +92,50 @@ TEST(LogisticsTest, ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults) {
     auto recuperado = falha; recuperado.falha = false; recuperado.sequencia_sensor = 2; recuperado.revisao = 4;
     auto estado_recuperado = estadoRoboDaMensagem(recuperado); estado_recuperado.sequencia = 4;
     ASSERT_TRUE(frota.atualizar(estado_recuperado)); cycle(organizer,frota,saidas,{recuperado});
+    EXPECT_THROW(organizer.retomarMissao(1, {}, frota.capturarEstado()), std::runtime_error);
     auto antigo = estadoRoboDaMensagem(falha); antigo.falha = false; antigo.estado = EstadoRobo::SUSPENSO; antigo.sequencia = 3;
     EXPECT_FALSE(frota.atualizar(antigo)); cycle(organizer,frota,saidas,{resume(1)});
     EXPECT_EQ(organizer.cargos()[0].estado,EstadoCarga::SUSPENSO);
     auto atual = estadoRoboDaMensagem(recuperado); atual.estado = EstadoRobo::SUSPENSO; atual.sequencia = 5;
-    ASSERT_TRUE(frota.atualizar(atual)); cycle(organizer,frota,saidas,{resume(1)});
+    ASSERT_TRUE(frota.atualizar(atual));
+    EXPECT_NO_THROW(organizer.retomarMissao(1, {}, frota.capturarEstado()));
+    cycle(organizer,frota,saidas);
     ASSERT_EQ(organizer.cargos()[0].estado,EstadoCarga::EM_TRANSPORTE);
     EXPECT_EQ(std::count(saidas.eventos.begin(),saidas.eventos.end(),AvisoLogistica::TipoAviso::MissaoSuspensa),1);
+    EXPECT_THROW(organizer.retomarMissao(1, {}, frota.capturarEstado()), std::runtime_error);
+    EXPECT_THROW(organizer.retomarMissao(99, {}, frota.capturarEstado()), std::invalid_argument);
     std::cout << "[SUCESSO] LogisticsTest.ResumeRequiresCurrentSensorsAndIgnoresObsoleteFaults passou!\n";
+}
+
+TEST(LogisticsTest, AppendsDynamicCargoWithoutBypassingBlockedBayHead) {
+    auto mapa = layout();
+    EstadoFrota frota;
+    registrarRobo(frota, 1);
+    OrganizadorLogistica logistica(mapa, {load(2)});
+    auto nova = load(1);
+    nova.id = 2;
+    nova.estado = EstadoCarga::ENTREGUE;
+    nova.id_missao = 99;
+    nova.motivo = "Antigo";
+    logistica.adicionarCarga(nova);
+    EXPECT_TRUE(logistica.processarCiclo({}, frota.capturarEstado()).comandos.empty());
+    ASSERT_EQ(logistica.cargos().size(), 2u);
+    EXPECT_EQ(logistica.cargos()[1].estado, EstadoCarga::PENDENTE);
+    EXPECT_EQ(logistica.cargos()[1].id_missao, 0);
+    EXPECT_TRUE(logistica.cargos()[1].motivo.empty());
+    EXPECT_THROW(logistica.adicionarCarga(nova), std::invalid_argument);
+    nova.id = 3;
+    nova.id_baia = 99;
+    EXPECT_THROW(logistica.adicionarCarga(nova), std::invalid_argument);
+    nova.id_baia = 1;
+    nova.id_destino = 99;
+    EXPECT_THROW(logistica.adicionarCarga(nova), std::invalid_argument);
+    nova.id_destino = 1;
+    nova.tamanho = 5;
+    EXPECT_THROW(logistica.adicionarCarga(nova), std::invalid_argument);
+    EXPECT_EQ(logistica.cargos().size(), 2u);
+    registrarRobo(frota, 2);
+    const auto resultado = logistica.processarCiclo({}, frota.capturarEstado());
+    ASSERT_EQ(resultado.comandos.size(), 2u);
+    for (const auto& comando : resultado.comandos) EXPECT_EQ(comando.second.id_carga, 1);
 }

@@ -19,6 +19,24 @@ Cenários: `base`, `cooperativo`, `disponibilidade`, `passagens`, `rota-equipe`,
 
 O banco padrão é `logs/etapa1.db`. Use `--banco logs/etapa1-demo.db` para outro arquivo. O banco de inspeção versionado é preservado pelas execuções padrão.
 
+## Mapa estático compartilhado
+
+O cenário usa `config/galpao.txt`; `passagens` usa `config/galpao-passagens.txt`. Esses arquivos substituem o layout fixo no código e podem ser lidos pela futura tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
+
+Use `--mapa caminho/galpao.txt` para escolher outro arquivo compatível com as baias, destinos e posições iniciais do cenário. Sem essa opção, a aplicação procura a configuração no diretório atual e depois junto ao diretório de build, onde o CMake copia `config/` durante a configuração.
+
+A primeira linha contém `largura altura`. As seguintes contêm um elemento por linha, com coordenadas inteiras a partir de zero:
+
+| Elemento | Formato |
+|---|---|
+| Obstáculo retangular, limites inclusivos | `parede x0 y0 x1 y1` |
+| Baia de coleta | `baia id x y` |
+| Destino de entrega | `destino id x y` |
+| Estação de recarga | `carregador x y` |
+| Passagem restrita | `passagem id capacidade quantidade_de_celulas x1 y1 x2 y2 ...` |
+
+Declare as paredes antes das passagens, que abrem suas células nos obstáculos. As capacidades vão de um a quatro robôs. Erros de elementos informam o arquivo e a linha. `mapa_execucao.txt` continua sendo uma exportação da execução, incluindo robôs, e não serve como configuração estática.
+
 ## Telemetria MQTT
 
 O MQTT é opcional e vem desativado. Para habilitá-lo, disponibilize os headers e as bibliotecas libmosquitto e cJSON e configure com `-DENABLE_MQTT=ON`. O CMake procura as duas dependências; instalações fora dos diretórios padrão podem ser indicadas por `CMAKE_PREFIX_PATH`. A cJSON é usada para validar os comandos recebidos e não é necessária com MQTT desativado.
@@ -42,13 +60,13 @@ As coordenadas usam objetos JSON, como `"posicao":{"x":10,"y":5}` e `"destino":{
 
 Um robô desconectado continua sendo publicado com `conectado=false` e `disponivel=false`, substituindo seu estado retido anterior. A interface deve usar o snapshot de frota como referência dos IDs conhecidos na execução atual, pois tópicos individuais de execuções anteriores podem permanecer retidos no broker. A publicação continua a cada ciclo enquanto há conexão; após reconectar, o próximo ciclo envia o estado atual. No encerramento normal, a aplicação tenta publicar um último snapshot antes de desconectar. Não há garantia de entrega desse último snapshot se a rede estiver indisponível ou se o processo for interrompido abruptamente.
 
-A integração publica telemetria e recebe comandos de modo e destino manual. Eventos remotos e a ligação entre setpoints e sensores de um simulador externo ainda precisam ser implementados.
+A integração publica telemetria e recebe comandos de modo, destino manual, falha, bateria, inclusão de cargas e robôs e retomada de missões. Eventos remotos e a ligação entre setpoints e sensores de um simulador externo ainda precisam ser implementados.
 
 ## Comandos de operação MQTT
 
 Execute com `--interativo` para manter a aplicação recebendo comandos. O cenário `processos` inicia um robô sem cargas, permitindo experimentar o modo manual antes de uma alocação automática. Os pedidos usam `fleet/commands`, QoS 1 e `retain=false`. As respostas usam `fleet/commands/results`, também com QoS 1 e sem retenção.
 
-Cada pedido exige `id`, `id_robo`, `geracao` e `acao`. O ID da requisição deve ser um texto não vazio com até 64 bytes. A geração deve corresponder à telemetria atual do robô; os valores abaixo são exemplos. Campos adicionais são ignorados. Campos repetidos, tipos incorretos e ausência de campos obrigatórios são recusados.
+Cada pedido exige `id` e `acao`. O ID da requisição deve ser um texto não vazio com até 64 bytes. Operações sobre robôs existentes também exigem `id_robo` e `geracao`, que deve corresponder à telemetria atual. Inclusão de robô, inclusão de carga e retomada usam os identificadores próprios descritos abaixo. Os valores dos exemplos são ilustrativos. Campos adicionais são ignorados. Campos repetidos, tipos incorretos e ausência de campos obrigatórios são recusados.
 
 Assine as respostas antes de enviar pedidos:
 
@@ -74,7 +92,25 @@ Após a chegada, devolva o robô ao modo automático:
 mosquitto_pub -h localhost -p 1883 -q 1 -t fleet/commands -m '{"id":"modo-2","acao":"definir_modo","id_robo":1,"geracao":1,"modo":"automatico"}'
 ```
 
-Uma resposta positiva tem o formato `{"id":"modo-1","aceito":true,"mensagem":"Comando confirmado pelo robô"}`. Ela confirma a aceitação pelo processo do robô; a chegada ao destino é acompanhada pela telemetria. Recusas usam `aceito=false` e explicam o motivo. Pedidos inválidos preservam o ID quando ele pode ser lido e validado; caso contrário, a resposta usa `id=null`.
+Uma resposta positiva tem o formato `{"id":"modo-1","aceito":true,"mensagem":"Comando confirmado pelo robô"}`. Para modo e destino, ela confirma a aceitação pelo processo do robô; a chegada ao destino é acompanhada pela telemetria. Recusas usam `aceito=false` e explicam o motivo. Pedidos inválidos preservam o ID quando ele pode ser lido e validado; caso contrário, a resposta usa `id=null`.
+
+As demais operações usam o mesmo tópico e formato de resposta:
+
+```json
+{"id":"falha-1","acao":"definir_falha","id_robo":1,"geracao":1,"falha":true}
+{"id":"recuperar-1","acao":"definir_falha","id_robo":1,"geracao":1,"falha":false}
+{"id":"bateria-1","acao":"definir_bateria","id_robo":1,"geracao":1,"bateria":10}
+{"id":"carga-1","acao":"adicionar_carga","carga":{"id":2,"tamanho":3,"id_baia":1,"id_destino":2}}
+{"id":"robo-2","acao":"adicionar_robo","id_robo":2,"posicao":{"x":3,"y":5}}
+{"id":"retomada-1","acao":"retomar_missao","id_missao":1}
+```
+
+- `definir_falha` injeta ou remove defeito, inclusive durante uma missão. `definir_bateria` aceita inteiros de 0 a 100. A resposta confirma a atualização dos sensores no simulador local; o estado do processo do robô é acompanhado pela telemetria.
+- `adicionar_carga` exige ID positivo e único na execução, tamanho de um a quatro e baia e destino existentes. A carga entra no fim da fila da baia, sem ultrapassar a carga que já aguardava uma equipe. A resposta confirma sua inclusão na logística.
+- `adicionar_robo` exige ID não negativo e livre e posição transitável fora de uma passagem. A resposta confirma a criação do processo; aguarde `conectado=true` no snapshot da frota para confirmar prontidão e obter sua geração.
+- `retomar_missao` exige missão suspensa e todos os integrantes conectados, da geração original, sem falha, com bateria acima de 15 e estado de suspensão confirmado. A equipe precisa estar na mesma posição lógica e, para transportar, estar completamente acoplada e ter rota compatível. A resposta confirma a autorização pela logística; as confirmações e o avanço da equipe seguem por IPC e telemetria.
+
+IDs de cargas, missões e gerações recebidos em JSON ficam limitados a `9007199254740991`, para preservar a representação inteira do parser. A recuperação de falha e a reposição de bateria não retomam uma missão suspensa automaticamente.
 
 As regras de operação são:
 

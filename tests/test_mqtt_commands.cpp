@@ -31,7 +31,14 @@ TEST(MqttCommandsTest, RejectsMalformedAmbiguousAndOutOfRangeCommands) {
         R"({"id":"","acao":"definir_modo","id_robo":1,"geracao":3,"modo":"manual"})",
         R"({"id":"a","acao":"definir_destino","id_robo":1,"geracao":3,"destino":{"x":-1,"y":2}})",
         R"({"id":"a","acao":"definir_destino","id_robo":1,"geracao":3,"destino":{"x":2147483648,"y":2}})",
-        R"({"id":"a\u0000b","acao":"definir_modo","id_robo":1,"geracao":3,"modo":"manual"})"
+        R"({"id":"a\u0000b","acao":"definir_modo","id_robo":1,"geracao":3,"modo":"manual"})",
+        R"({"id":"a","acao":"definir_falha","id_robo":1,"geracao":3,"falha":1})",
+        R"({"id":"a","acao":"definir_bateria","id_robo":1,"geracao":3,"bateria":101})",
+        R"({"id":"a","acao":"definir_bateria","id_robo":1,"bateria":10})",
+        R"({"id":"a","acao":"adicionar_robo","id_robo":2,"posicao":{"x":-1,"y":1}})",
+        R"({"id":"a","acao":"adicionar_carga","carga":{"id":1,"tamanho":5,"id_baia":1,"id_destino":1}})",
+        R"({"id":"a","acao":"adicionar_carga","carga":{"id":1,"tamanho":1,"id_baia":1}})",
+        R"({"id":"a","acao":"retomar_missao","id_missao":0})"
     };
     for (const auto& payload : invalidos) {
         EXPECT_THROW(decodificarComandoOperador(payload), std::invalid_argument) << payload;
@@ -39,6 +46,55 @@ TEST(MqttCommandsTest, RejectsMalformedAmbiguousAndOutOfRangeCommands) {
     std::string id;
     EXPECT_THROW(decodificarComandoOperador(R"({"id":"identificavel","acao":"definir_modo","id_robo":1,"geracao":3,"modo":"inválido"})", &id), std::invalid_argument);
     EXPECT_EQ(id, "identificavel");
+}
+
+TEST(MqttCommandsTest, DecodesSimulatorAndLogisticsOperations) {
+    const auto falha = decodificarComandoOperador(R"({"id":"f","acao":"definir_falha","id_robo":1,"geracao":3,"falha":true})");
+    EXPECT_EQ(falha.acao, AcaoOperador::DefinirFalha);
+    EXPECT_TRUE(falha.falha);
+    const auto recuperacao = decodificarComandoOperador(R"({"id":"r","acao":"definir_falha","id_robo":1,"geracao":3,"falha":false})");
+    EXPECT_FALSE(recuperacao.falha);
+    const auto bateria = decodificarComandoOperador(R"({"id":"b","acao":"definir_bateria","id_robo":1,"geracao":3,"bateria":0})");
+    EXPECT_EQ(bateria.acao, AcaoOperador::DefinirBateria);
+    EXPECT_EQ(bateria.bateria, 0);
+    const auto robo = decodificarComandoOperador(R"({"id":"n","acao":"adicionar_robo","id_robo":2,"posicao":{"x":3,"y":5}})");
+    EXPECT_EQ(robo.acao, AcaoOperador::AdicionarRobo);
+    EXPECT_EQ(robo.id_robo, 2);
+    EXPECT_EQ(robo.posicao, (Posicao{3, 5}));
+    const auto carga = decodificarComandoOperador(R"({"id":"c","acao":"adicionar_carga","carga":{"id":12,"tamanho":4,"id_baia":1,"id_destino":2}})");
+    EXPECT_EQ(carga.acao, AcaoOperador::AdicionarCarga);
+    EXPECT_EQ(carga.carga.id, 12);
+    EXPECT_EQ(carga.carga.tamanho, 4);
+    EXPECT_EQ(carga.carga.id_baia, 1);
+    EXPECT_EQ(carga.carga.id_destino, 2);
+    const auto missao = decodificarComandoOperador(R"({"id":"m","acao":"retomar_missao","id_missao":7})");
+    EXPECT_EQ(missao.acao, AcaoOperador::RetomarMissao);
+    EXPECT_EQ(missao.id_missao, 7);
+}
+
+TEST(MqttCommandsTest, DeduplicatesOperationsWithoutRobotGeneration) {
+    const std::vector<std::string> pedidos{
+        R"({"id":"c","acao":"adicionar_carga","carga":{"id":12,"tamanho":4,"id_baia":1,"id_destino":2}})",
+        R"({"id":"n","acao":"adicionar_robo","id_robo":2,"posicao":{"x":3,"y":5}})",
+        R"({"id":"m","acao":"retomar_missao","id_missao":7})"
+    };
+    IntegracaoMqtt mqtt;
+    int executados = 0;
+    const auto executar = [&](const ComandoOperador& comando) {
+        ++executados;
+        mqtt.responder(comando.id, true, "Aceito");
+    };
+    for (const auto& payload : pedidos) {
+        mqtt.enfileirarComando(payload);
+        mqtt.enfileirarComando(payload);
+    }
+    mqtt.processarComandos(executar);
+    EXPECT_EQ(executados, 3);
+    mqtt.enfileirarComando(R"({"id":"c","acao":"adicionar_carga","carga":{"id":12,"tamanho":3,"id_baia":1,"id_destino":2}})");
+    mqtt.enfileirarComando(R"({"id":"n","acao":"adicionar_robo","id_robo":2,"posicao":{"x":4,"y":5}})");
+    mqtt.enfileirarComando(R"({"id":"m","acao":"retomar_missao","id_missao":8})");
+    mqtt.processarComandos(executar);
+    EXPECT_EQ(executados, 3);
 }
 
 TEST(MqttCommandsTest, ExecutesOnlyOnCentralCycleAndDeduplicatesPendingAndFinishedRequests) {

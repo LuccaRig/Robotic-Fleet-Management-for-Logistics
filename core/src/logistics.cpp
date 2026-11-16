@@ -5,14 +5,37 @@
 OrganizadorLogistica::OrganizadorLogistica(const MapaGalpao& galpao, std::vector<Carga> carga)
     : galpao_(galpao), planejador_(galpao), baias_(galpao.baias()) {
     for (auto& pair : baias_) pair.second.fila_cargas.clear();
-    for (auto c : carga) {
-        if (c.id <= 0 || c.tamanho < 1 || c.tamanho > 4 || !baias_.count(c.id_baia) || !galpao.destinos().count(c.id_destino) || cargas_.count(c.id)) throw std::invalid_argument("Cadastro de carga inválido");
-        c.estado = EstadoCarga::PENDENTE; c.id_missao = 0; baias_.at(c.id_baia).fila_cargas.push_back(c.id); cargas_.emplace(c.id, std::move(c));
+    for (auto& c : carga) adicionarCarga(std::move(c));
+}
+void OrganizadorLogistica::adicionarCarga(Carga carga) {
+    if (carga.id <= 0 || carga.tamanho < 1 || carga.tamanho > 4 || !baias_.count(carga.id_baia) ||
+        !galpao_.destinos().count(carga.id_destino) || cargas_.count(carga.id)) throw std::invalid_argument("Cadastro de carga inválido ou ID duplicado");
+    carga.estado = EstadoCarga::PENDENTE;
+    carga.id_missao = 0;
+    carga.motivo.clear();
+    auto& fila = baias_.at(carga.id_baia).fila_cargas;
+    fila.push_back(carga.id);
+    try {
+        cargas_.emplace(carga.id, std::move(carga));
+    } catch (...) {
+        fila.pop_back();
+        throw;
     }
 }
-ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
+void OrganizadorLogistica::atualizarMissoes(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota) {
     for (const auto& mensagem : mensagens) registrarMensagem(mensagem, frota);
     for (auto& par : missoes_) avancarMissao(par.second);
+}
+void OrganizadorLogistica::retomarMissao(IdEntidade id, const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota) {
+    atualizarMissoes(mensagens, frota);
+    const auto missao = missoes_.find(id);
+    if (missao == missoes_.end()) throw std::invalid_argument("Missão inexistente");
+    if (missao->second.fase != FaseMissao::SUSPENSO) throw std::runtime_error("Missão não está suspensa");
+    retomar(missao->second, frota);
+    if (missao->second.fase == FaseMissao::SUSPENSO) throw std::runtime_error(cargas_.at(missao->second.id_carga).motivo);
+}
+ResultadoCicloLogistica OrganizadorLogistica::processarCiclo(const std::vector<Mensagem>& mensagens, const std::vector<EstadoAtualRobo>& frota, const std::set<int>& bloqueados) {
+    atualizarMissoes(mensagens, frota);
     agendarCargas(frota, bloqueados);
     ResultadoCicloLogistica resultado;
     resultado.comandos.swap(acoes_);
