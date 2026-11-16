@@ -45,6 +45,46 @@ TEST(WarehouseGridTest, LoadsSharedScenarioMapsWithTheirMetadata) {
     EXPECT_EQ(passagens.destinos().at(3).posicao, (Posicao{2, 3}));
 }
 
+TEST(ScenarioTest, ScaleScenarioUsesLargeMapAndFifteenRobots) {
+    const auto cenario = criarCenario("escala");
+    EXPECT_EQ(cenario.galpao.largura(), 32);
+    EXPECT_EQ(cenario.galpao.altura(), 20);
+    EXPECT_EQ(cenario.galpao.baias().size(), 4u);
+    EXPECT_EQ(cenario.galpao.destinos().size(), 4u);
+    EXPECT_EQ(cenario.galpao.carregadores().size(), 4u);
+    EXPECT_EQ(cenario.galpao.passagens().size(), 4u);
+    ASSERT_EQ(cenario.robos.size(), 15u);
+    ASSERT_EQ(cenario.cargos.size(), 8u);
+    int total_robos_necessarios = 0;
+    for (const auto& carga : cenario.cargos) total_robos_necessarios += carga.tamanho;
+    EXPECT_EQ(total_robos_necessarios, 15);
+
+    std::set<int> ids_robos;
+    for (const auto& robo : cenario.robos) {
+        EXPECT_TRUE(ids_robos.insert(robo.id).second);
+        EXPECT_EQ(cenario.galpao.obterCelula(robo.posicao.x, robo.posicao.y), EstadoCelula::LIVRE);
+    }
+
+    OrganizadorLogistica logistica(cenario.galpao, cenario.cargos);
+    std::vector<EstadoAtualRobo> frota;
+    for (const auto& inicial : cenario.robos) {
+        EstadoAtualRobo robo;
+        robo.id = inicial.id;
+        robo.posicao = inicial.posicao;
+        robo.conectado = robo.disponivel = true;
+        frota.push_back(robo);
+    }
+    const auto ciclo = logistica.processarCiclo({}, frota);
+    ASSERT_EQ(ciclo.comandos.size(), cenario.robos.size());
+    std::set<int> despachados;
+    for (const auto& comando : ciclo.comandos) {
+        EXPECT_EQ(comando.second.tipo, TipoMensagem::AtribuirMissao);
+        EXPECT_EQ(comando.second.fase, FaseMissao::INDO_PARA_COLETA);
+        EXPECT_TRUE(despachados.insert(comando.first).second);
+    }
+    EXPECT_EQ(despachados, ids_robos);
+}
+
 TEST(WarehouseGridTest, RejectsMalformedMapFiles) {
     std::filesystem::create_directories(TEST_DB_DIRECTORY);
     const auto caminho = std::string(TEST_DB_DIRECTORY) + "/mapa_invalido.txt";

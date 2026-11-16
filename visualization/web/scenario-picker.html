@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14243d">
+  <meta name="description" content="Escolha o cenário da simulação de frota robótica.">
+  <title>Escolher cenário · Operação de robôs</title>
+  <link rel="stylesheet" href="/scenario-picker.css">
+  <script type="module" src="/scenario-picker.js"></script>
+</head>
+<body>
+  <main class="picker">
+    <div class="brand-mark" aria-hidden="true">RF</div>
+    <p class="eyebrow">Frota robótica colaborativa</p>
+    <h1>Escolha um cenário</h1>
+    <p class="intro">Selecione como deseja iniciar a simulação. Os serviços serão iniciados assim que você confirmar.</p>
+    <form id="scenario-form">
+      <label for="scenario">Cenário</label>
+      <select id="scenario" name="cenario" required disabled>
+        <option value="">Carregando cenários...</option>
+      </select>
+      <button id="start-button" type="submit" disabled>Iniciar simulação</button>
+    </form>
+    <p id="status" role="status" aria-live="polite">Carregando cenários disponíveis...</p>
+  </main>
+</body>
+</html>

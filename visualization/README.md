@@ -23,9 +23,9 @@ cmake --build build-mqtt --parallel 2
 
 O executável C++ inicia o servidor Python sem exigir flags. O lançador usa `visualization/.venv/bin/python` quando disponível e, caso contrário, procura `python3` no `PATH`. O Python continua sendo necessário e precisa ter a dependência Paho instalada; o executável também depende de Mosquitto, dos arquivos de visualização/configuração e do executável de simulação produzido no build. O lançador encaminha `Ctrl+C` ao servidor Python.
 
-Abra **http://127.0.0.1:8080**. O servidor inicia um broker local isolado, o processo de simulação do hardware, a central em modo interativo e o servidor web. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra os serviços iniciados pelo servidor.
+Abra **http://127.0.0.1:8080** e escolha um cenário na página inicial. Depois da confirmação, o servidor inicia um broker local isolado, o processo de simulação do hardware e a central em modo interativo; a tela muda automaticamente para a operação. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra os serviços iniciados pelo servidor.
 
-O cenário padrão é `cooperativo`, com quatro robôs e quatro cargas. A baia 1 começa com tamanhos 2 e 4; a baia 2, com tamanhos 1 e 3. Cada fila mantém essa ordem, sem ordenar por tamanho. As entregas utilizam os dois destinos do mapa. Para começar sem cargas e explorar o controle manual:
+Para iniciar diretamente sem a página de escolha, passe `--cenario` ao servidor. Por exemplo, para testar a frota maior no mapa de 32x20, use `visualization/.venv/bin/python visualization/server.py --cenario escala`; esse cenário usa 15 robôs, oito cargas e quatro baias. Para começar sem cargas e explorar o controle manual:
 
 ```sh
 visualization/.venv/bin/python visualization/server.py --cenario processos
@@ -36,7 +36,7 @@ Opções:
 | Opção | Padrão | Uso |
 |---|---|---|
 | `--executavel` | `build-mqtt/app/simulador_exec` | Executável compilado com MQTT ativado. O lançador C++ fornece automaticamente o caminho do build atual. |
-| `--cenario` | `cooperativo` | Um dos cenários existentes. O roteiro automático de demonstração não é executado; as intervenções são feitas na tela. |
+| `--cenario` | Escolha no navegador | Inicia diretamente o cenário informado, sem mostrar a página de escolha. Inclui `escala` (mapa 32x20 e 15 robôs). O roteiro automático de demonstração não é executado; as intervenções são feitas na tela. |
 | `--mapa` | Mapa correspondente ao cenário | Arquivo compartilhado de configuração do galpão. |
 | `--banco` | `logs/operacao.db` | Banco da operação, que preserva execuções anteriores. A tela consulta a execução mais recente. |
 | `--porta` | `8080` | Porta HTTP, acessível somente na máquina local. |
@@ -61,8 +61,12 @@ O estado é recebido por MQTT e consultado pelo navegador a cada 400 ms, sem req
 ```text
 visualization/
   server.py          Inicialização, ponte HTTP/MQTT e consulta do histórico
+  test_scenario_picker.py  Testes HTTP da escolha e inicialização de cenários
   requirements.txt   Uma dependência Python: paho-mqtt
   web/
+    scenario-picker.html  Página inicial para escolher o cenário
+    scenario-picker.js    Seleção e transição para a operação
+    scenario-picker.css   Estilos da página inicial
     index.html       Estrutura e controles acessíveis
     styles.css       Identidade visual e adaptação de tamanho
     app.js           Estado da interface, comandos e histórico
@@ -73,7 +77,7 @@ visualization/
 
 O navegador não calcula rotas, não aloca equipes e não simula estados. Não há framework, bundler, CDN ou dependência de rede para os recursos visuais. Os ícones e o mapa são SVG, e as fontes usam as disponíveis no sistema. A interface respeita a preferência por movimento reduzido e oferece navegação por teclado, foco visível, rótulos e mensagens de confirmação.
 
-A ponte disponibiliza `GET /api/config`, `GET /api/state`, `POST /api/commands` e `GET /api/history`. Os comandos são encaminhados ao tópico já existente `fleet/commands`; respostas vêm de `fleet/commands/results`. O snapshot `fleet/telemetry/fleet` preserva `robos` e acrescenta `versao`, `cargas`, `missoes` e `passagens`. A geometria permanece no arquivo local, sem publicação por MQTT. O processo `--simulador` reutiliza `AdaptadorHardwareLocal` e avança autonomamente. A central usa `--simulador-mqtt` para enviar comandos físicos e receber sensores e anúncios, sem chamadas remotas de funções internas. O transporte binário reutiliza o protocolo existente, mantendo as confirmações de sensores e o avanço conjunto das equipes.
+Antes da operação, a página usa `GET /api/scenarios` para listar as opções e `POST /api/start` para iniciar a selecionada; `GET /api/start-status` informa falhas de inicialização. A ponte da operação disponibiliza `GET /api/config`, `GET /api/state`, `POST /api/commands` e `GET /api/history`. Os comandos são encaminhados ao tópico já existente `fleet/commands`; respostas vêm de `fleet/commands/results`. O snapshot `fleet/telemetry/fleet` preserva `robos` e acrescenta `versao`, `cargas`, `missoes` e `passagens`. A geometria permanece no arquivo local, sem publicação por MQTT. O processo `--simulador` reutiliza `AdaptadorHardwareLocal` e avança autonomamente. A central usa `--simulador-mqtt` para enviar comandos físicos e receber sensores e anúncios, sem chamadas remotas de funções internas. O transporte binário reutiliza o protocolo existente, mantendo as confirmações de sensores e o avanço conjunto das equipes.
 
 ## Validação
 
@@ -84,7 +88,7 @@ Em 16/11/2026, no macOS, os builds e as suítes completas passaram:
 | MQTT desativado | 53 | 11 | 64 aprovados |
 | MQTT ativado | 61 | 14 | 75 aprovados |
 
-Os três testes Python de histórico também passaram com `visualization/.venv/bin/python -m unittest visualization.test_history -v`. A sintaxe JavaScript foi conferida com `node --check visualization/web/app.js`.
+Os três testes Python de histórico passaram com `visualization/.venv/bin/python -m unittest visualization.test_history -v`. A sintaxe JavaScript da operação foi conferida com `node --check visualization/web/app.js`. Os quatro testes de escolha de cenário passaram com `python3 -m unittest visualization.test_scenario_picker -v`. O fluxo do seletor foi aberto no Chrome, que carregou as opções e mudou para a tela de operação após a seleção.
 
 Os testes com broker real verificaram anúncios de robôs, barreira das equipes, setpoints repetidos, recarga sem consultas da central e duas missões consecutivas com processos reais e sensores remotos. O teste de persistência cobre os participantes antes da coleta e a recuperação dos vínculos de bancos anteriores.
 

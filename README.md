@@ -27,7 +27,7 @@ Inicie a aplicação:
 ./build-mqtt/app/fleet_launcher
 ```
 
-Abra **http://127.0.0.1:8080**. `Ctrl+C` encerra a aplicação. O lançador ainda depende de Python, Paho MQTT, Mosquitto e dos arquivos do projeto.
+Abra **http://127.0.0.1:8080** e escolha o cenário; os serviços da simulação iniciam após a confirmação. `Ctrl+C` encerra a aplicação. O lançador ainda depende de Python, Paho MQTT, Mosquitto e dos arquivos do projeto.
 
 ## Executar apenas a simulação C++
 
@@ -38,7 +38,9 @@ cmake --build build --parallel 2
 ./build/app/simulador_exec --cenario cooperativo --interativo
 ```
 
-Cenários: `base`, `cooperativo`, `disponibilidade`, `passagens`, `rota-equipe`, `falhas`, `recarga` e `processos`. O modo automático encerra ao concluir o roteiro, com prazo máximo de 120 segundos. No modo interativo, use `ajuda` para listar comandos e `sair` para encerrar.
+Cenários: `base`, `cooperativo`, `disponibilidade`, `escala`, `passagens`, `rota-equipe`, `falhas`, `recarga` e `processos`. Para testar a nova configuração maior, execute `./build/app/simulador_exec --cenario escala`. Esse cenário usa um mapa de 32x20, 15 robôs e 8 cargas; as equipes necessárias totalizam 15 robôs.
+
+O modo automático encerra ao concluir as entregas, com prazo máximo de 120 segundos. No modo interativo, use `ajuda` para listar comandos e `sair` para encerrar.
 
 O banco padrão é `logs/etapa1.db`. Use `--banco logs/etapa1-demo.db` para outro arquivo. O banco de inspeção versionado é preservado pelas execuções padrão.
 
@@ -48,7 +50,7 @@ A aplicação web local reúne o mapa, a frota, os controles e o histórico. Par
 
 ## Mapa estático compartilhado
 
-O cenário usa `config/galpao.txt`; `passagens` usa `config/galpao-passagens.txt`. Esses arquivos substituem o layout fixo no código e são compartilhados com a tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
+Os cenários usam `config/galpao.txt`, `passagens` usa `config/galpao-passagens.txt`, e `escala` usa `config/galpao-escala.txt`. Esses arquivos substituem o layout fixo no código e são compartilhados com a tela de operação. Dimensões, obstáculos, baias, destinos, carregadores e capacidades não são publicados por MQTT.
 
 Use `--mapa caminho/galpao.txt` para escolher outro arquivo compatível com as baias, destinos e posições iniciais do cenário. Sem essa opção, a aplicação procura a configuração no diretório atual e depois junto ao diretório de build, onde o CMake copia `config/` durante a configuração.
 

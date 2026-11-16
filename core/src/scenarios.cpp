@@ -15,14 +15,24 @@ bool allSuspended(const AplicacaoCentral& runtime, const MissaoEquipe& missao, b
     return true;
 }
 }
-std::string nomesCenarios() { return "base, cooperativo, disponibilidade, passagens, rota-equipe, falhas, recarga, processos"; }
+std::string nomesCenarios() { return "base, cooperativo, disponibilidade, escala, passagens, rota-equipe, falhas, recarga, processos"; }
 std::string caminhoMapaCenario(const std::string& nome) {
-    return nome == "passagens" ? "config/galpao-passagens.txt" : "config/galpao.txt";
+    if (nome == "passagens") return "config/galpao-passagens.txt";
+    if (nome == "escala") return "config/galpao-escala.txt";
+    return "config/galpao.txt";
 }
 Cenario criarCenario(const std::string& nome, const std::string& caminho_mapa) {
     Cenario s{nome, carregarMapa(caminho_mapa.empty() ? caminhoMapaCenario(nome) : caminho_mapa), {carga(1,1)}, {{1,{2,5}}}};
     if (nome == "base") return s;
     if (nome == "cooperativo") { s.cargos = {carga(1,2,1,1), carga(2,1,2,2), carga(3,4,1,2), carga(4,3,2,1)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
+    else if (nome == "escala") {
+        s.cargos = {carga(1,4,1,3), carga(2,3,2,4), carga(3,1,3,1), carga(4,2,4,2),
+                    carga(5,2,1,1), carga(6,1,2,2), carga(7,1,3,3), carga(8,1,4,4)};
+        s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}},
+                   {5,{2,14}},{6,{3,14}},{7,{4,14}},{8,{5,14}},
+                   {9,{27,5}},{10,{28,5}},{11,{27,14}},{12,{28,14}},
+                   {13,{23,5}},{14,{23,14}},{15,{16,10}}};
+    }
     else if (nome == "disponibilidade") s.cargos = {carga(1,2)};
     else if (nome == "rota-equipe") { s.cargos = {carga(1,4)}; s.robos = {{1,{2,5}},{2,{3,5}},{3,{4,5}},{4,{5,5}}}; }
     else if (nome == "falhas") { s.cargos = {carga(1,2)}; s.robos = {{1,{2,12}},{2,{3,12}}}; }

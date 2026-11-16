@@ -1,0 +1,23 @@
+32 20
+parede 0 0 31 0
+parede 0 19 31 19
+parede 0 1 0 18
+parede 31 1 31 18
+parede 10 1 10 18
+parede 21 1 21 18
+passagem 1 4 1 10 5
+passagem 2 4 1 10 15
+passagem 3 4 1 21 5
+passagem 4 4 1 21 15
+baia 1 2 3
+baia 2 2 15
+baia 3 29 3
+baia 4 29 15
+destino 1 8 3
+destino 2 8 15
+destino 3 24 3
+destino 4 24 15
+carregador 2 2
+carregador 2 17
+carregador 29 2
+carregador 29 17
