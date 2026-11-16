@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_TESTING "Preparar os testes automatizados" OFF)
-option(ENABLE_MQTT "Publicar telemetria e receber comandos de operação via MQTT" ON)
+option(ENABLE_MQTT "Publicar telemetria e receber comandos de operação via MQTT" OFF)
 file(COPY config DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(communication)
