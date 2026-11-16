@@ -4,29 +4,26 @@ Aplicação web local para acompanhar e operar a frota. O mapa é o mesmo arquiv
 
 ## Preparação
 
-Requisitos: Python 3.10+, Mosquitto disponível no `PATH` e executável da central compilado com `ENABLE_MQTT=ON`. A dependência Python é o [Eclipse Paho MQTT](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html), usando a API de callbacks versão 2.
+Requisitos: compilador C++17, CMake 3.15+, dependências C++ de MQTT (libmosquitto e cJSON), Python 3.10+, Mosquitto disponível no `PATH` e os arquivos do projeto no local usado durante a configuração do CMake. A dependência Python é o [Eclipse Paho MQTT](https://eclipse.dev/paho/files/paho.mqtt.python/html/client.html), usando a API de callbacks versão 2.
 
-Na raiz do repositório:
+Na raiz do repositório, prepare o ambiente Python e compile o lançador e os executáveis da simulação com MQTT ativado:
 
 ```sh
 python3 -m venv visualization/.venv
 visualization/.venv/bin/python -m pip install -r visualization/requirements.txt
-```
-
-A extensão do snapshot MQTT exige recompilar a central antes da primeira execução desta interface. Quando for executar essa etapa:
-
-```sh
-cmake -S . -B build-mqtt -DENABLE_MQTT=ON -DBUILD_TESTING=ON
+cmake -S . -B build-mqtt -DENABLE_MQTT=ON
 cmake --build build-mqtt --parallel 2
 ```
 
 ## Executar a demo
 
 ```sh
-visualization/.venv/bin/python visualization/server.py
+./build-mqtt/app/fleet_launcher
 ```
 
-Abra **http://127.0.0.1:8080**. Um único comando inicia um broker local isolado, o processo de simulação do hardware, a central em modo interativo e o servidor web. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra primeiro a central e depois o simulador e o broker.
+O executável C++ inicia o servidor Python sem exigir flags. O lançador usa `visualization/.venv/bin/python` quando disponível e, caso contrário, procura `python3` no `PATH`. O Python continua sendo necessário e precisa ter a dependência Paho instalada; o executável também depende de Mosquitto, dos arquivos de visualização/configuração e do executável de simulação produzido no build. O lançador encaminha `Ctrl+C` ao servidor Python.
+
+Abra **http://127.0.0.1:8080**. O servidor inicia um broker local isolado, o processo de simulação do hardware, a central em modo interativo e o servidor web. O simulador executa seu próprio ciclo e publica sensores e anúncios de robôs; a central envia os comandos físicos por MQTT. A aplicação permanece aberta após as entregas, permitindo adicionar novas cargas e robôs. `Ctrl+C` encerra os serviços iniciados pelo servidor.
 
 O cenário padrão é `cooperativo`, com quatro robôs e quatro cargas. A baia 1 começa com tamanhos 2 e 4; a baia 2, com tamanhos 1 e 3. Cada fila mantém essa ordem, sem ordenar por tamanho. As entregas utilizam os dois destinos do mapa. Para começar sem cargas e explorar o controle manual:
 
@@ -38,7 +35,7 @@ Opções:
 
 | Opção | Padrão | Uso |
 |---|---|---|
-| `--executavel` | `build-mqtt/app/simulador_exec` | Executável compilado com MQTT ativado. |
+| `--executavel` | `build-mqtt/app/simulador_exec` | Executável compilado com MQTT ativado. O lançador C++ fornece automaticamente o caminho do build atual. |
 | `--cenario` | `cooperativo` | Um dos cenários existentes. O roteiro automático de demonstração não é executado; as intervenções são feitas na tela. |
 | `--mapa` | Mapa correspondente ao cenário | Arquivo compartilhado de configuração do galpão. |
 | `--banco` | `logs/operacao.db` | Banco da operação, que preserva execuções anteriores. A tela consulta a execução mais recente. |

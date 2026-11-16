@@ -2,11 +2,34 @@
 
 Trabalho de Automação em Tempo Real da UFMG. O núcleo da Etapa 1 usa C++17, processos independentes por robô, sockets locais para IPC e SQLite para histórico.
 
-## Preparação e execução
+## Início rápido: compilar e executar tudo
 
-Requisitos: compilador C++17, CMake 3.15+, SQLite 3.24+ com headers e APIs POSIX. No Ubuntu, instale `build-essential`, `cmake` e `libsqlite3-dev`. No macOS, use Command Line Tools, CMake e SQLite.
+No Ubuntu ou Debian, instale os pré-requisitos:
 
-Execute a partir da raiz do repositório:
+```sh
+sudo apt update
+sudo apt install build-essential cmake libsqlite3-dev libmosquitto-dev libcjson-dev \
+  mosquitto python3 python3-venv
+```
+
+Na raiz do repositório, prepare o Python e compile com MQTT:
+
+```sh
+python3 -m venv visualization/.venv
+visualization/.venv/bin/python -m pip install -r visualization/requirements.txt
+cmake -S . -B build-mqtt -DENABLE_MQTT=ON
+cmake --build build-mqtt --parallel 2
+```
+
+Inicie a aplicação:
+
+```sh
+./build-mqtt/app/fleet_launcher
+```
+
+Abra **http://127.0.0.1:8080**. `Ctrl+C` encerra a aplicação. O lançador ainda depende de Python, Paho MQTT, Mosquitto e dos arquivos do projeto.
+
+## Executar apenas a simulação C++
 
 ```sh
 cmake -S . -B build -DBUILD_TESTING=OFF
@@ -21,15 +44,7 @@ O banco padrão é `logs/etapa1.db`. Use `--banco logs/etapa1-demo.db` para outr
 
 ## Tela de operação e simulação
 
-A aplicação web local, isolada em `visualization/`, reúne mapa interativo, frota, controle manual, intervenções na simulação, logística e consulta de histórico. Usa o mapa compartilhado, os comandos MQTT existentes e leitura do SQLite. O navegador não implementa regras de navegação ou alocação.
-
-Com Python, Mosquitto e o executável compilado com MQTT ativado, a demo pode ser iniciada por um único comando:
-
-```sh
-visualization/.venv/bin/python visualization/server.py
-```
-
-Abra `http://127.0.0.1:8080`. Preparação, opções e funcionamento estão no [guia da tela de operação](visualization/README.md). A extensão de telemetria usada pela tela precisa ser recompilada antes da primeira execução. A interface foi validada no navegador em desktop e celular, com builds e suítes completas nas configurações MQTT ativado e desativado.
+A aplicação web local reúne o mapa, a frota, os controles e o histórico. Para compilar e executar, use o [início rápido](#in%C3%ADcio-r%C3%A1pido-compilar-e-executar-tudo); detalhes de configuração e operação estão no [guia da tela](visualization/README.md).
 
 ## Mapa estático compartilhado
 
@@ -51,7 +66,7 @@ Declare as paredes antes das passagens, que abrem suas células nos obstáculos.
 
 ## Telemetria MQTT
 
-O MQTT é opcional e vem desativado. Para habilitá-lo, disponibilize os headers e as bibliotecas libmosquitto e cJSON e configure com `-DENABLE_MQTT=ON`. O CMake procura as duas dependências; instalações fora dos diretórios padrão podem ser indicadas por `CMAKE_PREFIX_PATH`. A cJSON é usada para validar os comandos recebidos e não é necessária com MQTT desativado.
+O MQTT é opcional para a simulação C++ sem a interface web. A operação integrada pela tela exige MQTT ativado: disponibilize os headers e as bibliotecas libmosquitto e cJSON e configure com `-DENABLE_MQTT=ON`. O CMake procura as duas dependências; instalações fora dos diretórios padrão podem ser indicadas por `CMAKE_PREFIX_PATH`. A cJSON é usada para validar os comandos recebidos e não é necessária com MQTT desativado.
 
 O broker deve ser executado separadamente. O endereço padrão é `localhost:1883`, configurável pelas variáveis `MQTT_HOST` e `MQTT_PORT` ou pelos argumentos `--mqtt-host` e `--mqtt-port`, que têm precedência. A porta deve ser um inteiro entre 1 e 65535. Quando o MQTT está desativado, essas configurações são ignoradas.
 
