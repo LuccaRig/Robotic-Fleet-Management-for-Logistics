@@ -168,6 +168,7 @@ void OrganizadorLogistica::agendarCargas(const std::vector<EstadoAtualRobo>& fro
     for (const auto& robo : frota) {
         if (em_recarga_.count(robo.id) && (!robo.conectado || (robo.estado == EstadoRobo::DISPONIVEL && robo.bateria == 100))) em_recarga_.erase(robo.id);
         if (!robo.conectado || !roboLivre(robo) || robos_reservados.count(robo.id) || em_recarga_.count(robo.id) || robo.bateria == 100) continue;
+        if (robo.modo == ModoOperacao::MANUAL && robo.bateria > 15) continue;
         const auto charger = planejador_.carregadorMaisProximo(robo.posicao);
         if (!charger || charger->second.size() > static_cast<std::size_t>(robo.bateria)) continue;
         Mensagem m; m.tipo = TipoMensagem::AtribuirMissao; m.fase = FaseMissao::INDO_PARA_RECARGA;

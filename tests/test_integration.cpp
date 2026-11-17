@@ -79,6 +79,65 @@ TEST(Etapa1IntegrationStress, EnforcesPassageCapacityWithOneHundredRobotsAndSixt
     std::filesystem::remove(path);
 }
 
+TEST(Etapa1IntegrationStress, CompletesBatchesAddedWhileOneHundredRobotsAreWorking) {
+    const std::string scenario = "estresse-passagens";
+    const auto path = std::string(TEST_DB_DIRECTORY) + "/integracao_lotes_" + std::to_string(getpid()) + ".db";
+    std::filesystem::create_directories(TEST_DB_DIRECTORY);
+    std::filesystem::remove(path);
+    AplicacaoCentral runtime(SIMULATOR_EXECUTABLE_PATH, path, criarCenario(scenario));
+    runtime.iniciar();
+
+    const auto adicionarLote = [&](IdEntidade primeiro_id) {
+        std::vector<Carga> lote;
+        for (int i = 0; i < 10; ++i) {
+            const auto id = primeiro_id + i;
+            const int tamanho = static_cast<int>((id - 1) % 4) + 1;
+            const bool lado_direito = id % 2 == 0;
+            Carga carga;
+            carga.id = id;
+            carga.tamanho = tamanho;
+            carga.id_baia = tamanho + (lado_direito ? 4 : 0);
+            carga.id_destino = carga.id_baia;
+            lote.push_back(carga);
+        }
+        runtime.adicionarCargas(std::move(lote));
+    };
+
+    const auto prazo = std::chrono::steady_clock::now() + std::chrono::seconds(180);
+    std::size_t entregas_minimas = 10;
+    for (IdEntidade primeiro_id = 61; primeiro_id <= 91; primeiro_id += 10) {
+        adicionarLote(primeiro_id);
+        while (runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE) < entregas_minimas &&
+               std::chrono::steady_clock::now() < prazo) {
+            runtime.avancarCiclo();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+        ASSERT_GE(runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE), entregas_minimas)
+            << "Falha antes de adicionar o lote com ID " << primeiro_id;
+        entregas_minimas += 10;
+    }
+
+    while (!runtime.concluido() && std::chrono::steady_clock::now() < prazo) {
+        runtime.avancarCiclo();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    const auto cargas = runtime.cargos();
+    ASSERT_EQ(cargas.size(), 100u);
+    std::string pendencias;
+    for (const auto& carga : cargas) {
+        if (carga.estado != EstadoCarga::ENTREGUE) {
+            pendencias += " carga=" + std::to_string(carga.id) + " estado=" + nomeEstadoCarga(carga.estado) +
+                " missao=" + std::to_string(carga.id_missao) + " motivo=" + carga.motivo;
+        }
+    }
+    ASSERT_TRUE(runtime.concluido()) << "Cargas não entregues:" << pendencias;
+    EXPECT_EQ(runtime.quantidadeEventos(TipoEvento::CARGA_ENTREGUE), 100u);
+    runtime.parar();
+    EXPECT_TRUE(runtime.processos().empty());
+    std::filesystem::remove(path);
+}
+
 TEST(Etapa1Shutdown, StopsActiveWorkersAndDrainsAcceptedEvents) {
     std::cout << "\n[TESTE] Etapa1Shutdown.StopsActiveWorkersAndDrainsAcceptedEvents iniciado...\n" << std::unitbuf;
     std::filesystem::create_directories(TEST_DB_DIRECTORY);

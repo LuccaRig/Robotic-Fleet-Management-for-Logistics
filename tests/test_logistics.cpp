@@ -147,6 +147,27 @@ TEST(LogisticsTest, SendsEveryIdleRobotBelowFullBatteryToChargingStation) {
     EXPECT_TRUE(organizer.processarCiclo({}, frota.capturarEstado()).comandos.empty());
 }
 
+TEST(LogisticsTest, IdleManualRobotChargesOnlyAtLowBattery) {
+    auto map = layout(); EstadoFrota frota;
+    registrarRobo(frota, 1);
+    auto estado = *frota.obter(1);
+    ++estado.sequencia;
+    estado.modo = ModoOperacao::MANUAL;
+    estado.bateria = 16;
+    ASSERT_TRUE(frota.atualizar(estado));
+    OrganizadorLogistica organizer(map, {});
+
+    EXPECT_TRUE(organizer.processarCiclo({}, frota.capturarEstado()).comandos.empty());
+
+    definirBateria(frota, 1, 15);
+    const auto resultado = organizer.processarCiclo({}, frota.capturarEstado());
+    ASSERT_EQ(resultado.comandos.size(), 1u);
+    EXPECT_EQ(resultado.comandos.front().first, 1);
+    EXPECT_EQ(resultado.comandos.front().second.tipo, TipoMensagem::AtribuirMissao);
+    EXPECT_EQ(resultado.comandos.front().second.fase, FaseMissao::INDO_PARA_RECARGA);
+    EXPECT_EQ(resultado.comandos.front().second.destino, (Posicao{0, 0}));
+}
+
 TEST(LogisticsTest, CancelsBeforeCouplingAndPreservesQueue) {
     std::cout << "\n[TESTE] LogisticsTest.CancelsBeforeCouplingAndPreservesQueue iniciado..." << std::unitbuf;
     auto map = layout(); EstadoFrota frota; registrarRobo(frota,1); registrarRobo(frota,2);
