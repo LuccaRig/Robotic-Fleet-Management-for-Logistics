@@ -1,5 +1,6 @@
 import { $, $$, escape, icon, icons, number, robotName, coordinates, robotTone, cargoTone, timestamp, request, toast } from './ui.js';
 import { parseMap, Warehouse } from './map.js';
+import { batteryFeasibleCargoPairs } from './cargo_batch.mjs';
 
 icons(document);
 const state = { robos: [], cargas: [], missoes: [], passagens: [], atual: false };
@@ -266,36 +267,9 @@ function nextCargoId() {
   return Math.max(currentMax, lastGeneratedCargoId) + 1;
 }
 
-function routeExistsForCargo(start, destination, teamSize) {
-  const traversable = point => {
-    if (point.x < 0 || point.y < 0 || point.x >= map.width || point.y >= map.height || map.walls.has(`${point.x},${point.y}`)) return false;
-    const passage = map.passages.find(item => item.cells.some(cell => cell.x === point.x && cell.y === point.y));
-    return !passage || passage.capacity >= teamSize;
-  };
-  if (!traversable(start) || !traversable(destination)) return false;
-  const key = point => `${point.x},${point.y}`;
-  const visited = new Set([key(start)]);
-  const queue = [start];
-  for (let index = 0; index < queue.length; index++) {
-    const current = queue[index];
-    if (current.x === destination.x && current.y === destination.y) return true;
-    for (const [dx, dy] of [[1, 0], [0, 1], [-1, 0], [0, -1]]) {
-      const next = { x: current.x + dx, y: current.y + dy };
-      const nextKey = key(next);
-      if (!visited.has(nextKey) && traversable(next)) {
-        visited.add(nextKey);
-        queue.push(next);
-      }
-    }
-  }
-  return false;
-}
-
 function feasibleCargoPairs(teamSize) {
   if (cargoRoutes.has(teamSize)) return cargoRoutes.get(teamSize);
-  const pairs = map.bays.flatMap(bay => map.destinations
-    .filter(destination => routeExistsForCargo(bay, destination, teamSize))
-    .map(destination => ({ bay: bay.id, destination: destination.id })));
+  const pairs = batteryFeasibleCargoPairs(map, teamSize);
   cargoRoutes.set(teamSize, pairs);
   return pairs;
 }
@@ -326,7 +300,7 @@ function setCargoModalMode(mode) {
   }
 
   const sizes = [1, 2, 3, 4].filter(size => feasibleCargoPairs(size).length);
-  $('#modal-description').textContent = 'Cada carga recebe um tamanho de equipe e uma rota válidos para o mapa. As cargas entram em sequência nas filas das baias.';
+  $('#modal-description').textContent = 'Cada carga recebe uma equipe e uma rota compatível com as passagens e com a bateria necessária para entregar e alcançar um carregador.';
   $('#modal-fields').innerHTML = `<div class="batch-mode-action"><button type="button" class="button secondary" id="back-to-single-cargo">Voltar para carga única</button><span>Até 60 cargas por lote.</span></div><label class="batch-count-field">Quantidade de cargas<input name="batch_count" type="number" min="1" max="60" step="1" value="10" required></label><p class="batch-route-note">${sizes.length ? `Tamanhos de equipe possíveis neste mapa: ${sizes.join(', ')} robô(s).` : 'Este mapa não tem rotas válidas para cargas.'}</p>`;
   $('#back-to-single-cargo').onclick = () => setCargoModalMode('single');
   $('#modal-submit').innerHTML = `Adicionar lote${icon('arrow')}`;
