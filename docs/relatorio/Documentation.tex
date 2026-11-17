@@ -48,7 +48,7 @@
 \renewcommand{\headrulewidth}{0.35pt}
 \newcommand{\code}[1]{\mbox{\texttt{#1}}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
-\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,breakatwhitespace=true,
+\lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,breakatwhitespace=true,
  frame=single,backgroundcolor=\color{cinzaclaro},rulecolor=\color{black!15},
  xleftmargin=0.3cm,xrightmargin=0.3cm,showstringspaces=false,columns=fullflexible,
  aboveskip=0.5em,belowskip=0.6em}
@@ -113,7 +113,7 @@ capacidade limitada, conforme ilustrado na Figura~\ref{fig:galpao}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/galpao/galpao.png}
+    \includegraphics[width=0.9\textwidth]{figuras/galpao/galpao.png}
     \caption{Representação gráfica do ambiente logístico}
     \label{fig:galpao}
 \end{figure}
@@ -687,42 +687,42 @@ resultados apresentados diretamente no terminal.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/200_eventos.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/200_eventos.png}
     \caption{Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite.}
     \label{fig:200_eventos}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/init_conf.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/init_conf.png}
     \caption{Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento.}
     \label{fig:init_conf}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/passage_test.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/passage_test.png}
     \caption{Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados.}
     \label{fig:passage_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Interface_100.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Interface_100.png}
     \caption{Teste de sobrecarga com 100 robôs e 60 cargas, utilizado para verificar o respeito aos limites de capacidade das passagens e a consistência das operações.}
     \label{fig:100_robots_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Log.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Log.png}
     \caption{Consulta do datalogger - RobotEvents - SQLite pela interface web.}
     \label{fig:log_interface_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Log_cargas.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Log_cargas.png}
     \caption{Consulta do datalogger - Cargas e Formações - SQLite pela interface web.}
     \label{fig:log_cargas_interface_test}
 \end{figure}
@@ -731,6 +731,88 @@ Os testes de concorrência e integração fornecem evidências de integridade,
 progresso e encerramento nas execuções observadas. Os resultados confirmam o
 comportamento esperado nos cenários avaliados, mas não garantem ausência geral
 de condições de corrida, bloqueio ou inanição.
+
+\section{Análise de Capacidade e Escalabilidade do Sistema}
+\label{sec:escalabilidade}
+
+Para avaliar a capacidade e a responsividade do sistema, realizamos testes com
+diferentes quantidades de robôs, analisando os tempos de processamento, a
+comunicação entre componentes e a utilização dos recursos computacionais. As
+medições contemplaram a execução local do núcleo C++ e a operação integrada por
+MQTT.
+
+\subsection{Desempenho do núcleo C++}
+
+A Tabela~\ref{tab:desempenho_core} apresenta os resultados de cinco execuções
+dos cenários com 15 e 100 robôs.
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Amostragem dos tempos de processamento do núcleo C++.}
+    \label{tab:desempenho_core}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Indicador}     & \textbf{15 robôs} & \textbf{100 robôs} \\
+        \midrule
+        Tempo médio do ciclo   & 0,26 ms           & 1,37 ms            \\
+        Maior tempo observado  & 7,90 ms           & 19,78 ms           \\
+        Período nominal        & 20 ms             & 20 ms              \\
+        Ciclos dentro de 20 ms & 100\%             & 100\%              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+O tempo médio de processamento permaneceu abaixo do período nominal de 20 ms em
+ambos os cenários. Entretanto, com 100 robôs, o maior ciclo observado atingiu
+19,78 ms, indicando uma margem reduzida para eventuais atrasos de
+escalonamento.
+
+\subsection{Responsividade e comunicação MQTT}
+
+A arquitetura integrada, composta pelo núcleo C++, simulador físico, broker
+MQTT e interface Python, foi avaliada com 4, 8 e 16 robôs, totalizando 560
+movimentos.
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Tempos de resposta da aplicação integrada.}
+    \label{tab:desempenho_mqtt}
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Indicador} & \textbf{4 robôs} & \textbf{8 robôs} & \textbf{16 robôs} \\
+        \midrule
+        Movimentos         & 80               & 160              & 320               \\
+        Aceitação P95 (ms) & 77,9             & 78,4             & 90,3              \\
+        Chegada P95 (ms)   & 361,6            & 349,2            & 369,0             \\
+        CPU média (\%)     & 12,1             & 16,9             & 21,5              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Todos os comandos foram aceitos e os movimentos concluídos. O aumento da frota
+elevou moderadamente a latência de aceitação e o consumo de CPU, enquanto a
+latência de chegada permaneceu relativamente estável.
+
+Entre o envio do setpoint e a atualização do sensor, os valores P95 ficaram
+próximos de 20 a 25 ms. A latência total de chegada também inclui os ciclos de
+navegação, comunicação e atualização dos estados.
+
+\subsection{Capacidade e escalonamento}
+
+O sistema utiliza períodos nominais de 20 ms para o laço principal, 100 ms para
+navegação, 500 ms para status e 200 ms para processamento logístico.
+
+A execução com até 100 robôs demonstrou capacidade funcional, sem evidências de
+saturação contínua. Contudo, a proximidade do maior ciclo observado ao período
+nominal e a centralização das decisões logísticas e dos canais IPC indicam
+possíveis limitações para frotas maiores.
+
+Embora os processos independentes favoreçam o isolamento das tarefas, os
+resultados não permitem estabelecer garantias de tempo real ou determinar a
+capacidade máxima do hardware. Uma avaliação mais ampla exigiria testes sob
+cargas superiores e análise dos atrasos de escalonamento.
 
 \section{Compilação e reprodução}
 
@@ -758,7 +840,7 @@ adaptador de hardware local, sem depender do broker ou da interface gráfica.
 
 A partir da raiz do projeto, executamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build \
     -DENABLE_MQTT=OFF \
     -DBUILD_TESTING=OFF
@@ -775,7 +857,7 @@ incluindo transporte cooperativo, falhas, recarga, gerenciamento de processos e
 controle de passagens. Para executar outro cenário, basta substituir o
 argumento \code{--cenario}:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 ./build/app/simulador_exec \
     --cenario estresse-passagens
 \end{lstlisting}
@@ -794,7 +876,7 @@ integrada.
 Primeiramente, preparamos o ambiente virtual Python e instalamos as
 dependências da interface:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 python3 -m venv visualization/.venv
 
 
@@ -804,7 +886,7 @@ visualization/.venv/bin/python -m pip \
 
 Em seguida, realizamos a compilação:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-mqtt \
     -DENABLE_MQTT=ON \
     -DBUILD_TESTING=OFF
@@ -815,7 +897,7 @@ cmake --build build-mqtt --parallel 2
 
 Para iniciar o sistema completo, executamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 ./build-mqtt/app/fleet_launcher
 \end{lstlisting}
 
@@ -832,12 +914,13 @@ Também é possível executar a central e o simulador em terminais separados,
 utilizando respectivamente as opções \code{--simulador-mqtt} e
 \code{--simulador}, desde que ambos estejam conectados ao mesmo broker.
 
+
 \subsection{Compilação e execução dos testes}
 
 Os testes automatizados são habilitados pela opção \code{BUILD\_TESTING=ON}.
 Para executar os testes do núcleo C++, sem MQTT, utilizamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-testes \
     -DENABLE_MQTT=OFF \
     -DBUILD_TESTING=ON
@@ -853,7 +936,7 @@ ctest --test-dir build-testes \
 Para incluir os testes específicos da integração MQTT, utilizamos uma
 configuração separada:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-mqtt-testes \
     -DENABLE_MQTT=ON \
     -DBUILD_TESTING=ON
@@ -874,7 +957,7 @@ testes de integração com o simulador remoto.
 Os testes da interface Python podem ser executados separadamente, utilizando o
 ambiente virtual:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 visualization/.venv/bin/python -m unittest \
     visualization.test_history \
     visualization.test_scenario_picker -v
@@ -906,6 +989,16 @@ estão disponíveis no repositório público:
 
 \begin{center}
     \url{https://github.com/LuccaRig/Robotic-Fleet-Management-for-Logistics}
+\end{center}
+
+
+\subsection{Vídeo de demonstração do projeto}
+O vídeo de demonstração do projeto está disponível no YouTube, apresentando a
+execução de cenários com transporte básico, transporte colaborativo, passagens
+restritas, falhas, recarga e gerenciamento de processos.
+
+\begin{center}
+    \url{link do video do yt aqui}
 \end{center}
 
 \end{document}

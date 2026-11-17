@@ -33,9 +33,14 @@
 \contentsline {subsection}{\numberline {8.4}Comunicação MQTT e interface de operação}{13}{subsection.8.4}%
 \contentsline {subsection}{\numberline {8.5}Testes de integração}{13}{subsection.8.5}%
 \contentsline {subsection}{\numberline {8.6}Imagens dos testes}{14}{subsection.8.6}%
-\contentsline {section}{\numberline {9}Compilação e reprodução}{16}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Compilação e execução do núcleo C++}{17}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Compilação e execução do sistema completo}{17}{subsection.9.2}%
-\contentsline {subsection}{\numberline {9.3}Compilação e execução dos testes}{18}{subsection.9.3}%
-\contentsline {section}{\numberline {10}Conclusão}{19}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Disponibilidade do código-fonte e repositório}{19}{subsection.10.1}%
+\contentsline {section}{\numberline {9}Análise de Capacidade e Escalabilidade do Sistema}{16}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Desempenho do núcleo C++}{16}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Responsividade e comunicação MQTT}{17}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Capacidade e escalonamento}{17}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Compilação e reprodução}{18}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Compilação e execução do núcleo C++}{18}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Compilação e execução do sistema completo}{18}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}Compilação e execução dos testes}{19}{subsection.10.3}%
+\contentsline {section}{\numberline {11}Conclusão}{20}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Disponibilidade do código-fonte e repositório}{20}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Vídeo de demonstração do projeto}{20}{subsection.11.2}%
