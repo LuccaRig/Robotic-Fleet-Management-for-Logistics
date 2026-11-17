@@ -1,0 +1,154 @@
+\documentclass[tikz,border=8pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,shapes.geometric}
+\definecolor{bluebg}{HTML}{EDF4FA}
+\definecolor{blueedge}{HTML}{315C84}
+\definecolor{yellowbg}{HTML}{FFF7E7}
+\definecolor{yellowedge}{HTML}{B78123}
+\definecolor{greenbg}{HTML}{E1F1E8}
+\definecolor{orangebg}{HTML}{FBE8D6}
+\begin{document}
+
+\begin{tikzpicture}[x=1cm,y=1cm,>=Latex,
+ every node/.style={font=\sffamily\footnotesize},
+ major/.style={rounded corners=3pt,thick},
+ module/.style={draw=blue!55!black,fill=blue!4,line width=.6pt,rounded corners=2.4pt,align=center},
+ inner/.style={draw=teal!65!black,fill=teal!5,line width=.65pt,rounded corners=2.4pt,align=center},
+ db/.style={draw=black!48,fill=black!4,line width=.75pt,rounded corners=2.4pt},
+ flowmqtt/.style={<->,very thick,draw=orange!82!black},
+ flowipc/.style={<->,very thick,draw=blue!70!black},
+ flowhttp/.style={<->,thick,draw=teal!70!black},
+ flowdata/.style={->,very thick,draw=black!65},
+ lbl/.style={fill=white,inner sep=2pt,font=\sffamily\scriptsize,align=center}
+]
+% ---------------------------------------------------------------------
+% 1. SIMULADOR FISICO -- processo separado em C++
+% ---------------------------------------------------------------------
+\draw[major,draw=blue!60!black,fill=blue!3] (0.20,13.65) rectangle (8.15,17.25);
+\fill[blue!70!black,rounded corners=2.5pt] (0.20,16.65) rectangle (8.15,17.25);
+\node[font=\sffamily\bfseries\normalsize,text=white] at (4.18,16.94) {Simulador físico (C++)};
+\node[anchor=north west,align=left,text width=7.25cm,inner sep=0]
+ at (0.52,16.37) {\textbf{Processo independente} (ciclo nominal: 20 ms)\\[2pt]
+ \textbullet\ Recebe setpoints e comandos físicos\\
+ \textbullet\ Simula movimento, bateria e falhas\\
+ \textbullet\ Publica leituras e confirmações};
+
+% ---------------------------------------------------------------------
+% 2. BROKER MQTT
+% ---------------------------------------------------------------------
+\draw[major,draw=orange!80!black,fill=orange!9,line width=1pt]
+ (10.18,14.25) rectangle (15.76,16.65);
+\node[font=\sffamily\bfseries\large,text=orange!70!black] at (12.97,15.80) {Broker MQTT};
+\node[font=\sffamily\footnotesize,align=center] at (12.97,15.04)
+ {Mosquitto\\publicação / assinatura};
+\draw[flowmqtt] (8.15,15.45) -- (10.18,15.45);
+\node[lbl,above,font=\sffamily\scriptsize\bfseries] at (9.165,15.59) {MQTT};
+\node[lbl,font=\sffamily\tiny] at (9.16,14.89) {sensores / setpoints};
+
+% ---------------------------------------------------------------------
+% 3. INTERFACE PYTHON + NAVEGADOR (bloco isolado)
+% ---------------------------------------------------------------------
+\draw[major,draw=teal!63!black,fill=teal!2] (18.47,6.72) rectangle (27.34,17.25);
+\fill[teal!70!black,rounded corners=2.5pt] (18.47,16.65) rectangle (27.34,17.25);
+\node[font=\sffamily\bfseries\normalsize,text=white] at (22.90,16.94) {Interface de operação};
+\draw[inner] (18.88,12.52) rectangle (26.94,16.34);
+\node[font=\sffamily\bfseries\normalsize] at (22.91,15.93) {Servidor Python};
+\node[anchor=north west,align=left,text width=7.42cm,inner sep=0]
+ at (19.12,15.61) {\texttt{visualization/server.py}\\[3pt]
+ \textbullet\ Servidor HTTP e API de comandos\\
+ \textbullet\ Cliente Paho: ponte MQTT\\
+ \textbullet\ Consulta SQL para histórico\\
+ \textbullet\ Gerencia os serviços da simulação};
+\draw[inner] (18.88,7.40) rectangle (26.94,11.60);
+\node[font=\sffamily\bfseries\normalsize] at (22.91,11.18) {Frontend web};
+\node[font=\sffamily\scriptsize] at (22.91,10.76) {HTML, CSS e JavaScript no navegador};
+\node[anchor=north west,align=left,text width=7.25cm,inner sep=0]
+ at (19.15,10.43) {\textbullet\ Visualização do mapa, cargas e robôs\\
+ \textbullet\ Estados, eventos e passagens\\
+ \textbullet\ Modo manual / automático\\
+ \textbullet\ Comandos de bateria, falha, carga e robô};
+\draw[flowhttp] (22.91,12.52) -- (22.91,11.60);
+\node[lbl,right] at (23.06,12.05) {HTTP / JSON};
+
+\draw[flowmqtt] (15.76,15.45) -- (18.88,15.45);
+\node[lbl,above,font=\sffamily\scriptsize\bfseries] at (17.33,15.56) {MQTT};
+\node[lbl,font=\sffamily\tiny] at (17.33,14.86) {comandos / telemetria};
+
+% ---------------------------------------------------------------------
+% 4. NUCLEO CENTRAL C++ -- modulos do ciclo principal
+% ---------------------------------------------------------------------
+\draw[major,draw=blue!60!black,fill=blue!2] (0.20,6.80) rectangle (17.76,12.30);
+\fill[blue!70!black,rounded corners=2.5pt] (0.20,11.69) rectangle (17.76,12.30);
+\node[font=\sffamily\bfseries\normalsize,text=white] at (8.98,11.99)
+ {Aplicação central (C++17) -- coordenação e coleta assíncrona};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (runtime) at (2.43,10.58)
+ {\textbf{Runtime}\\Laço de execução\\sequencial};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (gestor) at (6.80,10.58)
+ {\textbf{Gestor de Robôs}\\\texttt{posix\_spawn()}\\processos e IPC};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (logistica) at (11.17,10.58)
+ {\textbf{Organizador Logístico}\\cargas e equipes\\de 1 a 4 robôs};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (integracao) at (15.54,10.58)
+ {\textbf{Integração MQTT}\\comandos remotos\\e telemetria};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (passagens) at (2.43,8.51)
+ {\textbf{Controle de Passagens}\\reservas, filas FIFO\\e capacidade};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (rotas) at (6.80,8.51)
+ {\textbf{Planejador de Rotas}\\busca BFS\\e caminhos do galpão};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (canal) at (11.17,8.51)
+ {\textbf{Canal da Simulação}\\setpoints e sensores\\via MQTT};
+\node[module,minimum width=4.04cm,minimum height=1.64cm] (coletor) at (15.54,8.51)
+ {\textbf{Coletor de Dados}\\fila sincronizada\\thread de persistência};
+\node[font=\sffamily\scriptsize\itshape] at (8.98,7.18)
+ {Coordenação das missões, recursos, comunicações e rastreabilidade};
+\draw[flowmqtt] (14.90,14.25) -- (14.90,12.30);
+\node[lbl,right] at (15.03,13.27) {MQTT};
+
+% ---------------------------------------------------------------------
+% 5. PROCESSOS DOS ROBOS + TWO THREADS
+% ---------------------------------------------------------------------
+\draw[major,draw=blue!60!black,fill=blue!2] (0.20,0.55) rectangle (17.76,4.58);
+\fill[blue!70!black,rounded corners=2.5pt] (0.20,3.98) rectangle (17.76,4.58);
+\node[font=\sffamily\bfseries\normalsize,text=white] at (8.98,4.28)
+ {Processos dos robôs (C++) -- um processo por robô};
+\foreach \x/\nome in {3.10/Robô 1,8.98/Robô 2,14.86/Robô N}{
+  \node[module,minimum width=5.56cm,minimum height=2.90cm] at (\x,2.26) {};
+  \node[font=\sffamily\bfseries\normalsize] at (\x,3.40) {\nome};
+  \node[font=\sffamily\scriptsize,align=left,anchor=north,text width=4.88cm]
+   at (\x,3.14) {\textbullet\ Thread de navegação (100 ms)\\
+                  \textbullet\ Thread de status (500 ms)\\
+                  \textbullet\ Receptor de mensagens IPC\\
+                  \textbullet\ \texttt{mutex} + \texttt{condition\_variable}\\
+                  \textbullet\ \texttt{timed\_mutex} no envio IPC};
+}
+\draw[flowipc] (8.98,6.80) -- (8.98,4.58);
+\node[lbl,anchor=west,font=\sffamily\footnotesize\bfseries] at (9.25,5.91)
+ {IPC local: \texttt{socketpair(AF\_UNIX, SOCK\_STREAM)}};
+\node[lbl,anchor=west,font=\sffamily\scriptsize] at (9.25,5.42)
+ {Comandos, confirmações, estados e controle de vida};
+
+% ---------------------------------------------------------------------
+% 6. SQLite e ligacoes de escrita (coletor) e leitura (Python)
+% ---------------------------------------------------------------------
+\draw[db,rounded corners=3pt] (19.05,1.48) rectangle (26.94,4.64);
+\fill[black!65,rounded corners=2.5pt] (19.05,4.00) rectangle (26.94,4.64);
+\node[text=white,font=\sffamily\bfseries\normalsize] at (23.00,4.32)
+ {Banco de dados SQLite};
+\node[align=left,font=\sffamily\footnotesize,text width=7.08cm]
+ at (23.00,2.82) {\textbullet\ Eventos e histórico dos robôs\\
+ \textbullet\ Transportes e integrantes de equipes\\
+ \textbullet\ Escrita transacional pelo coletor C++\\
+ \textbullet\ Consultas de leitura pela API Python};
+\draw[flowdata] (17.76,8.51) -- (18.13,8.51) -- (18.13,3.12) -- (19.05,3.12);
+\node[lbl,rotate=90,font=\sffamily\scriptsize] at (18.13,5.24)
+ {SQLite: gravação de eventos};
+\draw[->,very thick,draw=teal!70!black] (26.94,14.10) -- (27.56,14.10) -- (27.56,3.40) -- (26.94,3.40);
+\node[lbl,rotate=90,font=\sffamily\scriptsize] at (27.56,6.37)
+ {SQLite: consultas de histórico};
+
+\node[font=\sffamily\tiny,anchor=west,text=black!70] at (0.23,0.17)
+ {Linhas: \textcolor{blue!70!black}{\bfseries IPC} = comunicação entre processos locais; \textcolor{orange!82!black}{\bfseries MQTT} = comunicação distribuída; \textcolor{teal!70!black}{\bfseries HTTP} = navegador / servidor; \textcolor{black!65}{\bfseries SQL} = persistência.};
+\end{tikzpicture}
+\end{document}

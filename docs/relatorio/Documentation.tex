@@ -53,32 +53,31 @@
 
 \begin{document}
 \begin{titlepage}
-\centering
-{\scshape\Large Universidade Federal de Minas Gerais\par}
-\vspace{0.7cm}
-{\large ELT127 -Automação em Tempo Real\par}
-\vspace{2.2cm}
-{\huge\bfseries Relatório Técnico -- TP\par}
-\vspace{0.45cm}
-{\Large\bfseries Etapa 1 -- Arquitetura, Processos e Sincronização\par}
-\vspace{1.3cm}
-{\Large Gerenciamento de Frota Robótica para Logística\par}
-\vspace{2.0cm}
-\begin{center}
-\begin{minipage}{0.80\textwidth}
-\centering
-\vspace{0.5cm}
-{\large Lucca Rigueira Sant'ana Nogueira -- 2023038957 \par}
-{\large Matheus Muniz Soares -- 2023038892\par}
-{\large Pedro Henrique Chalfun de Aquino -- 2023039066\par}
-\vspace{0.55cm}
-{\large Prof. Leandro Freitas\par}
-\end{minipage}
-\end{center}
-\vfill
-{Belo Horizonte, 25 de outubro de 2026\par}
+    \centering
+    {\scshape\Large Universidade Federal de Minas Gerais\par}
+    \vspace{0.7cm}
+    {\large ELT127 -Automação em Tempo Real\par}
+    \vspace{2.2cm}
+    {\huge\bfseries Relatório Técnico -- TP\par}
+    \vspace{0.45cm}
+    {\Large\bfseries Entrega Final\par}
+    \vspace{1.3cm}
+    {\Large Gerenciamento de Frota Robótica para Logística\par}
+    \vspace{2.0cm}
+    \begin{center}
+        \begin{minipage}{0.80\textwidth}
+            \centering
+            \vspace{0.5cm}
+            {\large Lucca Rigueira Sant'ana Nogueira -- 2023038957 \par}
+            {\large Matheus Muniz Soares -- 2023038892\par}
+            {\large Pedro Henrique Chalfun de Aquino -- 2023039066\par}
+            \vspace{0.55cm}
+            {\large Prof. Leandro Freitas\par}
+        \end{minipage}
+    \end{center}
+    \vfill
+    {Belo Horizonte, 16 de novembro de 2026\par}
 \end{titlepage}
-
 
 \setlength{\columnsep}{1.1cm}
 \footnotesize
@@ -86,350 +85,987 @@
 
 \clearpage
 
-\section{Introdução e objetivos da etapa}
-O transporte de cargas em galpões logísticos automatizados pode exigir a atuação coordenada de diferentes robôs móveis. Nesse contexto, cargas de tamanhos distintos são disponibilizadas em baias e precisam ser encaminhadas às zonas de entrega. Algumas operações podem ser realizadas por um único robô, enquanto outras exigem equipes de até quatro integrantes. Além da escolha dos destinos, o sistema deve considerar o deslocamento pelo mapa, a ocupação de passagens estreitas, o estado da bateria e a ocorrência de falhas.
+\section{Introdução e objetivos}
+\label{sec:introducao}
 
-A Figura~\ref{fig:galpao} apresenta uma representação gráfica do ambiente logístico, que foi representado de forma matricial na abordagem adotada pelo grupo na implementação do projeto.
+O gerenciamento de frotas de robôs móveis em ambientes logísticos exige a
+coordenação de tarefas, o planejamento de rotas e o controle de recursos
+compartilhados. Neste trabalho, desenvolvemos um sistema de gerenciamento e
+simulação de uma frota robótica, responsável pelo transporte de cargas entre
+baias e zonas de entrega, incluindo operações colaborativas com equipes de até
+quatro robôs.
+
+O sistema foi desenvolvido principalmente em C++, utilizando múltiplos
+processos e threads para a execução concorrente das tarefas. Empregamos
+mecanismos de sincronização, como mutexes e variáveis de condição, além de
+comunicação entre processos (IPC), para coordenar as operações dos robôs.
+Também implementamos um banco de dados SQLite para registrar eventos e
+transportes, garantindo a rastreabilidade das operações.
+
+Para a operação e o monitoramento do sistema, desenvolvemos uma interface
+gráfica utilizando Python e tecnologias web, integrada ao núcleo C++ e ao
+simulador físico por meio do protocolo MQTT. O ambiente de simulação utiliza um
+mapa matricial com baias, zonas de entrega, pontos de recarga e passagens com
+capacidade limitada, conforme ilustrado na Figura~\ref{fig:galpao}.
+
+A Figura~\ref{fig:galpao} apresenta uma representação gráfica do ambiente
+logístico, que foi representado de forma matricial na abordagem adotada pelo
+grupo na implementação do projeto.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figuras/galpao/galpao_etapa1.png}
-\caption{Representação gráfica do ambiente logístico}
-\label{fig:galpao}
+    \centering
+    \includegraphics[width=\textwidth]{figuras/galpao/galpao.png}
+    \caption{Representação gráfica do ambiente logístico}
+    \label{fig:galpao}
 \end{figure}
 
-Os números entre parênteses na legenda correspondem aos códigos internos dos tipos de célula do mapa, não à capacidade de cada passagem restrita.
-
-O objetivo geral do projeto é desenvolver um sistema de planejamento e simulação de uma frota robótica, com processos independentes para os agentes e mecanismos de comunicação e sincronização que permitam realizar missões individuais e colaborativas. Nesta primeira etapa, concentramos a implementação na arquitetura de execução, na troca de mensagens, na coordenação logística e na persistência dos eventos.
-
-Como objetivos específicos desta entrega, definimos a criação dinâmica dos processos dos robôs, a execução das threads de navegação e status, a comunicação IPC com o processo central, o controle de equipes e passagens restritas e a gravação assíncrona de eventos em SQLite. Também desenvolvemos testes unitários e de integração para verificar o comportamento dos componentes e suas interações. As interfaces gráficas e a comunicação MQTT permanecem previstas para a segunda etapa.
+O objetivo do projeto é integrar os conceitos de programação concorrente,
+sincronização e comunicação entre processos estudados na disciplina de
+Automação em Tempo Real, desenvolvendo uma solução capaz de coordenar o
+transporte individual e colaborativo de cargas. Além da implementação e dos
+testes funcionais, avaliamos aspectos de corretude, tempo de resposta e
+escalabilidade, buscando identificar as limitações do sistema diante do aumento
+do número de robôs.
 
 \section{Arquitetura do sistema}
-Organizamos a arquitetura em três partes: coordenação logística, execução dos robôs e persistência de dados em SQLite. O processo central gerencia missões e recursos simulados, enquanto cada robô executa em um processo independente.
+
+Com a conclusão da segunda etapa, organizamos a arquitetura em quatro partes
+principais: coordenação logística, processos dos robôs, simulação física e
+interface de operação. O núcleo do sistema foi desenvolvido em C++17 e
+concentra as decisões de navegação, alocação de equipes e controle de recursos.
+Para a comunicação entre os processos dos robôs e a central, mantivemos o IPC
+por sockets Unix; já a comunicação com a interface e com o simulador externo
+utiliza MQTT. O histórico da operação é armazenado em SQLite.
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figuras/arquitetura_etapa1/arquitetura_etapa1.pdf}
-\caption{Arquitetura detalhada da Etapa 1: processos, threads, canais IPC e sincronização. Os módulos de coordenação atuam sequencialmente no ciclo central; as threads dos agentes e do coletor executam concorrentemente.}
-\label{fig:arquitetura}
+    \centering
+    \includegraphics[width=0.95\textwidth]{figuras/arquitetura/arquitetura.pdf}
+    \caption{Arquitetura geral do sistema.}
+    \label{fig:arquitetura}
 \end{figure}
 
-A Figura~\ref{fig:arquitetura} delimita os processos e identifica as operações concorrentes. Cada robô possui um processo próprio, com receptor IPC, thread de navegação e thread de status. A troca entre o processo central e cada agente ocorre por socket Unix \code{SOCK\_STREAM}, com prefixo de tamanho de quatro bytes e validação de identificador, geração e sequência. No processo do robô, o estado local é protegido por \code{std::mutex}; notificações por \code{std::condition\_variable} coordenam despertares periódicos ou antecipados, e o envio compartilhado pelo socket é serializado com \code{std::timed\_mutex}, usando \code{poll()} e limites de espera.
+A Figura~\ref{fig:arquitetura} apresenta os componentes e os principais canais
+de comunicação. No processo central, a \code{AplicacaoCentral} executa
+sequencialmente as rotinas do \code{GestorRobos}, do
+\code{OrganizadorLogistica} e do \code{ControlePassagens}, evitando o
+compartilhamento concorrente do estado central entre esses módulos. O gestor
+cria os processos dos robôs com \code{posix\_spawn()}, acompanha suas conexões
+e encaminha os comandos. Cada processo \code{AgenteRobo} possui threads de
+navegação e status, com períodos nominais de 100 ms e 500 ms, respectivamente.
+O estado local é protegido por \code{std::mutex} e as notificações entre
+threads utilizam \code{std::condition\_variable}. A troca de mensagens com a
+central é feita por \code{socketpair()} Unix do tipo \code{SOCK\_STREAM}, com
+enquadramento, validação e confirmações de comandos.
 
-No processo central, o gestor, o organizador, o controle de passagens e o adaptador de hardware são chamados pelo laço principal sequencialmente, e não constituem quatro threads independentes. O transporte colaborativo utiliza confirmações dos integrantes como barreira lógica, enquanto as passagens restritas são administradas por filas e reservas de capacidade, liberadas conforme leituras dos sensores; não são utilizados semáforos POSIX nesse controle. O registro de eventos alimenta uma fila \code{std::queue} protegida por mutex e variável de condição; uma thread coletora independente consome os eventos e grava em SQLite fora do bloqueio da fila. O \code{BufferEventos} circular, descrito na Seção~\ref{sec:buffer-detalhe}, é um componente auxiliar testado, não a fila principal de persistência.
+Na arquitetura integrada, a simulação física também executa em um processo C++
+independente, utilizando o mesmo executável em modo \code{--simulador}. Esse
+processo reutiliza o \code{AdaptadorHardwareLocal} para atualizar posições,
+bateria e sensores a partir dos setpoints recebidos, com ciclo nominal de 20
+ms. Os comandos físicos e as leituras são transmitidos pelo broker Mosquitto
+nos tópicos de simulação MQTT. A central recebe essas leituras e as utiliza
+para confirmar o deslocamento, a ocupação das passagens e as etapas do
+transporte colaborativo. Assim, o planejamento e a coordenação permanecem no
+núcleo, enquanto a atualização do estado físico ocorre separadamente.
 
-Optamos por utilizar o SQLite em vez de arquivos de log convencionais para garantir maior organização, integridade e rastreabilidade dos dados gerados durante a execução do sistema. O uso de um banco de dados relacional permite armazenar informações estruturadas sobre os robôs, eventos, missões e cargas transportadas, facilitando consultas e análises posteriores. Além disso, o SQLite oferece suporte a transações, restrições de integridade e recuperação em caso de falhas, reduzindo o risco de inconsistências nos registros. Por ser leve, não exigir um servidor dedicado e permitir integração direta com C++, mostrou-se uma solução adequada para o projeto. Associado à thread de coleta de dados, possibilita ainda a persistência assíncrona dos eventos, evitando que as operações de gravação bloqueiem diretamente o processamento logístico.
+A tela de operação é disponibilizada por um servidor Python, implementado em
+\code{visualization/server.py}. O lançador \code{fleet\_launcher} aciona esse
+servidor, que inicia um broker Mosquitto local, a central e o simulador físico
+em processos separados. O servidor também disponibiliza uma API HTTP e atua
+como ponte MQTT por meio da biblioteca Paho. A visualização propriamente dita é
+executada no navegador, utilizando HTML, CSS e JavaScript para apresentar o
+mapa, os robôs, as cargas, o estado das missões e os controles manuais. Os
+comandos enviados pelo operador passam pelo servidor Python, seguem pelo broker
+até a central e são validados antes de alterar a operação. Em sentido
+contrário, a central publica a telemetria da frota e as respostas aos comandos,
+que ficam disponíveis para consulta pela interface. A geometria do galpão é
+carregada de arquivos de configuração compartilhados, sem depender da
+transmissão do mapa por MQTT.
 
-\noindent A Tabela~\ref{tab:responsabilidades} resume as responsabilidades dos componentes.
+Para o registro das operações, mantivemos o \code{ColetorDados} com uma thread
+independente, que consome eventos de uma fila protegida por mutex e variável de
+condição e realiza a gravação no SQLite. Dessa forma, a persistência não exige
+que o ciclo lógico aguarde diretamente cada escrita no banco. Além de preservar
+o histórico de robôs e transportes, essa estrutura permite consultar os eventos
+e os integrantes das equipes. Optamos pelo SQLite por permitir registros
+estruturados e transacionais sem exigir um servidor de banco dedicado. A
+interface Python realiza essas consultas diretamente ao banco, em modo de
+leitura, por meio de sua API HTTP; portanto, o histórico não é transmitido como
+telemetria MQTT.
+
+\noindent A Tabela~\ref{tab:responsabilidades} resume as responsabilidades dos componentes na implementação final.
 
 \begin{table}[H]
-\centering
-\scriptsize
-\caption{Responsabilidades dos componentes implementados.}
-\label{tab:responsabilidades}
-
-\begingroup
-\renewcommand{\arraystretch}{2}
-
-\begin{tabularx}{\textwidth}{@{}p{3.0cm}p{3.2cm}Y@{}}
-\toprule
-\textbf{Módulo} & \textbf{Contexto} & \textbf{Responsabilidade}\\
-\midrule
-\code{AplicacaoCentral} & Processo central; laço principal & Processa mensagens, aciona logística, hardware e passagens.\\
-\code{GestorRobos} & Mesmo processo central & Cria/encerra processos, acompanha PIDs, gerações, mensagens e prontidão.\\
-\code{AgenteRobo} & Processo individual & Compartilha estado local entre threads de navegação e status.\\
-\code{OrganizadorLogistica} & Ciclo central & Reserva equipes, define missões, acompanha fases e retomadas.\\
-\code{ControlePassagens} & Ciclo central & Mantém fila, capacidade, ocupação e permissões de tráfego.\\
-{\ttfamily\tiny AdaptadorHardwareLocal} & Ciclo central & Converte setpoints válidos em novas leituras de sensores.\\
-\code{ColetorDados} & Thread própria & Consome eventos da fila e persiste registros no SQLite.\\
-\bottomrule
-\end{tabularx}
-
-\endgroup
+    \centering
+    \scriptsize
+    \caption{Responsabilidades dos componentes da arquitetura final.}
+    \label{tab:responsabilidades}
+    \begingroup
+    \renewcommand{\arraystretch}{1.75}
+    \begin{tabularx}{\textwidth}{@{}p{3.15cm}p{3.00cm}Y@{}}
+        \toprule
+        \textbf{Módulo}                                          & \textbf{Contexto}     & \textbf{Responsabilidade}                                                               \\
+        \midrule
+        \code{AplicacaoCentral}                                  & Processo central C++  & Coordena os ciclos de operação, trata mensagens e integra logística, hardware e MQTT.   \\
+        \code{GestorRobos}                                       & Processo central C++  & Cria e encerra processos de robôs, acompanha gerações, prontidão e canais IPC.          \\
+        \code{AgenteRobo}                                        & Processo C++ por robô & Executa navegação e status em threads, com estado local sincronizado.                   \\
+        \code{OrganizadorLogistica}                              & Ciclo central         & Aloca cargas e equipes, acompanha as fases e coordena o transporte colaborativo.        \\
+        \code{ControlePassagens}                                 & Ciclo central         & Administra filas, reservas, direção e capacidade das passagens restritas.               \\
+        {\ttfamily\tiny AdaptadorHardwareLocal}                  & Simulador C++         & Simula a resposta física aos setpoints e produz leituras de sensores.                   \\
+        \code{IntegracaoMqtt} /\newline\code{CanalSimulacaoMqtt} & Comunicação C++       & Encaminha comandos, publica telemetria e conecta a central ao simulador.                \\
+        \code{server.py} e interface web                         & Python e navegador    & Gerencia serviços, disponibiliza a API HTTP, faz a ponte MQTT e apresenta os controles. \\
+        \code{ColetorDados} / SQLite                             & Thread C++ e banco    & Persiste eventos e transportes, permitindo rastreabilidade e consultas de histórico.    \\
+        \bottomrule
+    \end{tabularx}
+    \endgroup
 \end{table}
+
+A separação entre IPC local e MQTT foi adotada para manter a comunicação dos
+agentes independente da interface de operação e da simulação externa. Com isso,
+preservamos os mecanismos de sincronização implementados na primeira etapa e
+acrescentamos os canais de supervisão e simulação necessários ao sistema
+completo. A divisão de responsabilidades também facilita o teste isolado dos
+componentes, embora a responsividade da aplicação dependa do tempo de
+processamento do ciclo central e do volume de mensagens trocadas.
 
 \section{Implementação dos processos}
 \subsection{Processo principal e coordenação sequencial}
-O executável \code{simulador\_exec} permite selecionar cenários, banco de dados e modo interativo. A função principal inicia a aplicação, executa seus ciclos e coordena o encerramento. No modo automático, cada cenário possui limite de execução de 120 segundos.
+O executável \code{simulador\_exec} permite selecionar cenários, mapa, banco de
+dados e modos de execução. No sistema final, a aplicação central pode utilizar
+o hardware simulado localmente ou trocar informações com um simulador físico
+executado em processo separado, por meio do modo \code{--simulador-mqtt}.
+Também mantivemos os modos de execução automática e interativa, úteis para
+reprodução de cenários e testes.
 
-O ciclo principal recebe mensagens IPC, atualiza sensores e permissões e processa as missões após eventos ou, em períodos de inatividade, a cada 200 ms aproximadamente. Os componentes de logística, passagens e hardware são executados sequencialmente. Com isso, concentramos o acesso ao estado central em um único fluxo de execução, reduzindo a necessidade de bloqueios.
+No processo central, o gestor de robôs, o organizador da logística, o controle
+de passagens e os adaptadores de hardware são acionados pelo laço principal,
+sem constituírem threads independentes. A cada iteração, a aplicação trata
+mensagens dos robôs e do simulador, processa comandos recebidos por MQTT,
+atualiza sensores e permissões e coordena as missões. A logística é reavaliada
+quando há eventos pendentes ou após aproximadamente 200 ms de inatividade. Essa
+organização concentra as alterações do estado global em um fluxo sequencial,
+reduzindo a necessidade de bloqueios entre os módulos centrais.
+
 \subsection{Criação dinâmica dos processos dos robôs}
-Ao adicionar um robô, o gestor valida seu identificador, cria um par de sockets Unix e inicia um novo processo com \code{posix\_spawn()}. O processo central mantém o PID, a identificação lógica, a geração e o canal de comunicação de cada agente.
+Ao adicionar um robô, o gestor valida seu identificador, cria um par de sockets
+Unix e inicia um processo independente com \code{posix\_spawn()}. Utilizamos o
+próprio executável, iniciado com a opção \code{--robot-worker}, para executar o
+agente. O processo central acompanha o PID, a identificação lógica, a geração e
+o canal IPC de cada robô.
 
-A inicialização compreende a abertura do canal, a criação do processo e a confirmação de prontidão. O gestor só envia tarefas após receber \code{RoboPronto}. O número de geração permite distinguir reinicializações de um mesmo robô e descartar mensagens de instâncias anteriores.
+O agente confirma sua inicialização por uma mensagem \code{RoboPronto}; somente
+após essa confirmação o gestor considera o canal apto a receber tarefas. A
+geração diferencia novas instâncias de um mesmo identificador e impede a
+aceitação de mensagens de processos anteriores. No encerramento, o gestor
+solicita a parada e utiliza \code{waitpid()} para acompanhar a finalização,
+recorrendo a \code{SIGTERM} e \code{SIGKILL} se necessário. Uma desconexão
+inesperada torna o robô indisponível, sem reinicialização automática.
 
-No encerramento, o gestor solicita a parada e monitora o processo com \code{waitpid()}. Caso necessário, envia \code{SIGTERM} após dois segundos e \code{SIGKILL} após três. Desconexões inesperadas tornam o robô indisponível, sem reinicialização automática.
+\subsection{Simulador físico e interface de operação}
+Na implementação final, o simulador físico também executa separadamente da
+aplicação central. Ele recebe comandos e setpoints pelo MQTT, atualiza posição
+e demais condições simuladas e publica leituras dos sensores. O ciclo de
+simulação utiliza intervalos nominais de aproximadamente 20 ms, enquanto
+anúncios e atualizações periódicas complementares podem ocorrer em intervalos
+maiores. Mantivemos o adaptador local para testes sem o simulador MQTT.
+
+A interface gráfica é disponibilizada por um servidor Python com
+\code{ThreadingHTTPServer}. O navegador apresenta o mapa e os controles com
+HTML, CSS e JavaScript, enquanto o servidor atende solicitações HTTP, encaminha
+comandos ao MQTT e fornece os dados recebidos para visualização. O histórico é
+consultado no banco SQLite em modo somente leitura. Dessa forma, o núcleo de
+coordenação, a simulação e a interface permanecem separados, com
+responsabilidades definidas.
+
 \subsection{O que permanece isolado entre processos}
-Não há memória compartilhada entre o robô e o gestor. As informações são transmitidas por mensagens serializadas, cuja consistência depende da validação de geração, sequência, confirmações e leituras de sensores.
+Os agentes não compartilham memória diretamente com o processo central.
+Comandos, confirmações e estados são transportados em mensagens serializadas
+pelo IPC; já os processos de simulação e operação se integram por MQTT. A
+consistência das operações depende da validação de geração, sequência,
+identificadores de comandos e revisões das missões, além das leituras
+confirmadas pelos sensores.
 
 \section{Implementação das threads}
 \subsection{Thread de comando de navegação}
-Cada robô possui uma thread de navegação com período nominal de \textbf{100 ms}. Ela verifica a missão, o nível de bateria, possíveis falhas e confirmações pendentes. Havendo um próximo destino, solicita acesso à passagem antes de enviar o comando de movimento. A rota só avança quando o sensor confirma a posição esperada.
+Cada processo de robô possui uma thread de navegação, com período nominal de
+\textbf{100 ms}. Ela acompanha a missão, verifica bateria e falhas, trata
+confirmações pendentes e define o próximo movimento. Quando a rota passa por um
+trecho restrito, solicita autorização ao controle central antes do
+deslocamento. O avanço da rota depende da leitura de posição confirmada pelo
+simulador, evitando considerar um setpoint enviado como movimento concluído.
 
-Ao concluir o percurso, o agente passa à fase correspondente da missão, como acoplamento, descarga ou recarga. Esse procedimento evita divergências entre posição estimada e posição confirmada.
 \subsection{Thread de status e tratamento de sensores}
-A thread de status possui período nominal de \textbf{500 ms}, com ativação antecipada diante de alterações de estado ou novos sensores. Ela processa leituras, acumula a distância percorrida, atualiza a disponibilidade e publica o estado do robô.
+A thread de status possui período nominal de \textbf{500 ms}, podendo despertar
+antecipadamente quando há alterações no estado compartilhado. Ela incorpora
+leituras dos sensores, calcula a distância percorrida, acompanha a
+disponibilidade e envia atualizações ao processo central. As mensagens incluem
+posição, fase da missão, bateria, falhas e demais informações operacionais. A
+validação de sequência e revisão impede que leituras antigas substituam estados
+mais recentes.
 
-Os registros incluem identidade, missão, fase, posição, bateria, falhas e distância. Leituras antigas ou incompatíveis com a missão são descartadas; leituras intermediárias são consideradas no cálculo do deslocamento.
+As duas threads acessam o estado local protegido por \code{std::mutex}.
+Utilizamos \texttt{std::condition\allowbreak\_variable} para coordenar os
+despertares e permitir um encerramento ordenado. O fluxo receptor do IPC
+atualiza os dados e sinaliza as condições, enquanto o envio de mensagens pelo
+canal compartilhado é serializado para evitar a mistura de quadros produzidos
+concorrentemente.
+
 \subsection{Thread do coletor de dados}
-O coletor utiliza uma thread independente para retirar eventos de uma fila sincronizada e gravá-los no SQLite. Dessa forma, as operações logísticas não precisam aguardar cada escrita em disco.
+O \code{ColetorDados} mantém uma thread independente que consome uma fila de
+eventos protegida por mutex e variável de condição. As operações de gravação
+são realizadas no SQLite fora da região crítica da fila, evitando que cada
+registro bloqueie diretamente o ciclo de coordenação. No encerramento, o
+coletor procura processar os eventos pendentes e propaga falhas de persistência
+para tratamento pelo processo central.
 
-No encerramento, o coletor processa os eventos pendentes antes de fechar o banco. Erros de persistência são registrados e podem ser encaminhados ao processo central.
+\subsection{Execução concorrente nos componentes externos}
+Além das threads dos agentes e do coletor, a comunicação MQTT utiliza rotinas
+de recepção da biblioteca cliente, cujas mensagens são enfileiradas antes de
+serem tratadas pela aplicação central. O servidor Python atende requisições
+HTTP por meio de threads e mantém a integração MQTT com a interface web. Essas
+atividades não substituem as threads de navegação e status: constituem fluxos
+concorrentes próprios dos componentes de comunicação e operação.
+
 \section{Comunicação entre processos e troca de dados}
 \subsection{Canal IPC e enquadramento das mensagens}
-Os processos se comunicam por sockets Unix do tipo \code{SOCK\_STREAM}. Como o fluxo não delimita mensagens, cada quadro contém um prefixo de quatro bytes que informa seu tamanho. O receptor recompõe mensagens fragmentadas, respeitando o limite de 64 KiB.
+A comunicação entre o gestor e cada robô utiliza um \code{socketpair()} Unix do
+tipo \code{SOCK\_STREAM}. Como esse tipo de socket transmite um fluxo contínuo
+de bytes, cada quadro possui um prefixo de quatro bytes com seu comprimento. O
+receptor recompõe mensagens fragmentadas e valida tamanho, versão,
+identificadores e limites dos campos, com limite de 64 KiB por mensagem.
 
-O protocolo transmite identificação, geração, sequência, comandos, missões e dados operacionais. A decodificação valida formato, versão e limites dos campos. O envio utiliza \code{poll()}, com prazo de até 1 s; o gestor aplica limites de 2 s para prontidão e 3 s para comunicação ou confirmação.
+O protocolo transporta comandos, missões, leituras e confirmações, associados a
+geração, sequência e revisão quando aplicável. O envio emprega \code{poll()} e
+espera limitada, com prazo de até 1 s para a operação de escrita. O gestor
+também utiliza limites de tempo para prontidão e confirmação; quando há perda
+de comunicação, o agente é marcado como indisponível e as operações dependentes
+são reavaliadas.
+
+\subsection{Comunicação MQTT com simulador e operação}
+Utilizamos o MQTT, com broker Mosquitto, para integrar a aplicação central, o
+simulador físico e a interface gráfica. O núcleo publica a telemetria dos robôs
+e um resumo do estado da frota, cargas, missões e passagens em mensagens JSON.
+Comandos do operador são recebidos pelo adaptador MQTT, validados e colocados
+em fila para tratamento no laço central, preservando a organização sequencial
+das alterações globais. As respostas informam a aceitação ou recusa dos pedidos
+e, quando aplicável, a confirmação posterior pelo robô.
+
+A comunicação com o simulador físico utiliza tópicos específicos e mensagens
+serializadas para setpoints e leituras de sensores. Assim, separamos os
+comandos internos entre central e agentes, transportados por IPC, da
+comunicação externa entre aplicações, realizada por MQTT. Essa divisão também
+permite executar cenários com hardware local sem exigir conexão ao broker.
+
+\subsection{Comunicação da interface e acesso ao banco de dados}
+O frontend utiliza HTTP para solicitar operações e obter informações do
+servidor Python. Esse servidor publica os comandos no MQTT e recebe telemetria
+e resultados dos comandos, que são disponibilizados à interface. Para consultar
+o histórico, a aplicação Python abre o SQLite em modo somente leitura, sem
+utilizar o canal IPC dos robôs. A persistência dos eventos e transportes
+continua sob responsabilidade da thread coletora no núcleo C++.
+
 \subsection{Sequência de uma operação de transporte}
-A Figura~\ref{fig:sequencia} apresenta a sequência de autorização, movimento e confirmação por sensor.
+A Figura~\ref{fig:sequencia} apresenta a sequência de autorização, movimento e
+confirmação por sensor, preservada da primeira etapa por continuar
+correspondente ao funcionamento do agente. No modo com simulador externo, a
+etapa de aplicação do setpoint e o retorno dos sensores também passam pelo
+canal MQTT entre a central e o simulador.
 
 \begin{figure}[H]
-\centering
-\begin{tikzpicture}[font=\footnotesize,>=Latex]
-\node[font=\bfseries] at (0,0) {Robô};
-\node[font=\bfseries] at (5.1,0) {Gestor / Controle};
-\node[font=\bfseries] at (10.0,0) {Hardware local};
-\foreach \x in {0,5.1,10} \draw[dashed,black!40] (\x,-.33)--(\x,-5.75);
-\draw[->,thick] (0,-0.9)--node[above,fill=white,inner sep=2pt]{Solicitar acesso} (5.1,-0.9);
-\draw[<-,thick] (0,-1.75)--node[above,fill=white,inner sep=2pt]{Permissão concedida} (5.1,-1.75);
-\draw[->,thick] (0,-2.6)--node[above,fill=white,inner sep=2pt]{Setpoint de posição} (5.1,-2.6);
-\draw[->,thick] (5.1,-3.45)--node[above,fill=white,inner sep=2pt]{Validar e aplicar} (10,-3.45);
-\draw[<-,thick] (5.1,-4.3)--node[above,fill=white,inner sep=2pt]{Leitura confirmada} (10,-4.3);
-\draw[<-,thick] (0,-5.15)--node[above,fill=white,inner sep=2pt]{Atualizar sensores} (5.1,-5.15);
-\end{tikzpicture}
-\caption{Fluxo de confirmação de um passo de navegação.}
-\label{fig:sequencia}
+    \centering
+    \begin{tikzpicture}[font=\footnotesize,>=Latex]
+        \node[font=\bfseries] at (0,0) {Robô};
+        \node[font=\bfseries] at (5.1,0) {Gestor / Controle};
+        \node[font=\bfseries] at (10.0,0) {Hardware local};
+        \foreach \x in {0,5.1,10} \draw[dashed,black!40] (\x,-.33)--(\x,-5.75);
+        \draw[->,thick] (0,-0.9)--node[above,fill=white,inner sep=2pt]{Solicitar acesso} (5.1,-0.9);
+        \draw[<-,thick] (0,-1.75)--node[above,fill=white,inner sep=2pt]{Permissão concedida} (5.1,-1.75);
+        \draw[->,thick] (0,-2.6)--node[above,fill=white,inner sep=2pt]{Setpoint de posição} (5.1,-2.6);
+        \draw[->,thick] (5.1,-3.45)--node[above,fill=white,inner sep=2pt]{Validar e aplicar} (10,-3.45);
+        \draw[<-,thick] (5.1,-4.3)--node[above,fill=white,inner sep=2pt]{Leitura confirmada} (10,-4.3);
+        \draw[<-,thick] (0,-5.15)--node[above,fill=white,inner sep=2pt]{Atualizar sensores} (5.1,-5.15);
+    \end{tikzpicture}
+    \caption{Fluxo de confirmação de um passo de navegação.}
+    \label{fig:sequencia}
 \end{figure}
 
-Na atribuição de missões, cada comando recebe uma confirmação associada ao seu identificador. Também são verificados geração, sequência e revisão da missão, evitando a aceitação de informações desatualizadas.
-
+Na atribuição de missões, cada comando recebe um identificador e uma
+confirmação correspondente. A verificação de geração, sequência e revisão da
+missão evita aceitar respostas desatualizadas. No transporte colaborativo, a
+liberação da operação depende das confirmações de prontidão dos integrantes,
+formando uma barreira lógica antes do acoplamento e da movimentação conjunta.
 
 \section{Mecanismos de sincronização}
 
-A Tabela~\ref{tab:sync} sintetiza os principais mecanismos de sincronização empregados no sistema, detalhando os recursos protegidos, as abordagens adotadas e as respectivas finalidades para assegurar a consistência operacional.
+A Tabela~\ref{tab:sync} sintetiza os principais mecanismos de sincronização
+empregados no sistema, indicando os recursos protegidos e os problemas que cada
+solução busca evitar. Priorizamos mecanismos que preservam a consistência dos
+dados compartilhados, reduzem bloqueios desnecessários e permitem controlar a
+espera das tarefas concorrentes.
 
 \begin{table}[H]
-\centering
-\scriptsize
-\caption{Mecanismos de sincronização utilizados no sistema.}
-\label{tab:sync}
+    \centering
+    \scriptsize
+    \caption{Mecanismos de sincronização utilizados no sistema.}
+    \label{tab:sync}
 
-\begingroup
-\renewcommand{\arraystretch}{1.8}
+    \begingroup
+    \renewcommand{\arraystretch}{1.8}
 
-\begin{tabularx}{\textwidth}{@{}p{2.8cm}p{3.0cm}Y@{}}
-\toprule
-\textbf{Recurso} & \textbf{Mecanismo} & \textbf{Finalidade} \\
-\midrule
-Estado, rota e sensores & \code{std::mutex} & Garantir consistência entre navegação, status e recepção de mensagens. \\
+    \begin{tabularx}{\textwidth}{@{}p{2.8cm}p{3.0cm}Y@{}}
+        \toprule
+        \textbf{Recurso}          & \textbf{Mecanismo}                                & \textbf{Finalidade}                       \\
+        \midrule
 
-Execução das threads & \code{condition\_variable} e \code{wait\_until()} & Coordenar ativações periódicas e notificações por eventos. \\
+        Estado, rota e sensores   & \code{std::mutex}                                 & Evitar condições de corrida entre
+        navegação, status e recepção de mensagens.                                                                                \\
 
-Envio de mensagens IPC & \code{std::timed\_mutex} e \code{poll()} & Serializar mensagens e limitar a espera pelo canal. \\
+        Execução das threads      & \code{condition\_variable} e \code{wait\_until()} &
+        Combinar execução periódica com notificações por eventos, evitando espera
+        ativa.                                                                                                                    \\
 
-Ciclo de vida dos agentes & Mutex, \code{notify\_all()} e \code{join()} & Coordenar inicialização e encerramento das threads. \\
+        Envio de mensagens IPC    & \code{std::timed\_mutex} e \code{poll()}          & Serializar
+        mensagens e estabelecer limites de espera para aquisição do bloqueio e
+        transmissão.                                                                                                              \\
 
-Passagens restritas & Filas e reservas & Controlar capacidade, sentido e ocupação dos corredores. \\
+        Ciclo de vida dos agentes & Mutex, \code{notify\_all()} e \code{join()}       &
+        Coordenar inicialização e encerramento das threads, evitando acessos após sua
+        finalização.                                                                                                              \\
 
-Transporte colaborativo & Barreira lógica e confirmações & Sincronizar acoplamento, deslocamento e descarga. \\
+        Passagens restritas       & Filas e reservas                                  & Controlar capacidade, sentido e
+        ocupação dos corredores, evitando conflitos entre robôs e equipes.                                                        \\
 
-Persistência SQLite & Fila, mutex e thread coletora & Registrar eventos sem bloquear diretamente o ciclo logístico durante a escrita. \\
-\bottomrule
-\end{tabularx}
+        Transporte colaborativo   & Barreira lógica e confirmações                    & Impedir o avanço das
+        operações antes da confirmação de todos os integrantes.                                                                   \\
 
-\endgroup
+        Persistência SQLite       & Fila, mutex e variável de condição                & Desacoplar a
+        produção dos eventos da escrita em disco, reduzindo bloqueios nas tarefas
+        produtoras.                                                                                                               \\
+
+        Comunicação MQTT          & Filas e mutexes                                   & Proteger o compartilhamento de comandos e
+        informações entre callbacks e o processamento central.                                                                    \\
+
+        \bottomrule
+    \end{tabularx}
+
+    \endgroup
 \end{table}
 
-As soluções adotadas combinam exclusão mútua, sincronização por eventos, comunicação com espera limitada e controle lógico de recursos. Com isso, buscamos reduzir bloqueios desnecessários e manter a consistência das operações concorrentes, aspectos importantes para a Automação em Tempo Real.
-
+As soluções adotadas combinam exclusão mútua, sincronização por eventos,
+comunicação com espera limitada e controle lógico de recursos. Dessa forma,
+buscamos manter a consistência das operações sem introduzir bloqueios
+desnecessários entre tarefas independentes.
 
 \subsection{Mutexes: exclusão mútua dentro do robô}
 
-Utilizamos \code{std::mutex} para proteger o estado, a rota e as leituras de sensores compartilhadas entre as threads de navegação, status e o receptor de mensagens. Essa proteção evita alterações simultâneas que poderiam comprometer a consistência das informações utilizadas na movimentação.
+Utilizamos \code{std::mutex} para proteger o estado, a rota e as leituras de
+sensores compartilhadas entre as threads de navegação, status e o receptor de
+mensagens. Essa proteção evita condições de corrida que poderiam resultar em
+decisões baseadas em informações inconsistentes.
 
-Os bloqueios são gerenciados por \code{std::lock\_guard} e \code{std::unique\_lock}, garantindo a liberação dos mutexes ao final de cada operação. Também adotamos mutexes específicos para controlar a inicialização e o encerramento das threads, além de proteger a sequência das mensagens enviadas pelo IPC.
+Os bloqueios são gerenciados por \code{std::lock\_guard} e
+\code{std::unique\_lock}, utilizando o princípio RAII para garantir sua
+liberação automática, inclusive diante de exceções. O \code{unique\_lock}
+também permite liberar temporariamente o mutex durante a espera em variáveis de
+condição.
 
-Essa separação permite proteger recursos distintos sem utilizar um único bloqueio para todas as operações do robô, reduzindo a interferência entre tarefas concorrentes.
+Adotamos mutexes específicos para os diferentes recursos, incluindo o controle
+do ciclo de vida das threads e a serialização das mensagens IPC. Essa separação
+reduz a contenção em comparação com a utilização de um único mutex para todas
+as operações do agente.
 
 \subsection{Variáveis de condição e execução periódica}
 
-Utilizamos \code{std::condition\_variable} para suspender as threads enquanto aguardam comandos, leituras ou encerramento, evitando consultas contínuas ao estado compartilhado.
+Utilizamos \code{std::condition\_variable} para suspender as threads enquanto
+aguardam eventos ou o próximo instante de execução. Diferentemente da espera
+ativa (\textit{busy waiting}), essa abordagem evita consultas contínuas ao
+estado compartilhado, reduzindo o consumo desnecessário de processamento.
 
-As rotinas de navegação e status possuem períodos nominais de 100 ms e 500 ms, respectivamente, utilizando \code{steady\_clock} e \code{wait\_until()}. A thread de status também pode despertar antecipadamente diante de novas leituras ou alterações de estado.
+As rotinas de navegação e status possuem períodos nominais de 100 ms e 500 ms,
+respectivamente, utilizando \code{steady\_clock} e \code{wait\_until()}. A
+thread de status também pode despertar antecipadamente diante de novas leituras
+ou alterações de estado.
 
-Combinamos, assim, execução periódica e resposta a eventos, reduzindo processamento desnecessário sem depender exclusivamente da próxima atualização periódica.
+A utilização de \code{steady\_clock} evita que alterações no relógio do sistema
+interfiram na contagem dos intervalos, enquanto \code{wait\_until()} permite
+trabalhar com instantes de ativação definidos. Combinamos, assim, execução
+periódica e resposta a eventos, sem depender exclusivamente de consultas
+periódicas ou de suspensões com duração fixa.
 
-No coletor de dados, outra variável de condição sinaliza a chegada de eventos à fila. O mutex é liberado antes das operações SQLite, permitindo que novas informações sejam recebidas enquanto ocorre a gravação em disco.
+No encerramento, utilizamos \code{notify\_all()} para despertar as threads que
+estejam aguardando e \code{join()} para confirmar sua finalização antes da
+liberação dos recursos compartilhados.
 
 \subsection{Exclusão mútua e espera limitada no IPC}
 
-No canal IPC, implementamos \code{std::timed\_mutex} para impedir que diferentes threads intercalem bytes durante a transmissão de mensagens pelo mesmo socket.
+No canal IPC, implementamos \code{std::timed\_mutex} para impedir que
+diferentes threads intercalem bytes durante o envio de mensagens pelo mesmo
+socket. Essa proteção preserva o enquadramento das mensagens e evita a
+corrupção do protocolo por transmissões concorrentes.
 
-Diferentemente de um bloqueio sem limite de espera, utilizamos \code{try\_lock\_until()} para estabelecer um prazo de aquisição do mutex. O envio também considera esse prazo e utiliza \code{poll()} para verificar a disponibilidade do canal.
+Diferentemente de um \code{std::mutex} convencional, utilizamos
+\code{try\_lock\_until()} para estabelecer um prazo de aquisição do bloqueio. O
+envio também respeita esse prazo, utilizando \code{poll()} para verificar a
+disponibilidade do socket antes de prosseguir com a transmissão.
 
-Essa solução permite detectar quando uma transmissão não pode ser concluída dentro do tempo previsto, em vez de manter a thread bloqueada indefinidamente. Trata-se de uma escolha importante para a responsividade do sistema, pois facilita a identificação de atrasos e falhas de comunicação.
+Essa combinação permite identificar operações que excedem o tempo previsto,
+evitando esperas indefinidas em condições normais de funcionamento. A principal
+vantagem está na possibilidade de tratar atrasos e falhas de comunicação,
+embora isso não elimine a necessidade de avaliar os tempos de bloqueio na
+análise de responsividade.
 
-Também utilizamos identificadores de geração, sequência e comando para validar as mensagens recebidas. Dessa forma, evitamos que informações antigas sejam utilizadas após alterações de missão ou reinicializações dos processos.
+Também utilizamos identificadores de geração, sequência e comando para validar
+as mensagens recebidas. Esses mecanismos evitam o processamento de informações
+antigas ou duplicadas após alterações de missão ou reinicialização dos
+processos, complementando a exclusão mútua com controle de consistência das
+mensagens.
 
 \subsection{Sincronização lógica de equipes e passagens}
 
-No transporte colaborativo, implementamos uma barreira lógica: a missão só avança quando todos os integrantes confirmam o acoplamento. O movimento coletivo exige propostas compatíveis de posição e destino, enquanto a descarga depende da confirmação de desacoplamento da equipe.
+No transporte colaborativo, implementamos uma barreira lógica baseada em
+confirmações. A operação de acoplamento e transporte só avança após a
+confirmação de prontidão dos integrantes necessários, enquanto o deslocamento
+coletivo depende de condições compatíveis de posição e destino. A descarga
+também exige a confirmação do desacoplamento da equipe.
 
-Para controlar passagens restritas, desenvolvemos um sistema de filas e reservas que considera a capacidade disponível, o sentido do deslocamento e a ocupação atual.
+Essa abordagem evita que um robô inicie ou conclua uma operação coletiva antes
+dos demais, o que poderia comprometer a consistência do transporte.
+Diferentemente de uma barreira convencional entre threads, a sincronização é
+realizada pelo organizador a partir de mensagens e estados dos processos,
+permitindo coordenar robôs independentes.
+
+Para controlar as passagens restritas, desenvolvemos um sistema de filas e
+reservas que considera a capacidade, o sentido do deslocamento e a ocupação
+atual.
 
 \begin{itemize}
-    \item \textbf{Controle por filas:} as solicitações são organizadas por passagem e avaliadas conforme a disponibilidade de vagas. Quando não há capacidade suficiente ou existe tráfego em sentido contrário, a solicitação permanece aguardando.
+    \item \textbf{Controle por filas:} as solicitações são
+          organizadas por passagem e avaliadas conforme a
+          disponibilidade de vagas. Quando não há capacidade
+          suficiente ou existe tráfego incompatível, a
+          solicitação permanece aguardando.
 
-    \item \textbf{Reservas coletivas:} equipes acopladas reservam conjuntamente a quantidade de vagas necessária aos seus integrantes. Isso evita autorizar um deslocamento coletivo sem capacidade suficiente para a equipe.
+    \item \textbf{Reservas coletivas:} equipes acopladas
+          reservam conjuntamente a quantidade de vagas
+          necessária aos seus integrantes, evitando autorizar
+          deslocamentos sem capacidade suficiente.
 
-    \item \textbf{Liberação por sensores:} as vagas somente são liberadas após a confirmação de saída dos robôs. Caso a posição seja desconhecida, não presumimos que o corredor esteja livre, evitando novas permissões baseadas em informações incompletas.
+    \item \textbf{Liberação por sensores:} as reservas
+          são liberadas após a confirmação de saída dos robôs.
+          Quando a posição é desconhecida, não presumimos
+          que o corredor esteja livre.
 \end{itemize}
 
-Como o gerenciamento das passagens ocorre exclusivamente no ciclo central, implementamos esse controle por filas e permissões, sem necessidade de semáforos POSIX. Essa organização evita acessos concorrentes às estruturas de ocupação e concentra as decisões sobre os recursos compartilhados.
+Como o gerenciamento das passagens ocorre no ciclo sequencial da aplicação
+central, não utilizamos semáforos POSIX para proteger suas estruturas internas.
+Em vez de representar apenas a quantidade de vagas disponíveis, as filas e
+reservas permitem considerar também o sentido do movimento e a ocupação por
+equipes.
+
+Essa solução evita a necessidade de sincronização concorrente sobre as
+estruturas de passagens e permite aplicar regras específicas do ambiente
+logístico. Por outro lado, concentra essas decisões no processamento central,
+aspecto relevante para a análise de escalabilidade.
 
 \subsection{Persistência assíncrona e tratamento de falhas}
 
-Para registrar os eventos operacionais, utilizamos uma fila protegida por mutex e uma thread independente responsável pela persistência no SQLite.
+Para registrar os eventos operacionais, utilizamos uma fila protegida por
+\code{std::mutex} e uma thread independente responsável pela persistência no
+SQLite. Uma variável de condição notifica a thread coletora quando novos
+registros estão disponíveis.
 
-Essa abordagem desacopla a produção dos eventos das operações de escrita em disco, evitando que cada registro interrompa diretamente o processamento logístico. Também estabelecemos um limite de 10.000 eventos na fila, permitindo identificar situações em que a produção supera a capacidade de armazenamento.
+Essa abordagem segue o modelo produtor-consumidor, desacoplando a geração dos
+eventos das operações de escrita em disco. Em comparação com a persistência
+síncrona realizada diretamente pelas tarefas produtoras, reduzimos o tempo em
+que essas tarefas permanecem envolvidas com o armazenamento.
 
-Durante o encerramento, a thread coletora processa os eventos pendentes antes de fechar o banco. Além disso, falhas de gravação são armazenadas e podem ser propagadas à aplicação central.
+O mutex protege apenas o acesso à fila, sendo liberado antes das operações
+SQLite. Assim, novas informações podem ser enfileiradas enquanto a thread
+coletora realiza a gravação dos registros anteriores.
 
-Esses mecanismos contribuem para a consistência dos registros e para o tratamento de falhas sem depender de gravações síncronas a cada evento.
+Estabelecemos um limite de 10.000 eventos pendentes para evitar o crescimento
+ilimitado da fila. Caso esse limite seja atingido, a tentativa de inserção gera
+uma exceção, permitindo identificar a sobrecarga em vez de descartar registros
+silenciosamente.
 
+Durante o encerramento, a thread coletora processa os eventos aceitos antes de
+finalizar o banco. Falhas de persistência também são registradas internamente e
+podem ser propagadas à aplicação central.
 
-\section{Persistência e rastreabilidade}\label{sec:buffer-detalhe}
-Os eventos operacionais são encaminhados ao coletor e armazenados em quatro tabelas SQLite: \code{runs}, \code{robot\_events}, \code{cargo\_transports} e \code{cargo\_members}. Os registros permitem relacionar execuções, robôs, missões, cargas e integrantes das equipes.
+Essa organização melhora o isolamento entre o processamento logístico e o
+acesso ao disco, embora a capacidade de armazenamento continue sujeita à taxa
+de produção de eventos e ao desempenho do SQLite.
 
-Cada evento é gravado em transação, com reversão em caso de falha. Restrições de identidade evitam duplicações e os registros utilizam horários Unix em milissegundos. Os prazos operacionais são medidos separadamente por relógio monotônico.
+\subsection{Sincronização na comunicação MQTT}
 
-Também implementamos o \code{BufferEventos}, que mantém um histórico circular limitado, com capacidade padrão de 100 eventos. Esse buffer utiliza \code{std::deque} e \code{std::mutex}; ao atingir a capacidade, os registros mais antigos são substituídos pelos novos. O componente é exercitado em testes e no programa auxiliar, mas não constitui a fila obrigatória do fluxo principal. Nesse fluxo, os eventos são encaminhados diretamente ao \code{ColetorDados}.
+Na integração MQTT, utilizamos callbacks para receber mensagens externas e
+filas protegidas por mutexes para encaminhar os comandos ao processamento
+central.
 
-A fila interna do coletor utiliza \code{std::queue}, mutex e variável de condição, com limite de 10.000 eventos pendentes. A thread consumidora aguarda a chegada de registros, retira cada evento sob proteção do mutex e realiza a gravação no SQLite depois de liberar a fila. Assim, a produção de novos eventos não fica bloqueada durante toda a operação de escrita. Ao atingir 10.000 eventos pendentes, a tentativa de enfileirar outro registro lança uma exceção do tipo \code{std::runtime\_error}; não há espera automática por espaço nem substituição silenciosa de registros. Esse comportamento difere do descarte circular empregado pelo \code{BufferEventos} e deverá ser considerado em testes de carga.
+Essa separação evita que os callbacks modifiquem diretamente as estruturas de
+controle logístico, reduzindo a possibilidade de condições de corrida entre a
+comunicação externa e o ciclo principal.
+
+Os comandos recebidos também passam por validações e mecanismos de
+identificação, permitindo rejeitar requisições inválidas ou duplicadas antes de
+sua aplicação.
+
+Dessa forma, mantemos a comunicação MQTT desacoplada das decisões de
+gerenciamento da frota. A principal vantagem é preservar o controle sequencial
+das operações logísticas, utilizando exclusão mútua apenas nos pontos em que há
+compartilhamento efetivo de informações entre contextos de execução.
+
+\section{Persistência e rastreabilidade}
+\label{sec:buffer-detalhe}
+
+Para garantir a rastreabilidade das operações, utilizamos um banco de dados
+SQLite, no qual são armazenados os eventos dos robôs, as informações dos
+transportes e os integrantes das equipes. Os registros estão organizados em
+cinco tabelas: \code{runs}, \code{robot\_events}, \code{robot\_event\_members},
+\code{cargo\_transports} e \code{cargo\_members}.
+
+Essa organização permite relacionar cada evento à sua execução, robô, missão e
+carga correspondente, além de identificar os participantes das operações
+colaborativas. Os registros possuem timestamps Unix em milissegundos, enquanto
+os intervalos operacionais são medidos separadamente por relógio monotônico.
+
+As gravações são realizadas por meio de transações SQL, com reversão em caso de
+falha. Também utilizamos chaves primárias, estrangeiras e restrições de
+unicidade para preservar a integridade dos registros e evitar duplicações. As
+operações de inserção utilizam comandos preparados, com parâmetros vinculados
+aos dados dos eventos.
+
+\subsection{Coleta assíncrona e buffer de eventos}
+
+Implementamos o \code{BufferEventos}, responsável por manter um histórico
+circular limitado, com capacidade padrão de 100 eventos. O componente utiliza
+\code{std::deque} e \code{std::mutex}, substituindo os registros mais antigos
+quando sua capacidade é atingida. Esse buffer é utilizado em testes e no
+programa auxiliar, mas não constitui a fila principal de persistência da
+aplicação.
+
+No fluxo principal, os eventos são encaminhados diretamente ao
+\code{ColetorDados}, que utiliza uma fila \code{std::queue}, protegida por
+mutex e variável de condição, com capacidade de até 10.000 eventos pendentes.
+
+Uma thread consumidora retira os eventos da fila e realiza a gravação no SQLite
+após liberar o mutex. Dessa forma, evitamos manter o recurso compartilhado
+bloqueado durante o acesso ao disco, reduzindo a interferência da persistência
+sobre as tarefas produtoras.
+
+Caso a fila atinja seu limite, uma exceção \code{std::runtime\_error} é
+lançada, permitindo identificar situações de sobrecarga sem descartar registros
+silenciosamente. Durante o encerramento, o coletor processa os eventos
+pendentes antes de finalizar a conexão com o banco.
+
+\subsection{Justificativa para utilização do SQLite}
+
+Optamos pelo SQLite em vez de arquivos de log convencionais devido à
+necessidade de armazenar e consultar informações estruturadas sobre os robôs,
+cargas, missões e transportes realizados.
+
+Embora arquivos de texto sejam suficientes para registros sequenciais simples,
+consultas como identificar os robôs participantes de uma entrega ou recuperar o
+histórico de determinada missão exigiriam processamento adicional dos
+registros.
+
+Com o SQLite, podemos realizar essas consultas diretamente por meio de comandos
+SQL, relacionando as informações entre tabelas e utilizando índices para
+facilitar a recuperação dos dados.
+
+Assim, consideramos o SQLite uma solução adequada para o projeto, pois oferece
+persistência estruturada, integridade transacional, facilidade de consulta e
+integração entre os componentes, sem a complexidade adicional de um servidor de
+banco de dados.
 
 \section{Testes e evidências de troca de dados}
 
-Implementamos uma suíte de testes automatizados utilizando GoogleTest, com o objetivo de verificar o funcionamento dos módulos e a comunicação entre eles. Os testes foram organizados para avaliar tanto o comportamento individual dos componentes quanto sua integração, com atenção especial aos mecanismos de sincronização e à consistência dos dados.
+Implementamos uma suíte de testes automatizados utilizando GoogleTest, com o
+objetivo de verificar o funcionamento dos módulos e a comunicação entre eles.
+Os testes foram organizados para avaliar tanto o comportamento individual dos
+componentes quanto sua integração, com atenção especial aos mecanismos de
+sincronização e à consistência dos dados.
 
-Esses testes se encontram no repositório, sendo possível executá-los localmente com o CTest, que apresenta os resultados diretamente no terminal. A seguir explicaremos a organização dos testes e os principais aspectos verificados em cada grupo.
+Esses testes se encontram no repositório, sendo possível executá-los localmente
+com o CTest, que apresenta os resultados diretamente no terminal. A seguir
+explicaremos a organização dos testes e os principais aspectos verificados em
+cada grupo.
 \subsection{Comunicação IPC e processos}
 
-Implementamos 8 testes para o protocolo IPC e o estado compartilhado da frota. Eles verificam a serialização e recuperação das mensagens, a recepção de dados fragmentados, a rejeição de mensagens inválidas e o tratamento de informações antigas ou duplicadas.
+Implementamos 10 testes para o protocolo IPC e o estado compartilhado da frota.
+Eles verificam a serialização e recuperação das mensagens, a recepção de dados
+fragmentados, a rejeição de mensagens inválidas e o tratamento de informações
+antigas ou duplicadas.
 
-Esses testes permitem verificar a integridade das informações transmitidas entre processos, incluindo o controle por geração e sequência das mensagens.
+Esses testes permitem verificar a integridade das informações transmitidas
+entre processos, incluindo o controle por geração e sequência das mensagens.
+Avaliamos ainda condições adicionais de atualização do estado da frota e
+tratamento de informações recebidas fora da sequência esperada.
 
 \subsection{Navegação, logística e sincronização}
 
-Desenvolvemos 18 testes distribuídos entre os seguintes módulos:
+Desenvolvemos 35 testes distribuídos entre os seguintes módulos:
 
 \begin{itemize}
     \item \textbf{Agente do robô (7 testes):} verificam permissões de movimentação, confirmação por sensores, tratamento de falhas, recarga e inicialização e encerramento das threads.
 
-    \item \textbf{Organizador logístico (4 testes):} avaliam a formação de equipes, a espera pelos integrantes, o cancelamento de missões e a retomada após interrupções.
+    \item \textbf{Organizador logístico (9 testes):} avaliam a formação de equipes, a espera pelos integrantes, o cancelamento de missões e a retomada após interrupções.
 
     \item \textbf{Passagens e hardware (4 testes):} verificam limites de ocupação, filas de espera, reservas coletivas e sincronização do movimento entre integrantes da equipe.
 
-    \item \textbf{Mapa e rotas (3 testes):} avaliam a validade do mapa, o planejamento de trajetos com obstáculos e as restrições de capacidade dos caminhos.
+    \item \textbf{Mapa, rotas e cenários (8 testes):} avaliam a validade do mapa, o planejamento de trajetos com obstáculos e as restrições de capacidade dos caminhos. Também verificam condições adicionais de configuração e execução dos cenários.
+
+    \item \textbf{Controle manual (7 testes):} verificam a alternância entre os modos manual e automático, as permissões de movimentação, a resposta a falhas e bateria baixa e a preservação do modo após a recarga.
 \end{itemize}
 
-Com esses testes, buscamos verificar se as decisões de movimentação respeitam as condições de segurança e sincronização estabelecidas para os robôs.
+Os testes do organizador também abrangem a formação progressiva de equipes, a
+inclusão dinâmica de cargas e o tratamento de alterações de missão. Com esses
+testes, buscamos verificar se as decisões de movimentação respeitam as
+condições de segurança e sincronização estabelecidas para os robôs.
 
 \subsection{Coleta e persistência de dados}
 
-Implementamos 13 testes relacionados ao armazenamento das informações:
+Implementamos 14 testes relacionados ao armazenamento das informações:
 
 \begin{itemize}
     \item \textbf{Coletor de dados (7 testes):} verificam a gravação de eventos e transportes no SQLite, o processamento de eventos pendentes, a concorrência entre threads produtoras e o comportamento durante inicialização e encerramento.
 
     \item \textbf{Buffer de eventos (4 testes):} avaliam a retenção do histórico circular, a escrita concorrente, a persistência dos eventos e o tratamento de registros rejeitados.
 
-    \item \textbf{Persistência e migração (2 testes):} verificam a preservação de registros existentes, o armazenamento dos integrantes de uma equipe e o tratamento de falhas de gravação.
+    \item \textbf{Persistência e migração (3 testes):} verificam a preservação de registros existentes, o armazenamento dos integrantes de uma equipe e o tratamento de falhas de gravação.
 \end{itemize}
 
-Essas verificações são importantes para avaliar o funcionamento da fila sincronizada e da thread coletora, principalmente quando múltiplas threads produzem eventos simultaneamente. No teste \code{HandlesConcurrentProducersWithoutLosingEvents}, quatro threads produzem 50 eventos cada; após o encerramento do coletor, verificamos que os 200 eventos foram persistidos, conforme ilustrado na Figura~\ref{fig:200_eventos}. O resultado registrado evidencia ausência de perda nesse cenário de concorrência, sem demonstrar ausência geral de condições de corrida.
+Essas verificações são importantes para avaliar o funcionamento da fila
+sincronizada e da thread coletora, principalmente quando múltiplas threads
+produzem eventos simultaneamente. No teste
+\code{HandlesConcurrentProducersWithoutLosingEvents}, quatro threads produzem
+50 eventos cada; após o encerramento do coletor, verificamos que os 200 eventos
+foram persistidos, conforme ilustrado na Figura~\ref{fig:200_eventos}. O
+resultado registrado evidencia ausência de perda nesse cenário de concorrência,
+sem demonstrar ausência geral de condições de corrida.
 
-Também desenvolvemos um programa auxiliar para gerar um banco SQLite persistente, permitindo consultar manualmente os registros após a execução e verificar as informações armazenadas.
+Também desenvolvemos um programa auxiliar para gerar um banco SQLite
+persistente, permitindo consultar manualmente os registros após a execução e
+verificar as informações armazenadas.
+
+\subsection{Comunicação MQTT e interface de operação}
+
+Implementamos 8 testes unitários para o processamento de comandos MQTT. Eles
+verificam a decodificação das mensagens, a rejeição de comandos inválidos ou
+fora dos limites, a deduplicação de requisições e o controle do tamanho das
+mensagens e das filas. Também avaliamos o encaminhamento dos comandos ao ciclo
+da aplicação central, sem modificar diretamente o estado logístico nos
+callbacks de comunicação.
+
+Para a interface Python, implementamos 8 testes automatizados, sendo 3
+relacionados às consultas do histórico de eventos e participantes das equipes e
+5 à seleção e execução de cenários pela interface HTTP. Esses testes verificam
+a recuperação dos registros, os filtros por robô, o tratamento de requisições
+inválidas, a prevenção de inicializações duplicadas e o encerramento dos
+processos.
 
 \subsection{Testes de integração}
 
-Além dos 39 testes unitários, implementamos 9 casos de integração: 8 execuções parametrizadas de cenários e um teste específico de encerramento.
+Implementamos 15 casos de integração C++: 8 execuções parametrizadas de
+cenários, um teste específico de encerramento, 3 testes adicionais de operação
+e estresse e 3 casos de integração com o simulador externo por MQTT.
 
-Os cenários abrangem transporte básico e cooperativo, disponibilidade de equipes, passagens restritas, rotas coletivas, falhas, recarga e gerenciamento de processos. A Figura~\ref{fig:init_conf} evidencia a criação dinâmica, a confirmação de prontidão e o encerramento dos processos dos robôs durante o cenário de gerenciamento, enquanto a Figura~\ref{fig:passage_test} ilustra a execução do transporte cooperativo e o controle de passagens restritas. Verificamos a conclusão dos cenários, o encerramento dos processos dos robôs e a existência dos registros esperados no banco de dados.
+Os cenários abrangem transporte básico e cooperativo, disponibilidade de
+equipes, passagens restritas, rotas coletivas, falhas, recarga e gerenciamento
+de processos. A Figura~\ref{fig:init_conf} evidencia a criação dinâmica, a
+confirmação de prontidão e o encerramento dos processos dos robôs durante o
+cenário de gerenciamento, enquanto a Figura~\ref{fig:passage_test} ilustra a
+execução do transporte cooperativo e o controle de passagens restritas.
+Verificamos a conclusão dos cenários, o encerramento dos processos dos robôs e
+a existência dos registros esperados no banco de dados.
 
-O teste de encerramento verifica também a finalização dos processos ativos e o processamento dos eventos aceitos pelo coletor.
+O teste de encerramento verifica também a finalização dos processos ativos e o
+processamento dos eventos aceitos pelo coletor.
 
-Ao todo, a suíte possui 48 casos de teste, considerando as instâncias parametrizadas de integração. Sua execução pode ser realizada pelo CTest, com os resultados apresentados diretamente no terminal.
+Nos testes de operação, verificamos o controle manual de um processo real e a
+preservação das reservas de passagens, a inclusão dinâmica de robôs e cargas e
+a retomada de uma equipe após suspensão. O teste de estresse executa um cenário
+com 100 robôs e 60 cargas, avaliando o respeito às capacidades das passagens,
+sem estabelecer, por si só, o limite máximo de robôs suportado pelo hardware.
 
+Os 3 testes de integração MQTT avaliam a barreira de sincronização de equipes,
+a rejeição de setpoints repetidos, a recarga e a execução de missões
+consecutivas a partir de sensores fornecidos pelo simulador externo. Esses
+casos exercitam a comunicação entre o núcleo C++, os processos dos robôs e a
+simulação física.
+
+Ao todo, a suíte contempla 90 casos automatizados: 67 testes unitários C++, 15
+testes de integração C++ e 8 testes Python. Essa contagem considera a
+compilação com MQTT habilitado e a disponibilidade do broker necessário aos
+testes de integração. Os testes C++ podem ser executados pelo
+CTest, com os resultados apresentados diretamente no terminal.
+
+\subsection{Imagens dos testes}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figuras/testes/200_eventos.png}
-\caption{Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite.}
-\label{fig:200_eventos}
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/200_eventos.png}
+    \caption{Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite.}
+    \label{fig:200_eventos}
 \end{figure}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figuras/testes/init_conf.png}
-\caption{Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento.}
-\label{fig:init_conf}
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/init_conf.png}
+    \caption{Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento.}
+    \label{fig:init_conf}
 \end{figure}
 
 \begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{figuras/testes/passage_test.png}
-\caption{Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados.}
-\label{fig:passage_test}
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/passage_test.png}
+    \caption{Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados.}
+    \label{fig:passage_test}
 \end{figure}
 
-Os testes de concorrência e os cenários de integração fornecem evidência de integridade dos registros, progresso e término nas execuções observadas. A serialização de envios, a exclusão mútua local e a separação entre produtores e consumidor reduzem riscos de acesso concorrente indevido. Os testes em si, não garantem a ausência de todas as condições de corrida, bloqueio ou inanição, porém, conforme observado anteriormente, garantem a corretude nos casos de teste, que tentam abrangir as situações mais prováveis de ocorrerem durante a execução do sistema.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/Interface_100.png}
+    \caption{Teste de sobrecarga com 100 robôs e 60 cargas, evidenciando às capacidades das passagens e a consistência das operações.}
+    \label{fig:100_robots_test}
+\end{figure}
 
-\section{Resultados da etapa e limitações}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/Log.png}
+    \caption{Consulta do datalogger - RobotEvents - SQLite pela interface web.}
+    \label{fig:log_interface_test}
+\end{figure}
 
-Concluímos a primeira etapa com os principais componentes implementados, incluindo processos independentes para os robôs, threads de navegação e status, comunicação IPC, sincronização de equipes e persistência SQLite.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{figuras/testes/Log_cargas.png}
+    \caption{Consulta do datalogger - Cargas e Formações - SQLite pela interface web.}
+    \label{fig:log_cargas_interface_test}
+\end{figure}
 
-Também desenvolvemos uma suíte de 48 casos de teste para verificar os módulos e suas interações. A arquitetura adotada concentra o gerenciamento logístico no ciclo central e utiliza mutexes, variáveis de condição e filas nos pontos de concorrência, buscando reduzir bloqueios desnecessários e preservar a consistência das operações.
 
-Para as próximas etapas, permanecem o desenvolvimento das interfaces gráficas, a integração MQTT e as avaliações de latência e escalabilidade. Os períodos de 100 ms e 500 ms definidos para as threads ainda são nominais, pois não realizamos medições de pior caso nem configuramos políticas de escalonamento de tempo real estrito.
+Os testes de concorrência e os cenários de integração fornecem evidência de
+integridade dos registros, progresso e término nas execuções observadas. A
+serialização de envios, a exclusão mútua local e a separação entre produtores e
+consumidor reduzem riscos de acesso concorrente indevido. Os testes, por si só,
+não garantem a ausência de todas as condições de corrida, bloqueio ou inanição;
+contudo, os resultados obtidos comprovam o comportamento esperado nos cenários
+avaliados, que abrangem situações relevantes para a execução do sistema.
+
 
 \section{Compilação e reprodução}
-A compilação e a execução dos cenários podem ser reproduzidas, a partir da raiz do projeto, pelos comandos:
-\begin{lstlisting}
-cmake -S . -B build -DBUILD_TESTING=OFF
-cmake --build build --parallel 2
-./build/app/simulador_exec --cenario base
-./build/app/simulador_exec --cenario disponibilidade
-./build/app/simulador_exec --cenario processos
-\end{lstlisting}
-Para definir outro arquivo SQLite, utiliza-se \code{--banco logs/nome-da-execucao.db}. Com GoogleTest disponível, a suíte pode ser executada por:
-\begin{lstlisting}
-cmake -S . -B build -DBUILD_TESTING=ON
-cmake --build build --parallel 2
-ctest --test-dir build --output-on-failure
+
+O projeto foi desenvolvido em C++17, utilizando CMake
+para gerenciar a compilação e suas dependências. A
+implementação permite executar apenas o núcleo C++,
+com simulação local, ou o sistema completo, incluindo
+comunicação MQTT, simulador físico independente e
+interface gráfica em Python.
+
+Para a compilação no Ubuntu, utilizamos as dependências
+básicas de C++, SQLite, Mosquitto e cJSON, além do
+ambiente Python necessário à interface:
+
+\begin{lstlisting}[language=bash]
+sudo apt update
+sudo apt install build-essential cmake \
+    libsqlite3-dev libmosquitto-dev \
+    libcjson-dev mosquitto \
+    python3 python3-venv
 \end{lstlisting}
 
-Consulta SQL para verificar transportes e integrantes:
-\begin{lstlisting}[language=SQL]
-SELECT t.mission_id, t.cargo_id, t.status,
-       m.robot_id
-FROM cargo_transports AS t
-JOIN cargo_members AS m
-  ON m.run_id = t.run_id
- AND m.mission_id = t.mission_id
-ORDER BY t.mission_id, m.robot_id;
+\subsection{Compilação e execução do núcleo C++}
+
+Para executar o sistema sem comunicação MQTT, utilizamos
+a configuração padrão do CMake, com a opção
+\code{ENABLE\_MQTT=OFF}. Nesse modo, o núcleo utiliza
+o adaptador de hardware local, sem depender do broker
+ou da interface gráfica.
+
+A partir da raiz do projeto, executamos:
+
+\begin{lstlisting}[language=bash]
+cmake -S . -B build \
+    -DENABLE_MQTT=OFF \
+    -DBUILD_TESTING=OFF
+
+cmake --build build --parallel 2
+
+./build/app/simulador_exec --cenario base
 \end{lstlisting}
+
+O executável \code{simulador\_exec} permite selecionar
+diferentes cenários, incluindo transporte cooperativo,
+falhas, recarga, gerenciamento de processos e controle
+de passagens. Para executar outro cenário, basta
+substituir o argumento \code{--cenario}:
+
+\begin{lstlisting}[language=bash]
+./build/app/simulador_exec \
+    --cenario estresse-passagens
+\end{lstlisting}
+
+Também podemos utilizar \code{--interativo} para
+habilitar os comandos pelo terminal, \code{--mapa}
+para selecionar um mapa compatível e \code{--banco}
+para definir o arquivo SQLite da execução.
+
+\subsection{Compilação e execução do sistema completo}
+
+Para habilitar a comunicação MQTT, utilizamos
+\code{ENABLE\_MQTT=ON}. Essa configuração inclui
+a integração com libmosquitto e cJSON e permite
+compilar o executável \code{fleet\_launcher},
+responsável por iniciar a aplicação integrada.
+
+Primeiramente, preparamos o ambiente virtual Python
+e instalamos as dependências da interface:
+
+\begin{lstlisting}[language=bash]
+python3 -m venv visualization/.venv
+
+visualization/.venv/bin/python -m pip \
+    install -r visualization/requirements.txt
+\end{lstlisting}
+
+Em seguida, realizamos a compilação:
+
+\begin{lstlisting}[language=bash]
+cmake -S . -B build-mqtt \
+    -DENABLE_MQTT=ON \
+    -DBUILD_TESTING=OFF
+
+cmake --build build-mqtt --parallel 2
+\end{lstlisting}
+
+Para iniciar o sistema completo, executamos:
+
+\begin{lstlisting}[language=bash]
+./build-mqtt/app/fleet_launcher
+\end{lstlisting}
+
+O lançador inicia o servidor Python, que gerencia
+a inicialização do broker MQTT, do simulador físico
+e da aplicação central. A interface de operação
+fica disponível no navegador pelo endereço
+\code{http://127.0.0.1:8080}.
+
+Nessa configuração, podemos selecionar o cenário
+pela interface, acompanhar os estados dos robôs,
+realizar intervenções manuais e consultar o histórico
+das operações. O encerramento é realizado por
+\code{Ctrl+C}, com a finalização coordenada dos
+processos iniciados.
+
+Também é possível executar a central e o simulador
+em terminais separados, utilizando respectivamente
+as opções \code{--simulador-mqtt} e \code{--simulador},
+desde que ambos estejam conectados ao mesmo broker.
+
+\subsection{Compilação e execução dos testes}
+
+Os testes automatizados são habilitados pela opção
+\code{BUILD\_TESTING=ON}. Para executar os testes
+do núcleo C++, sem MQTT, utilizamos:
+
+\begin{lstlisting}[language=bash]
+cmake -S . -B build-testes \
+    -DENABLE_MQTT=OFF \
+    -DBUILD_TESTING=ON
+
+cmake --build build-testes --parallel 2
+
+ctest --test-dir build-testes \
+    --output-on-failure
+\end{lstlisting}
+
+Para incluir os testes específicos da integração
+MQTT, utilizamos uma configuração separada:
+
+\begin{lstlisting}[language=bash]
+cmake -S . -B build-mqtt-testes \
+    -DENABLE_MQTT=ON \
+    -DBUILD_TESTING=ON
+
+cmake --build build-mqtt-testes --parallel 2
+
+ctest --test-dir build-mqtt-testes \
+    --output-on-failure
+\end{lstlisting}
+
+Os testes C++ utilizam GoogleTest, localizado pelo
+CMake ou obtido automaticamente quando não está
+instalado. Com MQTT habilitado, são incluídos os
+testes de comandos JSON e, quando o executável
+Mosquitto está disponível, os testes de integração
+com o simulador remoto.
+
+Os testes da interface Python podem ser executados
+separadamente, utilizando o ambiente virtual:
+
+\begin{lstlisting}[language=bash]
+visualization/.venv/bin/python -m unittest \
+    visualization.test_history \
+    visualization.test_scenario_picker -v
+\end{lstlisting}
+
+Essas configurações permitem reproduzir tanto os
+testes dos componentes isolados quanto os testes
+de integração do sistema, conforme apresentado
+na seção de validação.
 
 \section{Conclusão}
-Nesta primeira etapa, definimos e implementamos a arquitetura básica do sistema de gerenciamento de frota robótica. Organizamos a aplicação em um processo central e processos independentes para cada robô, com threads de navegação e status, comunicação por sockets Unix e sincronização por mutexes, variáveis de condição e confirmações de mensagens. O controle de passagens e a coordenação de equipes são realizados pelo ciclo central, enquanto a persistência dos eventos é executada de forma assíncrona pela thread coletora.
 
-Desenvolvemos 39 testes unitários e 9 casos de integração para verificar a comunicação IPC, a consistência dos estados, o transporte colaborativo, as passagens restritas, a gravação de eventos e o encerramento dos processos. As execuções dos testes registraram aprovação dos 48 casos, término dos oito cenários e integridade dos bancos SQLite. Dessa forma, distinguimos a cobertura prevista nos testes implementados das conclusões efetivamente sustentadas pelas execuções documentadas.
+Neste trabalho, desenvolvemos um sistema integrado de
+gerenciamento e simulação de uma frota robótica para
+operações logísticas. A arquitetura adotada combina
+processos independentes para os robôs, threads de
+navegação e status e um núcleo central responsável
+pela coordenação das operações. Utilizamos mecanismos
+de sincronização e comunicação IPC para garantir a
+consistência das informações e o funcionamento
+coordenado das tarefas concorrentes.
 
-Como próximos passos, pretendemos integrar a comunicação MQTT, desenvolver as interfaces de simulação e operação remota e ampliar os testes de funcionamento do sistema completo. Também serão necessárias medições de latência, variação dos períodos de execução, tempos de espera, resposta a falhas e escalabilidade com diferentes quantidades de robôs. Os períodos de 100 ms e 500 ms permanecem nominais, pois ainda não foram estabelecidas garantias de pior caso nem políticas de escalonamento de tempo real estrito.
+A separação das responsabilidades entre os componentes
+permitiu organizar o controle das missões, o transporte
+colaborativo, o gerenciamento das passagens e o
+tratamento de falhas. A integração por MQTT possibilitou
+a comunicação entre o núcleo C++, o simulador físico
+e a interface gráfica em Python, enquanto o SQLite
+garantiu a persistência e a rastreabilidade dos eventos
+e transportes realizados.
+
+A implementação foi validada por uma suíte de 90 testes
+automatizados, abrangendo os principais módulos e suas
+interações. Os resultados obtidos demonstraram o
+funcionamento das operações individuais e colaborativas,
+incluindo cenários com múltiplos robôs e recursos
+compartilhados.
+
+Em relação à escalabilidade, a divisão do sistema em
+processos e componentes independentes favorece a
+organização e o isolamento das tarefas. Entretanto,
+a centralização das decisões logísticas e da
+comunicação com os agentes pode representar um
+limite de desempenho conforme a frota aumenta.
+
+Concluímos que o projeto permitiu aplicar de forma
+prática os conceitos de programação concorrente,
+sincronização, comunicação entre processos e
+integração de sistemas estudados na disciplina de
+Automação em Tempo Real, evidenciando a importância
+das decisões arquiteturais para a corretude,
+a organização e a responsividade da aplicação.
+
 
 \subsection{Disponibilidade do código-fonte e repositório}
-Considerando que a totalidade dos códigos implementados, bem como os arquivos relacionados à camada de persistência em banco de dados e à suíte completa de testes, estão extensos para inclusão direta em apêndices textuais, todo o material desenvolvido encontra-se integralmente versionado e acessível no repositório público do projeto:
+Considerando que a totalidade dos códigos implementados, bem como os arquivos
+relacionados à camada de persistência em banco de dados e à suíte completa de
+testes, estão extensos para inclusão direta em apêndices textuais, todo o
+material desenvolvido encontra-se integralmente versionado e acessível no
+repositório público do projeto:
 \begin{center}
-\url{https://github.com/LuccaRig/Robotic-Fleet-Management-for-Logistics}
+    \url{https://github.com/LuccaRig/Robotic-Fleet-Management-for-Logistics}
 \end{center}
 
 \end{document}
