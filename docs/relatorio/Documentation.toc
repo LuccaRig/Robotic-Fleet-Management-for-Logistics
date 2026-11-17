@@ -1,41 +1,41 @@
 \babel@toc {brazil}{}\relax 
 \contentsline {section}{\numberline {1}Introdução e objetivos}{3}{section.1}%
 \contentsline {section}{\numberline {2}Arquitetura do sistema}{4}{section.2}%
-\contentsline {section}{\numberline {3}Implementação dos processos}{6}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Processo principal e coordenação sequencial}{6}{subsection.3.1}%
+\contentsline {section}{\numberline {3}Implementação dos processos}{5}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Processo principal e coordenação sequencial}{5}{subsection.3.1}%
 \contentsline {subsection}{\numberline {3.2}Criação dinâmica dos processos dos robôs}{6}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Simulador físico e interface de operação}{6}{subsection.3.3}%
 \contentsline {subsection}{\numberline {3.4}O que permanece isolado entre processos}{6}{subsection.3.4}%
-\contentsline {section}{\numberline {4}Implementação das threads}{7}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Thread de comando de navegação}{7}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Thread de status e tratamento de sensores}{7}{subsection.4.2}%
-\contentsline {subsection}{\numberline {4.3}Thread do coletor de dados}{7}{subsection.4.3}%
-\contentsline {subsection}{\numberline {4.4}Execução concorrente nos componentes externos}{7}{subsection.4.4}%
-\contentsline {section}{\numberline {5}Comunicação entre processos e troca de dados}{8}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Canal IPC e enquadramento das mensagens}{8}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}Comunicação MQTT com simulador e operação}{8}{subsection.5.2}%
+\contentsline {section}{\numberline {4}Implementação das threads}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Thread de navegação}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Thread de status e sensores}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Thread de coleta de dados}{7}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Concorrência nos componentes externos}{7}{subsection.4.4}%
+\contentsline {section}{\numberline {5}Comunicação entre processos e troca de dados}{7}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Canal IPC e enquadramento das mensagens}{7}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Comunicação MQTT com simulador e operação}{7}{subsection.5.2}%
 \contentsline {subsection}{\numberline {5.3}Comunicação da interface e acesso ao banco de dados}{8}{subsection.5.3}%
 \contentsline {subsection}{\numberline {5.4}Sequência de uma operação de transporte}{8}{subsection.5.4}%
-\contentsline {section}{\numberline {6}Mecanismos de sincronização}{9}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Mutexes: exclusão mútua dentro do robô}{10}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Variáveis de condição e execução periódica}{10}{subsection.6.2}%
-\contentsline {subsection}{\numberline {6.3}Exclusão mútua e espera limitada no IPC}{10}{subsection.6.3}%
-\contentsline {subsection}{\numberline {6.4}Sincronização lógica de equipes e passagens}{11}{subsection.6.4}%
-\contentsline {subsection}{\numberline {6.5}Persistência assíncrona e tratamento de falhas}{11}{subsection.6.5}%
-\contentsline {subsection}{\numberline {6.6}Sincronização na comunicação MQTT}{12}{subsection.6.6}%
-\contentsline {section}{\numberline {7}Persistência e rastreabilidade}{12}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Coleta assíncrona e buffer de eventos}{12}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Justificativa para utilização do SQLite}{13}{subsection.7.2}%
-\contentsline {section}{\numberline {8}Testes e evidências de troca de dados}{13}{section.8}%
-\contentsline {subsection}{\numberline {8.1}Comunicação IPC e processos}{13}{subsection.8.1}%
-\contentsline {subsection}{\numberline {8.2}Navegação, logística e sincronização}{13}{subsection.8.2}%
-\contentsline {subsection}{\numberline {8.3}Coleta e persistência de dados}{14}{subsection.8.3}%
-\contentsline {subsection}{\numberline {8.4}Comunicação MQTT e interface de operação}{14}{subsection.8.4}%
-\contentsline {subsection}{\numberline {8.5}Testes de integração}{15}{subsection.8.5}%
-\contentsline {subsection}{\numberline {8.6}Imagens dos testes}{16}{subsection.8.6}%
-\contentsline {section}{\numberline {9}Compilação e reprodução}{19}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Compilação e execução do núcleo C++}{19}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Compilação e execução do sistema completo}{19}{subsection.9.2}%
-\contentsline {subsection}{\numberline {9.3}Compilação e execução dos testes}{20}{subsection.9.3}%
-\contentsline {section}{\numberline {10}Conclusão}{21}{section.10}%
-\contentsline {subsection}{\numberline {10.1}Disponibilidade do código-fonte e repositório}{21}{subsection.10.1}%
+\contentsline {section}{\numberline {6}Mecanismos de sincronização}{8}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Mutexes: exclusão mútua dentro do robô}{9}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Variáveis de condição e execução periódica}{9}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Exclusão mútua e espera limitada no IPC}{9}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Sincronização lógica de equipes e passagens}{10}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Persistência assíncrona e tratamento de falhas}{10}{subsection.6.5}%
+\contentsline {subsection}{\numberline {6.6}Sincronização na comunicação MQTT}{11}{subsection.6.6}%
+\contentsline {section}{\numberline {7}Persistência e rastreabilidade}{11}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Coleta assíncrona e buffer de eventos}{11}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Justificativa para utilização do SQLite}{11}{subsection.7.2}%
+\contentsline {section}{\numberline {8}Testes e evidências de troca de dados}{12}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Comunicação IPC e processos}{12}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Navegação, logística e sincronização}{12}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}Coleta e persistência de dados}{12}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}Comunicação MQTT e interface de operação}{13}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}Testes de integração}{13}{subsection.8.5}%
+\contentsline {subsection}{\numberline {8.6}Imagens dos testes}{14}{subsection.8.6}%
+\contentsline {section}{\numberline {9}Compilação e reprodução}{16}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Compilação e execução do núcleo C++}{17}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Compilação e execução do sistema completo}{17}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}Compilação e execução dos testes}{18}{subsection.9.3}%
+\contentsline {section}{\numberline {10}Conclusão}{19}{section.10}%
+\contentsline {subsection}{\numberline {10.1}Disponibilidade do código-fonte e repositório}{19}{subsection.10.1}%

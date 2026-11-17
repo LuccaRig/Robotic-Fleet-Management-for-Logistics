@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.11.16)  16 NOV 2026 21:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.11.16)  16 NOV 2026 21:23
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -741,8 +741,8 @@ Package: lastpagemodern 2023-10-14 v2.0e Refers to last page's name (HMM; JPG)
 \c@lastpagecount=\count348
 ) 
 ))
-Package hyperref Info: Option `colorlinks' set `true' on input line 33.
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 54.
+Package hyperref Info: Option `colorlinks' set `true' on input line 35.
+LaTeX Font Info:    Trying to load font information for T1+lmr on input line 57.
  (/usr/share/texmf/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
@@ -752,24 +752,24 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 ) (./Documentation.aux)
 \openout1 = `Documentation.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 54.
-LaTeX Font Info:    ... okay on input line 54.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 57.
+LaTeX Font Info:    ... okay on input line 57.
  (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
 \scratchcounter=\count350
@@ -794,27 +794,27 @@ Package caption Info: float package is loaded.
 Package caption Info: hyperref package is loaded.
 Package caption Info: listings package is loaded.
 Package caption Info: End \AtBeginDocument code.
-Package hyperref Info: Link coloring ON on input line 54.
+Package hyperref Info: Link coloring ON on input line 57.
  (./Documentation.out) (./Documentation.out)
 \@outlinefile=\write5
 \openout5 = `Documentation.out'.
 
-LaTeX Info: Redefining \microtypecontext on input line 54.
-Package microtype Info: Applying patch `item' on input line 54.
-Package microtype Info: Applying patch `toc' on input line 54.
-Package microtype Info: Applying patch `eqnum' on input line 54.
+LaTeX Info: Redefining \microtypecontext on input line 57.
+Package microtype Info: Applying patch `item' on input line 57.
+Package microtype Info: Applying patch `toc' on input line 57.
+Package microtype Info: Applying patch `eqnum' on input line 57.
 
 
-Package microtype Warning: Unable to apply patch `footnote' on input line 54.
+Package microtype Warning: Unable to apply patch `footnote' on input line 57.
 
-Package microtype Info: Applying patch `verbatim' on input line 54.
+Package microtype Info: Applying patch `verbatim' on input line 57.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
 Package microtype Info: Automatic font expansion enabled (level 2),
 (microtype)             stretch: 20, shrink: 20, step: 1, non-selected.
 Package microtype Info: Using default expansion set `alltext-nott'.
-LaTeX Info: Redefining \showhyphens on input line 54.
+LaTeX Info: Redefining \showhyphens on input line 57.
 Package microtype Info: No adjustment of tracking.
 Package microtype Info: No adjustment of interword spacing.
 Package microtype Info: No adjustment of character kerning.
@@ -862,35 +862,35 @@ Package microtype Info: Character `029' is missing
 Package microtype Info: Character `029' is missing
 (microtype)             in font `T1/lmr/m/sc/17.28'.
 (microtype)             Ignoring protrusion settings for this character.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 76.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 79.
 (/usr/share/texmf/tex/latex/lm/ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 76.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 79.
  (/usr/share/texmf/tex/latex/lm/omllmm.fd
 File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 76.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 79.
  (/usr/share/texmf/tex/latex/lm/omslmsy.fd
 File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 76.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 79.
  (/usr/share/texmf/tex/latex/lm/omxlmex.fd
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 76.
+(Font)              <12> on input line 79.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 76.
+(Font)              <8> on input line 79.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 76.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 76.
+(Font)              <6> on input line 79.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 79.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 ) (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 76.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 79.
  (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 ) (/usr/share/texlive/texmf-dist/tex/latex/microtype/mt-msb.cfg
@@ -908,26 +908,26 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.39 ...execu√ß√£o dos testes}{20}{subsection.9.3}
+l.39 ...execu√ß√£o dos testes}{18}{subsection.9.3}
                                                   % [1])
 \tf@toc=\write6
 \openout6 = `Documentation.toc'.
 
  [2]
-<figuras/galpao/galpao.png, id=232, 493.845pt x 331.99031pt>
+<figuras/galpao/galpao.png, id=231, 493.845pt x 331.99031pt>
 File: figuras/galpao/galpao.png Graphic file (type png)
 <use figuras/galpao/galpao.png>
-Package pdftex.def Info: figuras/galpao/galpao.png  used on input line 117.
+Package pdftex.def Info: figuras/galpao/galpao.png  used on input line 116.
 (pdftex.def)             Requested size: 452.39867pt x 304.12274pt.
  [3
 
  <./figuras/galpao/galpao.png>]
-<figuras/arquitetura/arquitetura.pdf, id=241, 799.74583pt x 508.20566pt>
+<figuras/arquitetura/arquitetura.pdf, id=240, 799.74583pt x 508.20566pt>
 File: figuras/arquitetura/arquitetura.pdf Graphic file (type pdf)
 <use figuras/arquitetura/arquitetura.pdf>
-Package pdftex.def Info: figuras/arquitetura/arquitetura.pdf  used on input line 142.
+Package pdftex.def Info: figuras/arquitetura/arquitetura.pdf  used on input line 140.
 (pdftex.def)             Requested size: 429.77734pt x 273.10869pt.
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 148.
+LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 146.
  (/usr/share/texmf/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
@@ -935,72 +935,67 @@ Package microtype Info: Loading generic protrusion settings for font family
 (microtype)             `lmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-
-Overfull \hbox (38.48576pt too wide) in paragraph at lines 170--183
-[]\T1/lmr/m/n/10 (-20) A tela de ope-ra-Á„o È dis-po-ni-bi-li-zada por um ser-vi-dor Python, im-ple-men-tado em \T1/lmtt/m/n/10 visualization/server.py\T1/lmr/m/n/10 (-20) .
+ [4 <./figuras/arquitetura/arquitetura.pdf>]
+Underfull \hbox (badness 3849) in paragraph at lines 199--199
+[]|[] \T1/lmr/m/n/8 (+20) e in-ter-face
  []
 
-[4 <./figuras/arquitetura/arquitetura.pdf>]
-Underfull \hbox (badness 3849) in paragraph at lines 218--218
-[]|\T1/lmtt/m/n/8 server.py \T1/lmr/m/n/8 (+20) e in-ter-face
- []
-
-[5] [6] [7] [8]
-Underfull \hbox (badness 10000) in paragraph at lines 448--448
-[]|\T1/lmtt/m/n/8 std::timed_mutex \T1/lmr/m/n/8 (+20) e
+[5] [6] [7]
+Underfull \hbox (badness 10000) in paragraph at lines 421--421
+[]|[] \T1/lmr/m/n/8 (+20) e
  []
 
 
-Underfull \hbox (badness 3977) in paragraph at lines 448--448
+Underfull \hbox (badness 3977) in paragraph at lines 421--421
 []|\T1/lmr/m/n/8 (+20) Ciclo de vida dos
  []
 
-[9] [10]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 541.
+[8] [9]
+LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 496.
  (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [11{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}] [12] [13] [14]
-<figuras/testes/200_eventos.png, id=353, 962.84718pt x 542.025pt>
+) [10{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}] [11] [12]
+<figuras/testes/200_eventos.png, id=344, 962.84718pt x 542.025pt>
 File: figuras/testes/200_eventos.png Graphic file (type png)
 <use figuras/testes/200_eventos.png>
-Package pdftex.def Info: figuras/testes/200_eventos.png  used on input line 806.
+Package pdftex.def Info: figuras/testes/200_eventos.png  used on input line 690.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
- [15]
-<figuras/testes/init_conf.png, id=361, 962.84718pt x 542.025pt>
+ [13]
+<figuras/testes/init_conf.png, id=352, 962.84718pt x 542.025pt>
 File: figuras/testes/init_conf.png Graphic file (type png)
 <use figuras/testes/init_conf.png>
-Package pdftex.def Info: figuras/testes/init_conf.png  used on input line 813.
+Package pdftex.def Info: figuras/testes/init_conf.png  used on input line 697.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
-<figuras/testes/passage_test.png, id=362, 962.84718pt x 542.025pt>
+<figuras/testes/passage_test.png, id=353, 962.84718pt x 542.025pt>
 File: figuras/testes/passage_test.png Graphic file (type png)
 <use figuras/testes/passage_test.png>
-Package pdftex.def Info: figuras/testes/passage_test.png  used on input line 820.
+Package pdftex.def Info: figuras/testes/passage_test.png  used on input line 704.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
- [16 <./figuras/testes/200_eventos.png> <./figuras/testes/init_conf.png>]
-<figuras/testes/Interface_100.png, id=370, 962.84718pt x 484.05844pt>
+ [14 <./figuras/testes/200_eventos.png> <./figuras/testes/init_conf.png>]
+<figuras/testes/Interface_100.png, id=361, 962.84718pt x 484.05844pt>
 File: figuras/testes/Interface_100.png Graphic file (type png)
 <use figuras/testes/Interface_100.png>
-Package pdftex.def Info: figuras/testes/Interface_100.png  used on input line 827.
+Package pdftex.def Info: figuras/testes/Interface_100.png  used on input line 711.
 (pdftex.def)             Requested size: 452.39867pt x 227.43362pt.
-<figuras/testes/Log.png, id=371, 962.84718pt x 484.05844pt>
+<figuras/testes/Log.png, id=362, 962.84718pt x 484.05844pt>
 File: figuras/testes/Log.png Graphic file (type png)
 <use figuras/testes/Log.png>
-Package pdftex.def Info: figuras/testes/Log.png  used on input line 834.
+Package pdftex.def Info: figuras/testes/Log.png  used on input line 718.
 (pdftex.def)             Requested size: 452.39867pt x 227.43362pt.
- [17 <./figuras/testes/passage_test.png> <./figuras/testes/Interface_100.png>]
-<figuras/testes/Log_cargas.png, id=380, 962.84718pt x 485.56406pt>
+ [15 <./figuras/testes/passage_test.png> <./figuras/testes/Interface_100.png>]
+<figuras/testes/Log_cargas.png, id=371, 962.84718pt x 485.56406pt>
 File: figuras/testes/Log_cargas.png Graphic file (type png)
 <use figuras/testes/Log_cargas.png>
-Package pdftex.def Info: figuras/testes/Log_cargas.png  used on input line 841.
+Package pdftex.def Info: figuras/testes/Log_cargas.png  used on input line 725.
 (pdftex.def)             Requested size: 452.39867pt x 228.14104pt.
- [18 <./figuras/testes/Log.png> <./figuras/testes/Log_cargas.png>] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+ (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
 ) (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
-) [19]
+) [16 <./figuras/testes/Log.png> <./figuras/testes/Log_cargas.png>] [17]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 978.
- [20] [21] 
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 849.
+ [18] [19] 
 enddocument/afterlastpage: lastpage setting LastPage.
 (./Documentation.aux)
  ***********
@@ -1008,21 +1003,21 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `Documentation.out' has not changed.
-(rerunfilecheck)             Checksum: 06488DF8F1D6B6C51F2498E58E36D89A;9835.
+(rerunfilecheck)             Checksum: E41C6543726C45409BC0CF27882F7D93;9647.
  ) 
 Here is how much of TeX's memory you used:
- 30389 strings out of 476162
- 552871 string characters out of 5794813
- 1981975 words of memory out of 5000000
- 51582 multiletter control sequences out of 15000+600000
- 645140 words of font info for 185 fonts, out of 8000000 for 9000
+ 30394 strings out of 476162
+ 552970 string characters out of 5794813
+ 1974975 words of memory out of 5000000
+ 51583 multiletter control sequences out of 15000+600000
+ 645057 words of font info for 184 fonts, out of 8000000 for 9000
  16 hyphenation exceptions out of 8191
  84i,12n,87p,1084b,2049s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/lm/lmss8.pfb></usr/share/texmf/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsso8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb>
-Output written on Documentation.pdf (22 pages, 3814657 bytes).
+Output written on Documentation.pdf (20 pages, 3807437 bytes).
 PDF statistics:
  545 PDF objects out of 1000 (max. 8388607)
- 467 compressed objects within 5 object streams
- 126 named destinations out of 1000 (max. 500000)
+ 469 compressed objects within 5 object streams
+ 132 named destinations out of 1000 (max. 500000)
  51573 words of extra memory for PDF output out of 51595 (max. 10000000)
 
