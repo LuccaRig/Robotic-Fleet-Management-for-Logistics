@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.11.16)  16 NOV 2026 21:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.11.16)  16 NOV 2026 22:03
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -908,13 +908,13 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.39 ...execução dos testes}{18}{subsection.9.3}
+l.39 ...idade e escalonamento}{17}{subsection.9.3}
                                                   % [1])
 \tf@toc=\write6
 \openout6 = `Documentation.toc'.
 
  [2]
-<figuras/galpao/galpao.png, id=231, 493.845pt x 331.99031pt>
+<figuras/galpao/galpao.png, id=251, 493.845pt x 331.99031pt>
 File: figuras/galpao/galpao.png Graphic file (type png)
 <use figuras/galpao/galpao.png>
 Package pdftex.def Info: figuras/galpao/galpao.png  used on input line 116.
@@ -922,7 +922,7 @@ Package pdftex.def Info: figuras/galpao/galpao.png  used on input line 116.
  [3
 
  <./figuras/galpao/galpao.png>]
-<figuras/arquitetura/arquitetura.pdf, id=240, 799.74583pt x 508.20566pt>
+<figuras/arquitetura/arquitetura.pdf, id=260, 799.74583pt x 508.20566pt>
 File: figuras/arquitetura/arquitetura.pdf Graphic file (type pdf)
 <use figuras/arquitetura/arquitetura.pdf>
 Package pdftex.def Info: figuras/arquitetura/arquitetura.pdf  used on input line 140.
@@ -955,47 +955,49 @@ LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 49
  (/usr/share/texmf/tex/latex/lm/ts1lmr.fd
 File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 ) [10{/usr/share/texmf/fonts/enc/dvips/lm/lm-ts1.enc}] [11] [12]
-<figuras/testes/200_eventos.png, id=344, 962.84718pt x 542.025pt>
+<figuras/testes/200_eventos.png, id=364, 962.84718pt x 542.025pt>
 File: figuras/testes/200_eventos.png Graphic file (type png)
 <use figuras/testes/200_eventos.png>
 Package pdftex.def Info: figuras/testes/200_eventos.png  used on input line 690.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
  [13]
-<figuras/testes/init_conf.png, id=352, 962.84718pt x 542.025pt>
+<figuras/testes/init_conf.png, id=372, 962.84718pt x 542.025pt>
 File: figuras/testes/init_conf.png Graphic file (type png)
 <use figuras/testes/init_conf.png>
 Package pdftex.def Info: figuras/testes/init_conf.png  used on input line 697.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
-<figuras/testes/passage_test.png, id=353, 962.84718pt x 542.025pt>
+<figuras/testes/passage_test.png, id=373, 962.84718pt x 542.025pt>
 File: figuras/testes/passage_test.png Graphic file (type png)
 <use figuras/testes/passage_test.png>
 Package pdftex.def Info: figuras/testes/passage_test.png  used on input line 704.
 (pdftex.def)             Requested size: 452.39867pt x 254.66907pt.
  [14 <./figuras/testes/200_eventos.png> <./figuras/testes/init_conf.png>]
-<figuras/testes/Interface_100.png, id=361, 962.84718pt x 484.05844pt>
+<figuras/testes/Interface_100.png, id=381, 962.84718pt x 484.05844pt>
 File: figuras/testes/Interface_100.png Graphic file (type png)
 <use figuras/testes/Interface_100.png>
 Package pdftex.def Info: figuras/testes/Interface_100.png  used on input line 711.
 (pdftex.def)             Requested size: 452.39867pt x 227.43362pt.
-<figuras/testes/Log.png, id=362, 962.84718pt x 484.05844pt>
+<figuras/testes/Log.png, id=382, 962.84718pt x 484.05844pt>
 File: figuras/testes/Log.png Graphic file (type png)
 <use figuras/testes/Log.png>
 Package pdftex.def Info: figuras/testes/Log.png  used on input line 718.
 (pdftex.def)             Requested size: 452.39867pt x 227.43362pt.
  [15 <./figuras/testes/passage_test.png> <./figuras/testes/Interface_100.png>]
-<figuras/testes/Log_cargas.png, id=371, 962.84718pt x 485.56406pt>
+<figuras/testes/Log_cargas.png, id=391, 962.84718pt x 485.56406pt>
 File: figuras/testes/Log_cargas.png Graphic file (type png)
 <use figuras/testes/Log_cargas.png>
 Package pdftex.def Info: figuras/testes/Log_cargas.png  used on input line 725.
 (pdftex.def)             Requested size: 452.39867pt x 228.14104pt.
- (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10.95> on input line 754.
+ [16 <./figuras/testes/Log.png> <./figuras/testes/Log_cargas.png>] [17] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
 ) (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
 File: lstlang1.sty 2023/02/27 1.9 listings language file
-) [16 <./figuras/testes/Log.png> <./figuras/testes/Log_cargas.png>] [17]
+) [18]
 LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 849.
- [18] [19] 
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 932.
+ [19] [20] 
 enddocument/afterlastpage: lastpage setting LastPage.
 (./Documentation.aux)
  ***********
@@ -1003,21 +1005,21 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `Documentation.out' has not changed.
-(rerunfilecheck)             Checksum: E41C6543726C45409BC0CF27882F7D93;9647.
+(rerunfilecheck)             Checksum: 48F72EC885C6A7D3F1251EEE2A9B65DE;10586.
  ) 
 Here is how much of TeX's memory you used:
- 30394 strings out of 476162
- 552970 string characters out of 5794813
- 1974975 words of memory out of 5000000
- 51583 multiletter control sequences out of 15000+600000
- 645057 words of font info for 184 fonts, out of 8000000 for 9000
+ 30428 strings out of 476162
+ 553567 string characters out of 5794813
+ 1977975 words of memory out of 5000000
+ 51604 multiletter control sequences out of 15000+600000
+ 649319 words of font info for 192 fonts, out of 8000000 for 9000
  16 hyphenation exceptions out of 8191
  84i,12n,87p,1084b,2049s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf/fonts/type1/public/lm/lmbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx12.pfb></usr/share/texmf/fonts/type1/public/lm/lmbx8.pfb></usr/share/texmf/fonts/type1/public/lm/lmcsc10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr10.pfb></usr/share/texmf/fonts/type1/public/lm/lmr12.pfb></usr/share/texmf/fonts/type1/public/lm/lmr17.pfb></usr/share/texmf/fonts/type1/public/lm/lmr8.pfb></usr/share/texmf/fonts/type1/public/lm/lmri10.pfb></usr/share/texmf/fonts/type1/public/lm/lmss8.pfb></usr/share/texmf/fonts/type1/public/lm/lmssbx10.pfb></usr/share/texmf/fonts/type1/public/lm/lmsso8.pfb></usr/share/texmf/fonts/type1/public/lm/lmtk10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt10.pfb></usr/share/texmf/fonts/type1/public/lm/lmtt8.pfb>
-Output written on Documentation.pdf (20 pages, 3807437 bytes).
+Output written on Documentation.pdf (21 pages, 3812408 bytes).
 PDF statistics:
- 545 PDF objects out of 1000 (max. 8388607)
- 469 compressed objects within 5 object streams
- 132 named destinations out of 1000 (max. 500000)
- 51573 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 575 PDF objects out of 1000 (max. 8388607)
+ 498 compressed objects within 5 object streams
+ 139 named destinations out of 1000 (max. 500000)
+ 53653 words of extra memory for PDF output out of 61914 (max. 10000000)
 

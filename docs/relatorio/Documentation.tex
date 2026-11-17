@@ -732,6 +732,88 @@ progresso e encerramento nas execuções observadas. Os resultados confirmam o
 comportamento esperado nos cenários avaliados, mas não garantem ausência geral
 de condições de corrida, bloqueio ou inanição.
 
+\section{Análise de Capacidade e Escalabilidade do Sistema}
+\label{sec:escalabilidade}
+
+Para avaliar a capacidade e a responsividade do sistema, realizamos testes com
+diferentes quantidades de robôs, analisando os tempos de processamento, a
+comunicação entre componentes e a utilização dos recursos computacionais. As
+medições contemplaram a execução local do núcleo C++ e a operação integrada por
+MQTT.
+
+\subsection{Desempenho do núcleo C++}
+
+A Tabela~\ref{tab:desempenho_core} apresenta os resultados de cinco execuções
+dos cenários com 15 e 100 robôs.
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Amostragem dos tempos de processamento do núcleo C++.}
+    \label{tab:desempenho_core}
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Indicador}     & \textbf{15 robôs} & \textbf{100 robôs} \\
+        \midrule
+        Tempo médio do ciclo   & 0,26 ms           & 1,37 ms            \\
+        Maior tempo observado  & 7,90 ms           & 19,78 ms           \\
+        Período nominal        & 20 ms             & 20 ms              \\
+        Ciclos dentro de 20 ms & 100\%             & 100\%              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+O tempo médio de processamento permaneceu abaixo do período nominal de 20 ms em
+ambos os cenários. Entretanto, com 100 robôs, o maior ciclo observado atingiu
+19,78 ms, indicando uma margem reduzida para eventuais atrasos de
+escalonamento.
+
+\subsection{Responsividade e comunicação MQTT}
+
+A arquitetura integrada, composta pelo núcleo C++, simulador físico, broker
+MQTT e interface Python, foi avaliada com 4, 8 e 16 robôs, totalizando 560
+movimentos.
+
+\begin{table}[H]
+    \centering
+    \small
+    \caption{Tempos de resposta da aplicação integrada.}
+    \label{tab:desempenho_mqtt}
+    \begin{tabular}{lccc}
+        \toprule
+        \textbf{Indicador} & \textbf{4 robôs} & \textbf{8 robôs} & \textbf{16 robôs} \\
+        \midrule
+        Movimentos         & 80               & 160              & 320               \\
+        Aceitação P95 (ms) & 77,9             & 78,4             & 90,3              \\
+        Chegada P95 (ms)   & 361,6            & 349,2            & 369,0             \\
+        CPU média (\%)     & 12,1             & 16,9             & 21,5              \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Todos os comandos foram aceitos e os movimentos concluídos. O aumento da frota
+elevou moderadamente a latência de aceitação e o consumo de CPU, enquanto a
+latência de chegada permaneceu relativamente estável.
+
+Entre o envio do setpoint e a atualização do sensor, os valores P95 ficaram
+próximos de 20 a 25 ms. A latência total de chegada também inclui os ciclos de
+navegação, comunicação e atualização dos estados.
+
+\subsection{Capacidade e escalonamento}
+
+O sistema utiliza períodos nominais de 20 ms para o laço principal, 100 ms para
+navegação, 500 ms para status e 200 ms para processamento logístico.
+
+A execução com até 100 robôs demonstrou capacidade funcional, sem evidências de
+saturação contínua. Contudo, a proximidade do maior ciclo observado ao período
+nominal e a centralização das decisões logísticas e dos canais IPC indicam
+possíveis limitações para frotas maiores.
+
+Embora os processos independentes favoreçam o isolamento das tarefas, os
+resultados não permitem estabelecer garantias de tempo real ou determinar a
+capacidade máxima do hardware. Uma avaliação mais ampla exigiria testes sob
+cargas superiores e análise dos atrasos de escalonamento.
+
 \section{Compilação e reprodução}
 
 O projeto foi desenvolvido em C++17, utilizando CMake para gerenciar a
@@ -831,6 +913,7 @@ coordenada dos processos iniciados.
 Também é possível executar a central e o simulador em terminais separados,
 utilizando respectivamente as opções \code{--simulador-mqtt} e
 \code{--simulador}, desde que ambos estejam conectados ao mesmo broker.
+
 
 \subsection{Compilação e execução dos testes}
 
