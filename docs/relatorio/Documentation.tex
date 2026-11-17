@@ -48,7 +48,7 @@
 \renewcommand{\headrulewidth}{0.35pt}
 \newcommand{\code}[1]{\mbox{\texttt{#1}}}
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
-\lstset{basicstyle=\ttfamily\footnotesize,breaklines=true,breakatwhitespace=true,
+\lstset{basicstyle=\ttfamily\scriptsize,breaklines=true,breakatwhitespace=true,
  frame=single,backgroundcolor=\color{cinzaclaro},rulecolor=\color{black!15},
  xleftmargin=0.3cm,xrightmargin=0.3cm,showstringspaces=false,columns=fullflexible,
  aboveskip=0.5em,belowskip=0.6em}
@@ -113,7 +113,7 @@ capacidade limitada, conforme ilustrado na Figura~\ref{fig:galpao}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/galpao/galpao.png}
+    \includegraphics[width=0.9\textwidth]{figuras/galpao/galpao.png}
     \caption{Representação gráfica do ambiente logístico}
     \label{fig:galpao}
 \end{figure}
@@ -687,42 +687,42 @@ resultados apresentados diretamente no terminal.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/200_eventos.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/200_eventos.png}
     \caption{Teste de concorrência do ColetorDados, com quatro threads produtoras e confirmação da persistência de 200 eventos no banco SQLite.}
     \label{fig:200_eventos}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/init_conf.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/init_conf.png}
     \caption{Evidência da criação dinâmica, confirmação de prontidão e encerramento dos processos dos robôs durante o cenário de gerenciamento.}
     \label{fig:init_conf}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/passage_test.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/passage_test.png}
     \caption{Evidências da execução do transporte cooperativo e do controle de passagens restritas, demonstrando a sincronização entre robôs, a coordenação das missões e o gerenciamento de recursos compartilhados.}
     \label{fig:passage_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Interface_100.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Interface_100.png}
     \caption{Teste de sobrecarga com 100 robôs e 60 cargas, utilizado para verificar o respeito aos limites de capacidade das passagens e a consistência das operações.}
     \label{fig:100_robots_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Log.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Log.png}
     \caption{Consulta do datalogger - RobotEvents - SQLite pela interface web.}
     \label{fig:log_interface_test}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{figuras/testes/Log_cargas.png}
+    \includegraphics[width=0.85\textwidth]{figuras/testes/Log_cargas.png}
     \caption{Consulta do datalogger - Cargas e Formações - SQLite pela interface web.}
     \label{fig:log_cargas_interface_test}
 \end{figure}
@@ -840,7 +840,7 @@ adaptador de hardware local, sem depender do broker ou da interface gráfica.
 
 A partir da raiz do projeto, executamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build \
     -DENABLE_MQTT=OFF \
     -DBUILD_TESTING=OFF
@@ -857,7 +857,7 @@ incluindo transporte cooperativo, falhas, recarga, gerenciamento de processos e
 controle de passagens. Para executar outro cenário, basta substituir o
 argumento \code{--cenario}:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 ./build/app/simulador_exec \
     --cenario estresse-passagens
 \end{lstlisting}
@@ -876,7 +876,7 @@ integrada.
 Primeiramente, preparamos o ambiente virtual Python e instalamos as
 dependências da interface:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 python3 -m venv visualization/.venv
 
 
@@ -886,7 +886,7 @@ visualization/.venv/bin/python -m pip \
 
 Em seguida, realizamos a compilação:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-mqtt \
     -DENABLE_MQTT=ON \
     -DBUILD_TESTING=OFF
@@ -897,7 +897,7 @@ cmake --build build-mqtt --parallel 2
 
 Para iniciar o sistema completo, executamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 ./build-mqtt/app/fleet_launcher
 \end{lstlisting}
 
@@ -920,7 +920,7 @@ utilizando respectivamente as opções \code{--simulador-mqtt} e
 Os testes automatizados são habilitados pela opção \code{BUILD\_TESTING=ON}.
 Para executar os testes do núcleo C++, sem MQTT, utilizamos:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-testes \
     -DENABLE_MQTT=OFF \
     -DBUILD_TESTING=ON
@@ -936,7 +936,7 @@ ctest --test-dir build-testes \
 Para incluir os testes específicos da integração MQTT, utilizamos uma
 configuração separada:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 cmake -S . -B build-mqtt-testes \
     -DENABLE_MQTT=ON \
     -DBUILD_TESTING=ON
@@ -957,7 +957,7 @@ testes de integração com o simulador remoto.
 Os testes da interface Python podem ser executados separadamente, utilizando o
 ambiente virtual:
 
-\begin{lstlisting}[language=bash]
+\begin{lstlisting}[basicstyle=\ttfamily\footnotesize, language=bash]
 visualization/.venv/bin/python -m unittest \
     visualization.test_history \
     visualization.test_scenario_picker -v
@@ -989,6 +989,16 @@ estão disponíveis no repositório público:
 
 \begin{center}
     \url{https://github.com/LuccaRig/Robotic-Fleet-Management-for-Logistics}
+\end{center}
+
+
+\subsection{Vídeo de demonstração do projeto}
+O vídeo de demonstração do projeto está disponível no YouTube, apresentando a
+execução de cenários com transporte básico, transporte colaborativo, passagens
+restritas, falhas, recarga e gerenciamento de processos.
+
+\begin{center}
+    \url{link do video do yt aqui}
 \end{center}
 
 \end{document}
